@@ -1,0 +1,437 @@
+<?php
+/*
+ * Name: voterdb_turf_checkin.php     V4.1  5/30/18
+ * This include file contains the code to upload a turf exported from the
+ * VAN and add it to the voter database.
+ */
+
+require_once "voterdb_constants_turf_tbl.php";
+require_once "voterdb_constants_voter_tbl.php";
+require_once "voterdb_constants_nls_tbl.php";
+require_once "voterdb_constants_van_tbl.php";
+require_once "voterdb_constants_voter_tbl.php";
+require_once "voterdb_group.php";
+require_once "voterdb_nls_status.php";
+require_once "voterdb_track.php";
+require_once "voterdb_banner.php";
+require_once "voterdb_path.php";
+require_once "voterdb_van_hdr.php";
+require_once "voterdb_debug.php";
+require_once "voterdb_nls_validate.php";
+require_once "voterdb_class_button.php";
+require_once "voterdb_class_turfs.php";
+require_once "voterdb_class_paths.php";
+require_once "voterdb_turf_checkin_func.php";
+require_once "voterdb_turf_checkin_func2.php";
+require_once "voterdb_turf_checkin_func3.php";
+require_once "voterdb_turf_checkin_func4.php";
+
+
+use Drupal\voterdb\NlpButton;
+use Drupal\voterdb\NlpTurfs;
+use Drupal\voterdb\NlpPaths;
+
+
+/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * voterdb_turf_checkin_form
+ *
+ * Create the form for checking in a turf for an NL.
+ * 
+ * @return string
+ */
+function voterdb_turf_checkin_form($form, &$form_state) {
+  $fv_button_obj = new NlpButton();
+  $fv_button_obj->setStyle();
+  if (!isset($form_state['voterdb']['reenter'])) {
+    if(!voterdb_get_group($form_state)) {return;}
+    $form_state['voterdb']['hd-saved']=$form_state['voterdb']['pct-saved']=0;
+    $form_state['voterdb']['turf_file']=$form_state['voterdb']['pdf_file']='';
+    $form_state['voterdb']['addr-change']=FALSE;
+    if(isset($form_state['voterdb']['Debug'])) {
+      variable_set('voterdb_debug',TRUE);
+    } else {
+      variable_set('voterdb_debug',FALSE);
+    }
+  }   
+  $fv_county = $form_state['voterdb']['county'];
+  $fv_hd_saved = $form_state['voterdb']['hd-saved'];
+  $fv_pct_saved = $form_state['voterdb']['pct-saved'];
+  
+  $form_state['voterdb']['turfsObj'] = new NlpTurfs();
+  $form_state['voterdb']['pathsObj'] = new NlpPaths();
+  
+  // Create the form to display of all the NLs.
+  $fv_banner = voterdb_build_banner ($fv_county);
+  $form['note'] = array (
+    '#type' => 'markup',
+    '#markup' => $fv_banner
+  );
+  // Get the selected HD or 0 if the first build of this page.
+  // The current HD is the value last selected just in case it changed.  
+  if (!isset($form_state['values']['HD'])) {
+    $fv_selected_hd =$fv_previous_hd = 
+                           $form_state['voterdb']['PreviousHD'] = $fv_hd_saved;
+  } else {
+    $fv_selected_hd = $form_state['values']['HD'];
+    $fv_previous_hd = $form_state['voterdb']['PreviousHD'];
+  }
+  // If we have a new HD selected, then the list of Pcts needs to be reset.
+  if ($fv_selected_hd != $fv_previous_hd ) {
+    $form_state['values']['pct'] = 0;
+    $form_state['input']['pct'] = 0;
+    $form_state['complete form']['hd-change']['pct']['#input'] = 0;
+    $form_state['complete form']['hd-change']['pct']['#value'] = 0;
+    $form_state['voterdb']['PreviousHD'] = $fv_selected_hd;
+  }
+  // Create the list of HD numbers with prospective NLs.
+  $fv_hd_options = voterdb_hd_list($fv_county);  // func.
+  
+  //voterdb_debug_msg('hd options', $fv_hd_options, __FILE__, __LINE__);
+  if (!$fv_hd_options) { 
+    drupal_set_message("The prospective NL list has not been uploaded", 
+            "status");
+    return $form;
+  }
+  // Create a list of House Districts with prospective NLs.
+  // The default is the value last set in case the form is reused.
+  // Set the AJAX configuration to rebuild the precinct list if an HD is
+  // selected.
+  $form_state['voterdb']['hd_options'] = $fv_hd_options;
+  $form['nl-select'] = array(
+    '#title' => 'Select the Neighborhood Leader',
+    '#type' => 'fieldset',
+    '#prefix' => '<div style="width:600px;">',
+    '#suffix' => '</div>',
+  );
+  $form['nl-select']['HD'] = array(
+      '#type' => 'select',
+      '#title' => t('Select a House District'),
+      '#options' => $fv_hd_options,
+      '#default_value' => $fv_selected_hd,
+      '#ajax' => array (
+          'callback' => 'voterdb_hd_selected_callback',
+          'wrapper' => 'hd-change-wrapper',
+      )
+  );
+  // Put a container around both the Pct and the NL selection, they both
+  // reset and haved to be redrawn with a change in the HD.
+  $form['nl-select']['hd-change'] = array(
+    '#prefix' => '<div id="hd-change-wrapper">',
+    '#suffix' => '</div>',
+    '#type' => 'fieldset',
+    '#attributes' => array('style' => array('background-image: none; border: 0px; width: 550px; padding:0px; margin:0px; background-color: rgb(255,255,255);'), ),
+   );
+  // Show the list of precincts for the selected HD. 
+  // Set the AJAX configuration to build the list of prospective NLs in the
+  // selected precinct.
+
+  $fv_pct_options = voterdb_pct_list($fv_county, $fv_hd_options[$fv_selected_hd]);  // func.
+  $form_state['voterdb']['pct_options'] = $fv_pct_options;
+  $fv_selected_pct = isset($form_state['values']['pct'])? $form_state['values']['pct']:$fv_pct_saved;
+  $form['nl-select']['hd-change']['pct'] = array(
+      '#type' => 'select',
+      '#title' => t('Select a Precinct Number for HD'). $fv_hd_options[$fv_selected_hd],
+      '#prefix' => '<div id="ajax-pct-replace">',
+      '#options' => $fv_pct_options,
+      '#default_value' => $fv_selected_pct,
+      '#ajax' => array(
+        'callback' => 'voterdb_pct_selected_callback',
+        'wrapper' => 'ajax-nls-replace',
+        'effect' => 'fade',
+      ),
+  );
+  // Create the list of known NLs in this precinct for the options list.
+  $fv_pct = $fv_pct_options[$fv_selected_pct];
+  $fv_mcid_array = array();
+  $fv_nls_choices = voterdb_nls_list($fv_county,$fv_pct,$fv_mcid_array);  // func.
+  //voterdb_debug_msg('nl options', $fv_nls_choices, __FILE__, __LINE__);
+  $form_state['voterdb']['mcid_array'] = $fv_mcid_array;
+  $form_state['voterdb']['nls_choices'] = $fv_nls_choices;
+  // Offer a set of radio buttons for selection of an NL. 
+  $form['nl-select']['hd-change']['nls-select'] = array(
+      '#title' => t('Select the NL for the turf checkin'),
+      '#type' => 'radios',
+      '#default_value' => 0,
+      '#prefix' => '<div id="ajax-nls-replace">',
+      '#suffix' => '</div></div>',
+      '#options' => $fv_nls_choices,
+  );
+  // Display the upload file entries.
+  $form['filegroup'] = array(
+    '#title' => 'Files to upload',
+    '#type' => 'fieldset',
+    '#prefix' => '<div style="width:600px;">',
+    '#suffix' => '</div>',
+  );
+  // Name the file with the turf.
+  $form['filegroup']['turffile'] = array(
+      '#type' => 'file',
+      '#title' => t('NL turf export list'),
+      '#size' => 75,
+  );
+  // Name of the PDF of the walksheet for the turf.
+  $form['filegroup']['turfpdf'] = array(
+      '#type' => 'file',
+      '#title' => t('NL turf walksheet'),
+      '#size' => 75,
+  );
+  // And, a submit button.
+  $form['filegroup']['turf-submit'] = array(
+      '#type' => 'submit',
+      '#value' => 'Checkin the turf >>',
+  );
+  $form['done'] = array(
+    '#markup' => '<p><a href="nlpadmin?County='.$fv_county.'" class="button ">Return to Admin page >></a></p>',
+  );
+  return $form;
+}
+
+/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * voterdb_turf_checkin_form_validate
+ *
+ * Validate the form entries.  
+ * 1) Verify that the file names are given for both the turf and the walksheet.
+ * 2) Verify that the suffix for the turf is txt and the walksheet is pdf.
+ * 3) Verify that the turf is a VoteBuilder export with the proper header and
+ *    all required fields.
+ * 4) Verify that the voters in the turf are all in one precinct.
+ *
+ * @param type $form
+ * @param type $form_state
+ * @return boolean
+ */
+function voterdb_turf_checkin_form_validate($form,&$form_state) {
+  $form_state['voterdb']['reenter'] = TRUE;
+  $fv_county = $form_state['voterdb']['county'];
+  // Process the verify only for the submit button click.  We ignore the passes
+  // for the ajax entries.
+  $fv_element_clicked = $form_state['triggering_element']['#type'];
+  if ($fv_element_clicked != 'submit') {return;}
+  $fv_turffile = $_FILES['files']['name']['turffile'];
+  $fv_turftmp = $_FILES['files']['tmp_name']['turffile'];
+  if ($fv_turffile == '') {
+    form_set_error('turffile', 'A turf  is required.');
+    return;
+  }
+  $fv_tname_txt = strtolower($fv_turffile);
+  $fv_tname_txt_array = explode('.', $fv_tname_txt);
+  $fv_ftype_txt = end($fv_tname_txt_array);
+  if ($fv_ftype_txt != 'txt') {
+    form_set_error('turffile', 'The turf file must be a txt type.');
+    return;
+  }
+  $form_state['voterdb']['turf_file'] = $fv_turffile;
+  // Now check that we have the PDF for the turf.
+  $fv_pdf_file = $_FILES['files']['name']['turfpdf'];
+  $fv_pdftmp = $_FILES['files']['tmp_name']['turfpdf'];
+  if ($fv_pdf_file == '') {
+    form_set_error('turfpdf','A walksheet file is required.');
+    return;
+  }
+  $fv_fname_pdf = strtolower($fv_pdf_file);
+  $fv_fname_pdf_array = explode('.', $fv_fname_pdf);
+  $fv_ftype_pdf = end($fv_fname_pdf_array);
+  $fv_allowed = array('pdf','xls','xlsx');
+  $fv_wrong_type = TRUE;
+  foreach ($fv_allowed as $fv_type) {
+    if ($fv_ftype_pdf == $fv_type) { 
+      $fv_wrong_type = FALSE;
+    }
+  }
+  if ($fv_wrong_type) {
+    form_set_error('turfpdf', 'The walksheet must be a PDF, XLS, or XLSX type.');
+    return;
+  }
+  $form_state['voterdb']['pdf_file'] = $fv_pdf_file;
+  // Now check that we have a valid export of a turf from the VAN.
+  $fv_voter_fh = fopen($fv_turftmp, "r");
+  if ($fv_voter_fh == FALSE) {
+    form_set_error('turffile', 'Failed to open NLP Voter File Upload.');
+    return FALSE;
+  }
+  // Verify we have a good VAN export and determine which columns we want.
+  $fv_voter_raw = fgets($fv_voter_fh);
+  $fv_display_order = array();
+  $fv_field_pos = voterdb_validate_turf_hdr($fv_voter_raw,$fv_display_order); // func3.
+  if (!$fv_field_pos) {
+    fclose($fv_voter_fh);
+    form_set_error('turffile', 'Turf header validation failed.');
+    $fv_nls_selected = $form_state['values']['nls-select'];
+    $fv_mcid_array = $form_state['voterdb']['mcid_array'];
+    $fv_fname = $fv_mcid_array[$fv_nls_selected][NH_NICKNAME];
+    $fv_lname = $fv_mcid_array[$fv_nls_selected][NH_LNAME];
+    $fv_info = $fv_fname." ". $fv_lname.": ".$fv_turffile;
+    voterdb_login_tracking('turf',$fv_county,'Turf header failure. ',$fv_info);
+    return FALSE;
+  }
+  $fv_state = variable_get('voterdb_state','');
+  if ($fv_state == 'Oregon') {
+    if(empty($fv_field_pos[VR_NICKNAME]) AND empty($fv_field_pos[VR_SALUTATION])) {
+      form_set_error('turffile', 'You must either the Saluation or the Nickname fields.');
+      return FALSE;
+    }
+    if(empty($fv_field_pos[VR_PARTY])) {
+      drupal_set_message('*** Note *** Please update your export format to include the Party field.  It will be required in the future.','status');
+    }
+    if(empty($fv_field_pos[VR_NICKNAME])) {
+      drupal_set_message('*** Note *** Please update your export format to include the Nickname field.  It will be required in the future.','status');
+    }
+  } else {
+    if(empty($fv_field_pos[VR_NICKNAME])) {
+      form_set_error('turffile', 'The Nickname field is required.');
+      return FALSE;
+    }
+  }
+  $form_state['voterdb']['field_pos'] = $fv_field_pos;
+  $form_state['voterdb']['display-order'] = $fv_display_order;
+  // Get the voters in the turf export file.
+  $fv_voters = voterdb_get_voters($fv_voter_fh,$form_state); //func3.
+
+  $fv_vcount = $form_state['voterdb']['voter_count'];
+  if ($fv_vcount > 100) {
+    form_set_error('turffile', 'The turf must have 100 voters or less.');
+    $fv_nls_selected = $form_state['values']['nls-select'];
+    $fv_mcid_array = $form_state['voterdb']['mcid_array'];
+    $fv_fname = $fv_mcid_array[$fv_nls_selected][NH_NICKNAME];
+    $fv_lname = $fv_mcid_array[$fv_nls_selected][NH_LNAME];
+    $fv_info = $fv_fname." ". $fv_lname.": ".$fv_turffile;
+    voterdb_login_tracking('turf',$fv_county,'Turf with too many voters. ',$fv_info);
+    return FALSE;
+  } elseif($fv_vcount > 75) {
+    drupal_set_message('Turfs with more than 75 voters are discouraged','warning');
+  }
+  
+  $form_state['voterdb']['voters'] = $fv_voters;
+  // Verify that all voters are in one precinct.
+  $fv_leg_districts = voterdb_validate_turf_pct($fv_voters);  //func3.
+  fclose($fv_voter_fh);
+  if ($fv_leg_districts[1] == '') {
+    form_set_error('turffile', 'The turf must be for one precinct.');
+    $fv_nls_selected = $form_state['values']['nls-select'];
+    $fv_mcid_array = $form_state['voterdb']['mcid_array'];
+    $fv_fname = $fv_mcid_array[$fv_nls_selected][NH_NICKNAME];
+    $fv_lname = $fv_mcid_array[$fv_nls_selected][NH_LNAME];
+    $fv_info = $fv_fname." ". $fv_lname.": ".$fv_turffile;
+    voterdb_login_tracking('turf',$fv_county,'Turf with multiple precincts. ',$fv_info);
+    return FALSE;
+  }
+  // Save all the inputs.
+  $form_state['voterdb']['turf_tmp'] = $fv_turftmp;
+  $form_state['voterdb']['pdf_tmp'] = $fv_pdftmp;
+  $form_state['voterdb']['turf_pct'] = $fv_leg_districts[1];
+  $form_state['voterdb']['turf_hd'] = $fv_leg_districts[0];
+  $form_state['voterdb']['voter_cnt'] = $fv_leg_districts[2];
+  return TRUE;
+}
+
+/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * voterdb_turf_checkin_form_submit
+ *
+ * Enter the turf into the MySQL table for voters.  And, save the PDF if
+ * submitted so the NL can get it on the website.
+ *
+ * @param type $form
+ * @param type $form_state
+ */
+function voterdb_turf_checkin_form_submit($form,&$form_state) {
+  $form_state['voterdb']['reenter'] = TRUE;
+  $form_state['rebuild'] = TRUE;  // form_state will persist.
+  $tc_nls_selected = $form_state['values']['nls-select'];
+  $tc_mcid_array = $form_state['voterdb']['mcid_array'];
+  $tc_mcid = $tc_mcid_array[$tc_nls_selected][NH_MCID];
+  $form_state['voterdb']['mcid'] = $tc_mcid;
+  $form_state['voterdb']['fname'] = $tc_mcid_array[$tc_nls_selected][NH_NICKNAME];
+  $form_state['voterdb']['lname'] = $tc_mcid_array[$tc_nls_selected][NH_LNAME];
+  // Save the selected HD and Pct so they are used for another turf.
+  // We are guessing the next turf will be in the same precinct.
+  $form_state['voterdb']['hd-saved'] = $form_state['values']['HD'];
+  $form_state['voterdb']['pct-saved'] = $form_state['values']['pct'];
+  $tc_county = $form_state['voterdb']['county'];
+  // Create a turf name from the file name of the PDF.  This name will match
+  // the name on the PDF walksheet making it easier to recognize.
+  $tc_turfbase = voterdb_get_base($form_state['voterdb']['pdf_file']); // func.
+  $tc_tname = $tc_turfbase;
+  $form_state['voterdb']['tname'] = $tc_tname;
+  // Now check if there is any overlap of voter assignment to NLs.
+  $tc_turf_overlap = voterdb_turf_overlap($form_state);  // func2.
+  if(isset($form_state['voterdb']['Debug'])) {
+    voterdb_debug_msg("Form state:",$form_state,__FILE__,__LINE__);
+    return FALSE;
+  }
+  if ($tc_turf_overlap == 'err') {
+    // There is an overlap of one or more voters with another NL's turf or
+    // with multiple turfs.  
+    $lt_info = $form_state['voterdb']['fname']." ". 
+        $form_state['voterdb']['lname']." ".$form_state['voterdb']['tname'];
+    voterdb_login_tracking('turf',$tc_county,'Overlap with other NL', $lt_info);
+    return FALSE;
+  } 
+  if ($tc_turf_overlap != 'OK') {
+    // We have an overlap but it is a single turf assigned to this NL.  
+    // Assume the existing turf is being replaced with an updated one. 
+    // Delete the old turf and leave the new one.
+    //$tc_turf_oarray = voterdb_get_turf($tc_turf_overlap);  //func.
+
+
+    $turfsObj = $form_state['voterdb']['turfsObj'];
+    
+    $tc_turf_oarray = $turfsObj->getTurf($tc_turf_overlap);
+    //voterdb_debug_msg('overlayednturf', $tc_turf_oarray , __FILE__, __LINE__);
+
+    $turf['county'] = $tc_county;
+    $turf['turfIndex'] = $tc_turf_oarray['TurfIndex'];
+    $turf['pathObj'] = $form_state['voterdb']['pathsObj'];
+    $turfsObj->removeTurf($turf);
+
+    // Remove the voters from the group table.  This allows the voters to be
+    // assigned to a new turf.
+    db_set_active('nlp_voterdb');
+    db_delete(DB_NLPVOTER_GRP_TBL)
+      ->condition(NV_NLTURFINDEX, $tc_turf_oarray['TurfIndex'])
+      ->execute();
+    db_set_active('default');
+    
+    //$to_turf_info = voterdb_get_turf($to_ol_turf_index);
+    drupal_set_message($tc_turf_oarray['TurfName']." was deleted.","warning");
+
+    //voterdb_turf_entry_remove($tc_county, $tc_mcid,$tc_turf_oarray);
+    $lt_info = $form_state['voterdb']['fname']." "
+        . $form_state['voterdb']['lname']." ".$tc_turf_oarray['TurfName'];
+    voterdb_login_tracking('turf',$tc_county,'Deleted overlapped turf',$lt_info);
+  }
+  // Save the PDF where we can find it.
+  $tc_pdf_tmp = $form_state['voterdb']['pdf_tmp'];
+  $tc_turf_pdf_name = '';
+  if ($tc_pdf_tmp != '') {
+    $tc_turf_pdf_name = "MCID".$tc_mcid."_".$tc_tname.'.pdf';
+    $tc_uri = voterdb_get_path('PDF',$tc_county).$tc_turf_pdf_name;
+    drupal_move_uploaded_file($tc_pdf_tmp, $tc_uri);
+    $form_state['voterdb']['pdf_file'] = $tc_turf_pdf_name;
+  } 
+  // We have a good turf so insert in database.
+  if(!voterdb_insert_turf($form_state)) { //func.
+    return FALSE;
+  } 
+  // Build the mailing address file.
+  $tc_mail_file = voterdb_mailing_list($form_state); //func4.
+  $form_state['voterdb']['mail_file'] = $tc_mail_file;
+  
+  $tc_turf_index = $form_state['voterdb']['turf_index'];
+  
+  $turfsObj = $form_state['voterdb']['turfsObj'];
+  $turfsObj->updateTurfFiles('mail',$tc_mail_file,$tc_turf_index);
+  //voterdb_update_turf_tbl($form_state);
+  // Set the NL status to reflect the turf was cut (checked in).
+  $tc_nls_status = voterdb_nls_status('GET',$tc_mcid,$tc_county,'');
+  $tc_nls_status[NN_NLSIGNUP] = 'Y'; 
+  $tc_nls_status[NN_TURFCUT] = 'Y'; 
+  $tc_ask = unserialize(AT_ASKED_ARRAY);
+  $tc_nls_status[NN_ASKED] = $tc_ask[NS_YES_I]; 
+  voterdb_nls_status('PUT',$tc_mcid,$tc_county,$tc_nls_status);
+  voterdb_nl_status_history($tc_county,$tc_mcid,NY_TURFCHECKEDIN);
+  $lt_info = $form_state['voterdb']['fname']." ". 
+          $form_state['voterdb']['lname']." ".$form_state['voterdb']['tname'];
+  voterdb_login_tracking('turf',$tc_county,'Successful Turf Checkin',$lt_info);
+  $tc_success_msg = "$tc_tname has been successfully checked in.";
+  drupal_set_message($tc_success_msg,'status');
+}
