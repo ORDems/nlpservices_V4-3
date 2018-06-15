@@ -1,0 +1,106 @@
+<?php
+/**
+ * Name:  voteredb_mail.php     V3.1  9/8/17
+ * @file
+ * Implements the nlp voter database
+ */
+
+/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * voterdb_mail_alter
+ * 
+ * Implements hook mail alter.
+ * 
+ * @param type $message
+ */
+function voterdb_mail_alter(&$message) {
+  if($message['module'] == 'voterdb') {
+    //drupal_set_message('<pre>'.print_r($message, true).'</pre>','status');
+    $options = array(
+      'langcode' => $message['language']->language,
+    );
+    $ma_from = variable_get('voterdb_email', 'notifications@nlpservices.org');
+    $signature = t('<br>If you recieved this email in error, please forward it to '
+      . $ma_from . " and we will remove you from future emails.", array(), $options);
+    if (is_array($message['body'])) {
+      $message['body'][] = $signature;
+    }
+    else {
+      // Some modules use the body as a string, erroneously.
+      $message['body'] .= $signature;
+    }
+  if (isset($message['params']['func']) AND 
+          $message['params']['func'] == 'turf-deliver')  {
+      $params = $message['params'];
+      $ma_notify = array();
+      $ma_notify['sender']['county'] = $params['county'];
+      $ma_notify['sender']['s-fn'] = $params['s-fn'];
+      $ma_notify['sender']['s-ln'] = $params['s-ln'];
+      $ma_notify['sender']['s-email'] = $params['s-email'];
+
+      $ma_notify['recipient']['r-fn'] = $params['r-fn'];
+      $ma_notify['recipient']['r-ln'] = $params['r-ln'];
+      $ma_notify['recipient']['r-email'] = $params['r-email'];
+
+      $ma_notify_str = json_encode($ma_notify).'<eor>';
+
+      $message['headers']['x-voterdb-notify'] = $ma_notify_str;
+    }
+  }
+}
+
+/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * voterdb_mail
+ * 
+ * @param type $key
+ * @param type $message
+ * @param type $params
+ */
+function voterdb_mail($key, &$message, $params) {
+
+  $options = array(
+    'langcode' => $message['language']->language,
+  );
+
+  switch ($key) {
+
+    case 'deliver turf':
+      $df_firstname = $params['s-fn'];
+      $df_lastname = $params['s-ln'];
+      $df_semail = $params['s-email'];
+      $message['headers']['Content-Type'] = 'text/html; charset=UTF-8;';
+      $message['subject'] = t('Neighborhood Leader Materials - @grp County', 
+        array('@grp' => $params['county']), $options);
+      $message['body'][] = $params['message'];
+      $message['body'][] = t('<em>@fname @lname [@semail] sent you this message from NLP services.</em>', 
+        array(
+          '@fname' => $df_firstname,
+          '@lname' => $df_lastname,
+          '@semail' => $df_semail,),$options);
+      break;
+    
+    case 'no login':
+      $message['headers']['Content-Type'] = 'text/html; charset=UTF-8;';
+      $message['subject'] = t('Neighborhood Leader Notification - @grp County', 
+        array('@grp' => $params['county']), $options);
+      $message['body'][] = $params['message'];
+      $message['body'][] = t('<em>The NLP services admin sent you this message.</em>');
+      break;
+    
+    case 'no report':
+      $message['headers']['Content-Type'] = 'text/html; charset=UTF-8;';
+      $message['subject'] = t('Neighborhood Leader Notification - @grp County', 
+        array('@grp' => $params['county']), $options);
+      $message['body'][] = $params['message'];
+      $message['body'][] = t('<em>The NLP services admin sent you this message.</em>');
+      break;
+    
+    case 'notify bounce':
+      $message['headers']['Content-Type'] = 'text/html; charset=UTF-8;';
+      $message['subject'] = t('Neighborhood Leader Notification - NL email bounce', 
+        $options);
+      $message['body'][] = $params['message'];
+      $message['body'][] = t('<br><em>The NLP services admin sent you this message.</em>');
+      break;
+    
+  }
+}

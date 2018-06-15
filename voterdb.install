@@ -1,0 +1,13 @@
+<?php
+
+function voterdb_enable() {
+  $current = variable_get('mail_system', array('default-system' => 'DefaultMailSystem'));
+  $addition = array('voterdb' => 'voterdbMailSystem');
+  variable_set('mail_system', array_merge($current, $addition));
+}
+
+function voterdb_disable() {
+  $mail_system = variable_get('mail_system', array('default-system' => 'DefaultMailSystem'));
+  unset($mail_system['voterdb']);
+  variable_set('mail_system', $mail_system);
+}

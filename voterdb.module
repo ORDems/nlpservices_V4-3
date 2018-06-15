@@ -1,0 +1,377 @@
+<?php
+/**
+ * Name:  voteredb_module     V4.1  6/2/18
+ * @file
+ * Implements the nlp voter database
+ */
+require_once "voterdb_mail.php";
+require_once "voterdb_cron.php";
+require_once "voterdb_blocks.php";
+require_once "voterdb_constants_bounce_tbl.php";
+require_once "voterdb_track.php";
+require_once "voterdb_cron_results.php";
+require_once "voterdb_cron_login.php";
+require_once "voterdb_cron_bounce.php";
+require_once "voterdb_cron_report.php";
+require_once "voterdb_class_turfs.php";
+
+class voterdbMailSystem extends DefaultMailSystem {
+  public function format(array $message) {
+    $message['body'] = implode("\n\n", $message['body']);
+    $message['body'] = drupal_wrap_mail($message['body']);
+    return $message;
+  }
+}
+
+/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * voterdb_menu()
+ * 
+ * Implements the hook menu for the various nlp commands.
+ * 
+ * @return string
+ */
+function voterdb_menu() {
+  $items = array();
+  $items ['nlptest'] = array (
+    'title' => 'Test',
+    'description' => 'Test',
+    'access callback' => TRUE,
+    'page callback' => 'voterdb_test',
+    'file' => 'voterdb_test.php',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['nlpformtest'] = array (
+    'title' => 'Test form',
+    'description' => 'Test form',
+    'access callback' => TRUE,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_test_form'),
+    'file' => 'voterdb_formtest.php',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['nlpapitest'] = array (
+    'title' => 'Test API',
+    'description' => 'Test API',
+    'access callback' => TRUE,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_api_requests'),
+    'file' => 'voterdb_test_api_generic.php',
+    'type' => MENU_CALLBACK,
+  );
+
+  $items ['nlphdfix'] = array (
+    'title' => 'Manage Legislative District fixes',
+    'description' => 'Fix the HD and Pct if incorrectly set by VoteBuilder',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_hd_fix_form'),
+    'file' => 'voterdb_hd_fix.php',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['nlpfixreport'] = array (
+    'title' => 'Enable/Disable NL canvass reports.',
+    'description' => 'Fix user errors in reported voter contact.',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_fix_report_form'),
+    'file' => 'voterdb_fix_report.php',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['nlpexportblob'] = array (
+    'title' => 'Download NL email blob',
+    'description' => 'Download NL email blob',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'voterdb_export_blob',
+    'file' => 'voterdb_export_blob.php',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['nlpexportnlsstatus'] = array (
+    'title' => 'Export NL status report',
+    'description' => 'Export NL status report',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'voterdb_export_nls_status',
+    'file' => 'voterdb_export_nls_status.php',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['nlpexportturfstatus'] = array (
+    'title' => 'Export turf results',
+    'description' => 'Export turf Results',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'voterdb_export_turf_status',
+    'file' => 'voterdb_export_turf_status.php',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['nlpsetup'] = array (
+    'title' => 'Setup the NLP Services Database Tables',
+    'description' => 'Set up the Voterdb module for a new election',
+    'access arguments' => array('administer voterdb'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_setup_form'),
+    'file' => 'voterdb_nlpsetup.php',
+    'type' => MENU_CALLBACK,
+  );
+    $items ['nlpconfig'] = array (
+    'title' => 'Configure NLP Services for a new election cycle',
+    'description' => 'Set up the global constants for a new election',
+    'access arguments' => array('administer voterdb'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_config_form'),
+    'file' => 'voterdb_nlpconfig.php',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['nlpparticipation'] = array (
+    'title' => 'Participation Stats',
+    'description' => 'Display participation counts',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'voterdb_participation',
+    'file' => 'voterdb_participation.php',
+    'type' => MENU_CALLBACK,
+  );  
+  $items ['nlpdisplayresults'] = array (
+    'title' => 'Result Analysis',
+    'description' => 'Display summary of results',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'voterdb_display_results',
+    'file' => 'voterdb_display_results.php',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['nlpballotsreceived'] = array (
+    'title' => 'Matchback Upload',
+    'description' => 'Upload the voter matchback data',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_ballots_received_form'),
+    'file' => 'voterdb_ballots_received.php',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['nlpballotcounts'] = array (
+    'title' => 'Ballot Counts',
+    'description' => 'Upload the counts of ballots recieved to date.',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_ballot_counts_form'),
+    'file' => 'voterdb_ballot_counts.php',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['nlpexportnlsreports'] = array (
+    'title' => 'Export NLS results',
+    'description' => 'Create tab delimited file with NLS results',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_export_nlsreports_form'),
+    //'page callback' => 'voterdb_export_nlsreports',
+    'file' => 'voterdb_export_nlsreports.php',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['nlprestorenlsreports'] = array (
+    'title' => 'Restore NLS Reports',
+    'description' => 'Upload prior NL reports',
+    'access arguments' => array('administer voterdb'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_restore_nlsreports_form'),
+    'file' => 'voterdb_restore_nlsreports.php',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['nlpdataentry'] = array (
+    'title' => 'NLP data entry',
+    'description' => 'Allow the NL to enter canvass results',
+    'access callback' => TRUE,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_dataentry_form'),
+    'file' => 'voterdb_dataentry.php',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['nlpturfdeliver'] = array (
+    'title' => 'Send a turf email to NL',
+    'description' => 'Send an email to the NL with links for the turf and instructions.',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_turf_deliver_form'),
+    'file' => 'voterdb_turf_deliver.php',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['nlpturfdelete'] = array (
+    'title' => 'NLP delete turf',
+    'description' => 'Remove a turf and the associated files',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_turf_delete_form'),
+    'file' => 'voterdb_turf_delete.php',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['nlpturfcheckin'] = array (
+    'title' => 'Check in a turf for an NL',
+    'description' => 'Upload the Voters assigned to this NL',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_turf_checkin_form'),
+    'file' => 'voterdb_turf_checkin.php',
+  );
+  $items ['nlpupload'] = array (
+    'title' => 'Upload NL list',
+    'description' => 'Upload the contact info for our NLs',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_nlupload_form'),
+    'file' => 'voterdb_nls_upload.php',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['nlpdisplay'] = array (
+    'title' => 'Active NL Management Page',
+    'description' => 'Display the info for our NLs',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_display_nls_form'),
+    'file' => 'voterdb_nls_display.php',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['nlpgoals'] = array (
+    'title' => 'Neighborhood Leader Recruitment Goals',
+    'description' => 'Get the NL recruitment goals',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_goals_form'),
+    'file' => 'voterdb_nlp_goals.php',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['nlpcoordinators'] = array (
+    'title' => 'Manage the list of NLP coordinators',
+    'description' => 'Create or delete names for coordinators.',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_coordinators_form'),
+    'file' => 'voterdb_coordinators.php',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['nlpcandidates'] = array (
+    'title' => 'Manage the list of candidate names',
+    'description' => 'Create or delete names for candidates.',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_candidates_form'),
+    'file' => 'voterdb_candidates.php',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['nlpinstructions'] = array (
+    'title' => 'Manage the files with NLs instructions',
+    'description' => 'Upload canvass or postcard instructions.',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_nlp_instructions_form'),
+    'file' => 'voterdb_nlp_instructions.php',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['nlpsurvey'] = array (
+    'title' => 'Create the survey question',
+    'description' => 'Create the survey question and responses.',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_survey_question_form'),
+    'file' => 'voterdb_survey_question.php',
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items ['nlpadmin'] = array (
+    'title' => 'NLP Admin Page',
+    'description' => 'Navigate to various functions',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'voterbd_nlpadmin',
+    'file' => 'voterdb_nlpadmin.php',
+    'type' => MENU_CALLBACK,
+  );
+
+$items['nlpcron'] = array(
+    'title' => 'Cron Example',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_cron_form'),
+    'file' => 'voterdb_cron_cmd.php',
+    'access arguments' => array('Access VoterDB tools'),
+);
+
+$items['nlpblocked'] = array(
+    'title' => 'Email Blocked Report',
+    'description' => 'Display list of email bounce reports',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'voterdb_blocked_report',
+    'file' => 'voterdb_blocked_report.php',
+    'type' => MENU_CALLBACK,
+);
+
+$items['nlpnlhistory'] = array(
+    'title' => 'History of NL participation',
+    'description' => 'Create history file for NL participation',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'voterdb_nls_status_history',
+    'file' => 'voterdb_nls_status_history.php',
+    'type' => MENU_CALLBACK,
+);
+return $items;
+};
+
+/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * voterdb_permission
+ * 
+ * Implementation of hook_permission().  There are two permissions, one for
+ * those who are county coordinators that do work like checking in a turf. 
+ * The other is for maintenance functions that might ruin the database.   
+ *
+ * People -> Permissions
+ */
+function voterdb_permission() {
+    $arr = array();
+    $arr['administer voterdb'] = array(
+            'title' => t('Administer VoterDB access'),
+            'description' => t('Allow user to change VoterDB settings.')
+        );
+    $arr['access voterdb tools'] = array(
+            'title' => t('Access VoterDB tools'),
+            'description' => t('Allow NLs to access VoterDB tools.')
+        );
+    return $arr;
+}
+
+
+
+function voterdb_services_resources() {
+  return array(
+    'jobdone' => array(                           
+      'create' => array(
+        'callback' => '_voterdb_create_node',
+        'access callback' => '_voterdb_create_access',
+        'args' => array(
+          array(
+            'name' => 'nope',
+            'optional' => FALSE,
+            'source' => 'data',    
+            'description' => 'The node data to create',
+            'type' => 'array',
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/**
+ * Access callback
+ */
+function _voterdb_create_access() {
+    return TRUE;
+}
+
+/**
+ * Callback function that creates the node
+ */
+function _voterdb_create_node($arg) {
+
+  $bri = print_r($arg, true);
+  watchdog('voterdb jobdone', 'arg: @bri',array('@bri' => $bri ),WATCHDOG_DEBUG);
+  // Minimally there needs to be something submitted.
+  if($arg) {
+    //$bri = '<pre>'.print_r($arg, true).'</pre>';
+    //watchdog('voterdb jobdone', 'arg: @bri',array('@bri' => $bri ),WATCHDOG_DEBUG);
+  } else {
+    // Error if no args were passed
+    return services_error(t('No data submitted!'), 406, t('No data submitted!'));
+  }
+}

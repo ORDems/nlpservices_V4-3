@@ -1,0 +1,130 @@
+<p>Please click the your county name below to take you to the appropriate Neighborhood Leader Login.</p>
+<table style="width: 550px;">
+	<tbody>
+		<tr>
+			<td style="width: 100px;">
+			<a href="/nlpdataentry?County=ADAMS">ADAMS</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=ALLEN">ALLEN</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=BARTHOLOMEW">BARTHOLOMEW</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=BENTON">Clatsop</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Columbia">Columbia</a>
+      </td>
+    </tr>
+    <tr>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Coos">Coos</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Crook">Crook</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Curry">Curry</a>
+			</td>
+			<td style="width: 100px;">
+			<a href="/nlpdataentry?County=Deschutes">Deschutes</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Douglas">Douglas</a>
+      </td>
+    </tr>
+    <tr>
+      <td style="width: 100px;">
+      <a href="/nlpdataentry?County=Gilliam">Gilliam</a>
+      </td>
+      <td style="width: 100px;">
+      <a href="/nlpdataentry?County=Grant">Grant</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Harney">Harney</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Hood_River">Hood River</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Jackson">Jackson</a>
+			</td>
+    </tr>
+    <tr>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Jefferson">Jefferson</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Josephine">Josephine</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Klamath">Klamath</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Lake">Lake</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Lane">Lane</a>
+      </td>
+    </tr>
+    <tr>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Lincoln">Lincoln</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Linn">Linn</a>			
+			</td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Malheur">Malheur</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Marion">Marion</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Morrow">Morrow</a>
+      </td>
+    </tr>
+    <tr>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Multnomah">Multnomah</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Polk">Polk</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Sherman">Sherman</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Tillamook">Tillamook</a>
+      </td>
+      <td style="width: 100px;">
+      <a href="/nlpdataentry?County=Umatilla">Umatilla</a>
+      </td>
+    </tr>
+    <tr>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Union">Union</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Wallow">Wallow</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Wasco">Wasco</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Washington">Washington</a>
+      </td>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Wheeler">Wheeler</a>
+      </td>
+    </tr>
+    <tr>
+      <td style="width: 100px;">
+			<a href="/nlpdataentry?County=Yamhill">Yamhill</a>
+      </td>
+		</tr>
+	</tbody>
+</table>
+<!--break-->
