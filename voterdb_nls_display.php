@@ -18,6 +18,7 @@ require_once "voterdb_class_button.php";
 require_once "voterdb_class_get_browser.php";
 require_once "voterdb_class_turfs.php";
 require_once "voterdb_class_nls.php";
+require_once "voterdb_class_nlreports_nlp.php";
 require_once "voterdb_nls_display_func.php";
 require_once "voterdb_nls_display_func2.php";
 
@@ -25,6 +26,7 @@ use Drupal\voterdb\NlpButton;
 use Drupal\voterdb\GetBrowser;
 use Drupal\voterdb\NlpTurfs;
 use Drupal\voterdb\NlpNls;
+use Drupal\voterdb\NlpReports;
 
 // Constants for building the goals table.
 define('DC_LBL_W','130'); // Width of the label.
@@ -124,6 +126,7 @@ function voterdb_display_nls_form($form_id, &$form_state) {
       $dn_hd = $form_state['voterdb']['hd_array'][$dn_hdi-1];
     }
     $dn_ccv_url = voterdb_create_csv($dn_county,$dn_hd,$nlRecords); // func2.
+    voterdb_debug_msg('ccv url', $dn_ccv_url, __FILE__, __LINE__);
     
     $dn_browser_obj = new GetBrowser();
     $dn_browser = $dn_browser_obj->getBrowser();
@@ -171,8 +174,11 @@ function voterdb_display_nls_form($form_id, &$form_state) {
   // Add the line for selecting an HD and CSV download.
   voterdb_options_display($form,$dn_hdoptions,$dn_hd_new);
   
+  $form_state['voterdb']['sortable'] = array('hd'=>'HD','pct'=>'Pct','asked'=>'NL',
+      'turfCut'=>'TC','turfDelivered'=>'TD','contact'=>'CO','loginDate'=>'LI','atmps'=>'Atmps','conts'=>'Conts');
+  $dn_sortable = $form_state['voterdb']['sortable'];
   // Add the line for return and sort.
-  voterdb_sort_display($form,$dn_county);
+  voterdb_sort_display($form,$dn_county,$dn_sortable);
     
    
   $form_state['voterdb']['hd-current'] = $form_state['voterdb']['hd-new'];
@@ -181,9 +187,13 @@ function voterdb_display_nls_form($form_id, &$form_state) {
   if (!isset($form_state['voterdb']['nlRecords'])) {
     $nlsObj = new NlpNls();
     $nlRecords = $nlsObj->getNls($dn_county,$dn_hd);
+    //voterdb_debug_msg('nlrecords', $nlRecords, __FILE__, __LINE__);
     $nlKeys = array_keys($nlRecords);
+    $reportsObj = new NlpReports();
     foreach ($nlKeys as $mcid) {
-      $nlRecords[$mcid]['progress']  = voterdb_get_progress($mcid);  // func2.
+      //voterdb_debug_msg('mcid: '.$mcid, '', __FILE__, __LINE__);
+      $nlRecords[$mcid]['progress']  = voterdb_get_progress($nlRecords[$mcid],$reportsObj);  // func2.
+      //voterdb_debug_msg('nlrecord', $nlRecords[$mcid], __FILE__, __LINE__);
     } 
     $form_state['voterdb']['nlRecords'] = $nlRecords;
   }  
@@ -191,8 +201,8 @@ function voterdb_display_nls_form($form_id, &$form_state) {
 
   voterdb_build_nls_table($form,$form_state); // func.
   
-  $dn_sortable = $form_state['voterdb']['sortable'];
-  $form['sortselect']['#options'] = $dn_sortable;
+  //$dn_sortable = $form_state['voterdb']['sortable'];
+  //$form['sortselect']['#options'] = $dn_sortable;
   
   $form['done'] = array(
     '#markup' => '<p><a href="nlpadmin?County='.$dn_county.'" class="button ">Return to Admin page >></a></p>',
@@ -215,6 +225,8 @@ function voterdb_display_nls_form($form_id, &$form_state) {
 function voterdb_display_nls_form_validate($form, &$form_state) {
   $form_state['voterdb']['reenter'] = TRUE;
   $nv_county = $form_state['voterdb']['county'];
+  $nlsObj = new NlpNls();
+  //voterdb_debug_msg('nlsobj', $nlsObj, __FILE__, __LINE__);
   // No validation needed for the HD selection.
   $nv_element_clicked = $form_state['triggering_element']['#name'];
   //voterdb_debug_msg('element clicked', $nv_element_clicked, __FILE__, __LINE__);
@@ -226,68 +238,93 @@ function voterdb_display_nls_form_validate($form, &$form_state) {
   // The triggering element names have the form type-mcid.
   $nv_id_array = explode('-', $nv_element_clicked);
   $nv_mcid = $nv_id_array[1];  // MCID of affected NL.
-  $nv_status = voterdb_nls_status('GET',$nv_mcid,$nv_county,'');  // Current status.
+  $nv_status = $nlsObj->getNlsStatus($nv_mcid,$nv_county);
+  //$nv_status = voterdb_nls_status('GET',$nv_mcid,$nv_county,'');  // Current status.
   $nv_value = $form_state['triggering_element']['#value'];
-  $nv_history = array(DZ_NL=>NY_SIGNEDUP,DZ_TC=>NY_TURFCHECKEDIN,DZ_TD=>NY_DELIVEREDTURF);
+  voterdb_debug_msg('value', $nv_value, __FILE__, __LINE__);
+  
+  //$nv_history = array(DZ_NL=>NY_SIGNEDUP,DZ_TC=>NY_TURFCHECKEDIN,DZ_TD=>NY_DELIVEREDTURF);
   // Process the checkbox, select or textbox for this NL.
   switch ($nv_id_array[0]) {
-    case DZ_TD:  // Turf Delivered.
+    case 'TD':  // Turf Delivered.
       // If the turf delivered status is set, update the date the turf was delivered.
       if($nv_value) {
         $turfsObj = new NlpTurfs();
         $turfsObj->setAllTurfsDelivered($nv_mcid,$nv_county);
       }
-    case DZ_NL:  // NL signup.
-      $nv_click_box = $form_state['voterdb']['click-box'];
-      $nv_col = $nv_click_box[$nv_id_array[0]];
+      
       $nv_cell_display = ($nv_value)?'Y':'';
-      $nv_status[$nv_col] = $nv_cell_display;
-      voterdb_nls_status('PUT',$nv_mcid,$nv_county,$nv_status);
-      $form_state['voterdb']['nl-list'][$nv_mcid]['status'][$nv_col] = $nv_cell_display;
-      voterdb_nl_status_history($nv_county,$nv_mcid,NY_SIGNEDUP);
+      $nv_status['turfDelivered'] = $nv_cell_display;
+      
+      $nlsObj->setNlsStatus($nv_status);
+      //voterdb_nls_status('PUT',$nv_mcid,$nv_county,$nv_status);
+      
+      $form_state['voterdb']['nl-list'][$nv_mcid]['status']['turfDelivered'] = $nv_cell_display;
+      
+      $statusHistory['mcid'] = $nv_mcid;
+      $statusHistory['county'] = $nv_county;
+      $statusHistory['status'] = $nlsObj::HISTORYDELIVEREDTURF;
+      $statusHistory['nlFirstName'] = $form_state['voterdb']['nlRecords'][$nv_mcid]['firstName'];
+      $statusHistory['nlLastName'] = $form_state['voterdb']['nlRecords'][$nv_mcid]['lastName'];
+      
+      $nlsObj->setStatusHistory($statusHistory);
+      //voterdb_nl_status_history($nv_county,$nv_mcid,NY_DELIVEREDTURF);
+      
+      
       break;
-    case DZ_TC:  // Turf cut.
-      $nv_click_box = $form_state['voterdb']['click-box'];
-      $nv_col = $nv_click_box[$nv_id_array[0]];
+
+    case 'TC':  // Turf cut.
+
       $nv_cell_display = ($nv_value)?'Y':'';
-      $nv_status[$nv_col] = $nv_cell_display;
-      voterdb_nls_status('PUT',$nv_mcid,$nv_county,$nv_status);
-      $form_state['voterdb']['nl-list'][$nv_mcid]['status'][$nv_col] = $nv_cell_display;
-      voterdb_nl_status_history($nv_county,$nv_mcid,NY_TURFCHECKEDIN);
+      $nv_status['turfCut'] = $nv_cell_display;
+      
+      $nlsObj->setNlsStatus($nv_status);
+      //voterdb_nls_status('PUT',$nv_mcid,$nv_county,$nv_status);
+      
+      $form_state['voterdb']['nl-list'][$nv_mcid]['status']['turfCut'] = $nv_cell_display;
+      
+      $statusHistory['mcid'] = $nv_mcid;
+      $statusHistory['county'] = $nv_county;
+      $statusHistory['status'] = $nlsObj::HISTORYTURFCHECKEDIN;
+      $statusHistory['nlFirstName'] = $form_state['voterdb']['nlRecords'][$nv_mcid]['firstName'];
+      $statusHistory['nlLastName'] = $form_state['voterdb']['nlRecords'][$nv_mcid]['lastName'];
+      $nlsObj->setStatusHistory($statusHistory);
+      //voterdb_nl_status_history($nv_county,$nv_mcid,NY_TURFCHECKEDIN);
       break;
-    case DZ_TB:  // Notes (text box).
-      $nv_trunc = substr($nv_value,0,NN_NOTES_LENGTH);
-      $nv_status[NN_NOTES] = $nv_trunc;
-      voterdb_nls_status('PUT',$nv_mcid,$nv_county,$nv_status);
-      $form_state['voterdb']['nl-list'][$nv_mcid]['status'][NN_NOTES] = $nv_trunc;
-      voterdb_nl_status_history($nv_county,$nv_mcid,NY_DELIVEREDTURF);
+    
+    case 'TB':  // Notes (text box).
+      $nv_trunc = substr($nv_value,0,$nlsObj::NOTESMAX);
+      $nv_status['notes'] = $nv_trunc;
+      
+      $nlsObj->setNlsStatus($nv_status);
+      
+      //voterdb_nls_status('PUT',$nv_mcid,$nv_county,$nv_status);
+      $form_state['voterdb']['nlRecords'][$nv_mcid]['status']['notes'] = $nv_trunc;
       break;
-    case DZ_CO:  // Contact type (select); canvass, post card, phone.
-      $nv_contact = unserialize(CT_CONTACT_ARRAY);
-      $nv_contact_value = $nv_contact[$nv_value];
-      $nv_status[NN_CONTACT] = $nv_contact_value;
-      voterdb_nls_status('PUT',$nv_mcid,$nv_county,$nv_status);
-      $form_state['voterdb']['nl-list'][$nv_mcid]['status'][NN_CONTACT] = $nv_contact_value;
+    
+    case 'CO':  // Contact type (select); canvass, post card, phone.
+      $nv_status['contact'] = $nv_value;
+      $nlsObj->setNlsStatus($nv_status);
+      $form_state['voterdb']['nl-list'][$nv_mcid]['status']['contact'] = $nv_value;
       break;
-    case DZ_AS:  // Ask type (select); Default(NULL), Asked, Yes, No, Quit.
-      $nv_ask = unserialize(AT_ASKED_ARRAY);
-      $nv_ask_value = NULL;
-      if($nv_value != 0) {
-        $nv_ask_value = $nv_ask[$nv_value];
-        $nv_ask_status = $nv_ask_value;
-        if ($nv_ask_value == AT_YES) {
-          $nv_status[NN_NLSIGNUP] = 'Y';
-          $nv_ask_status = NY_SIGNEDUP;
-        } elseif ($nv_ask_value == AT_NO) {
-          $nv_ask_status = NY_DECLINED;
-        }
-        voterdb_nl_status_history($nv_county,$nv_mcid,$nv_ask_status);
+    
+    case 'AS':  // Ask type (select); Default(NULL), Asked, Yes, No, Quit.
+      $nv_status['nlSignup'] = '';
+      if($nv_value == 'yes') {
+        $nv_status['nlSignup'] = 'Y';
       }
-      $nv_status[NN_ASKED] = $nv_ask_value;
-      //voterdb_debug_msg('ask array', $nv_ask, __FILE__, __LINE__);
-      //voterdb_debug_msg('ask status, value:'.$nv_value, $nv_status, __FILE__, __LINE__);
-      $form_state['voterdb']['nl-list'][$nv_mcid]['status'][NN_ASKED] = $nv_ask_value;
-      voterdb_nls_status('PUT',$nv_mcid,$nv_county,$nv_status);
+      $nv_status['asked'] = $nv_value;
+      $form_state['voterdb']['nl-list'][$nv_mcid]['status']['asked'] = $nv_value;
+      //voterdb_nls_status('PUT',$nv_mcid,$nv_county,$nv_status);
+      $nlsObj->setNlsStatus($nv_status);
+      
+      $statusHistory['mcid'] = $nv_mcid;
+      $statusHistory['county'] = $nv_county;
+      $statusHistory['status'] = $nlsObj->askHistory[$nv_value];
+      $statusHistory['nlFirstName'] = $form_state['voterdb']['nlRecords'][$nv_mcid]['firstName'];
+      $statusHistory['nlLastName'] = $form_state['voterdb']['nlRecords'][$nv_mcid]['lastName'];
+      $nlsObj->setStatusHistory($statusHistory);
+      //voterdb_nl_status_history($nv_county,$nv_mcid,$nv_ask_status);
       break;
   }
   return;
@@ -313,7 +350,7 @@ function voterdb_display_nls_form_submit($form, &$form_state) {
       // The user may have changed the HD to display.
       $form_state['voterdb']['hd-new'] = $form_state['values']['hdselect'];
       // force rebuilding the list of NLs.
-      unset($form_state['voterdb']['nl-list']);
+      unset($form_state['voterdb']['nlRecords']);
       // Clear existing information about prior input.  It actually contains
       // prior defaults and forms API gets confused with a new form.
       unset($form_state['buttons']);
@@ -330,14 +367,19 @@ function voterdb_display_nls_form_submit($form, &$form_state) {
       //voterdb_debug_msg('values', $form_state['values'], __FILE__, __LINE__);
       $dn_county = $form_state['voterdb']['county'];
       $dn_sortable = $form_state['voterdb']['sortable'];
-      $dn_column_i = $form_state['values']['sortselect'];
-      $dn_column = $dn_sortable[$dn_column_i];
-      $dn_nl_list = $form_state['voterdb']['nl-list'];
-      $dn_sorted_data = orderBy($dn_nl_list, $dn_column);
-      //voterdb_debug_msg('sorted', $dn_sorted_data, __FILE__, __LINE__);
-      $form_state['voterdb']['nl-list'] = $dn_sorted_data;
+      //voterdb_debug_msg('sortable', $dn_sortable, __FILE__, __LINE__);
+      //$dn_column = $dn_sortable[$columnKey];
+      $columnKey = $form_state['values']['sortselect'];
+
+      $nlRecords = $form_state['voterdb']['nlRecords'];
+      //$dn_sorted_data = orderBy($dn_nl_list, $dn_column_key);
       
-      $dn_info = "Column requested for sort: ".$dn_column;
+      
+      $dn_sorted_data = voterdb_sort_nls($nlRecords,$columnKey);
+      //voterdb_debug_msg('sorted', $dn_sorted_data, __FILE__, __LINE__);
+      $form_state['voterdb']['nlRecords'] = $dn_sorted_data;
+      
+      $dn_info = "Column requested for sort: ".$dn_sortable[$columnKey];
       voterdb_login_tracking('sort',$dn_county,'NL table was sorted. ',$dn_info);
       
       break;
@@ -353,7 +395,30 @@ function orderBy($data, $field)  {
   return $data;
 }
 
-function voterdb_sort_display(&$form,$sd_county) {
+function voterdb_sort_nls($nlRecords,$columnKey) {
+  switch ($columnKey) {
+    case 'hd':
+    case 'pct':
+      $sortedRecords = orderBy($nlRecords,$columnKey);
+      break;
+    case 'atmps':
+    case 'conts':
+      foreach ($nlRecords as $mcid => $nlRecord) {
+        $nlRecords[$mcid]['order'] = $nlRecord['progress'][$columnKey];
+      }
+      $sortedRecords = orderBy($nlRecords, 'order');
+      break;
+    default:
+      foreach ($nlRecords as $mcid => $nlRecord) {
+        $nlRecords[$mcid]['order'] = $nlRecord['status'][$columnKey];
+      }
+      $sortedRecords = orderBy($nlRecords, 'order');
+      break;
+  }
+  return $sortedRecords;
+}
+
+function voterdb_sort_display(&$form,$sd_county,$sd_options) {
     
  $form['sort-start'] = array(
       '#type' => 'markup',
@@ -369,7 +434,7 @@ function voterdb_sort_display(&$form,$sd_county) {
   
   $form['sortselect'] = array(
     '#type' => 'select',
-    '#options' => array('HD'),
+    '#options' => $sd_options,
     '#prefix' => '</td><td style = "font-size:x-small;"><div><div  style="float:right;">',
     '#suffix' => '</div>',
     );

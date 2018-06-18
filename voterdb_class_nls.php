@@ -4,33 +4,10 @@
  * Contains Drupal\voterdb\NlpNls.
  */
 /*
- * Name: voterdb_class_nls.php   V4.2  6/5/18
+ * Name: voterdb_class_nls.php   V4.2  6/17/18
  */
 
 namespace Drupal\voterdb;
-
-
-define('DH_MCID', 'My Campaign ID');
-define('DH_FNAME', 'FirstName');
-define('DH_LNAME', 'LastName');
-define('DH_NICKNAME', 'Nickname');
-define('DH_COUNTY', 'CountyName');
-define('DH_HD', 'HD');
-define('DH_PCT', 'PrecinctName');
-define('DH_ADDR', 'Address');
-define('DH_EMAIL', 'PreferredEmail');
-define('DH_PHONE', 'Preferred Phone');
-define('DH_HOMEPHONE', 'Home Phone');
-define('DH_CELLPHONE', 'Cell Phone');
-define('DH_CITY', 'City');
-define('DH_SALUTATION', 'Salutation'); // Depreciated.
-
-define('DH_MESSAGE_ARRAY', serialize(array(
-    'MCID', 'Name', '', 'Nickname',
-    'County',
-    'Legislative Districts', 'PrecinctName', 'Primary Address (MyCampaign)', 'Email',
-    'Preferred Phone', 'Home Phone', 'Cell Phone', 'City'
-)));
 
 class NlpNls {
   
@@ -42,7 +19,7 @@ class NlpNls {
   const CANVASS = 'canvass';
   const MINIVAN = 'minivan';
   const PHONE = 'phone';
-  const POSTCARD = 'mail';
+  const MAIL = 'mail';
   
   const NOTESDBLENGTH = '81';  // Length of the notes field in database.
   const NOTESMAX = '75';   // Notes max length of the note.
@@ -52,7 +29,7 @@ class NlpNls {
       'canvass'=>self::CANVASS,
       'minivan'=>self::MINIVAN,
       'phone'=>self::PHONE,
-      'postcard'=>self::POSTCARD,
+      'mail'=>self::MAIL,
   );
   
   const DASH = '-';
@@ -62,11 +39,18 @@ class NlpNls {
   const QUIT = 'Quit';
   
   public $askList = array(
-      'select'=>self::DASH,
+      '-'=>self::DASH,
       'asked'=>self::ASKED,
       'yes'=>self::YES,
       'no'=>self::NO,
-      'quit'=>self::QUIT,
+      'quit'=>self::QUIT
+  );
+  
+  public $askHistory = array(
+      'asked' => self::HISTORYASKED,
+      'yes' => self::HISTORYSIGNEDUP,
+      'no' => self::HISTORYDECLINED,
+      'quit' => self::HISTORYQUIT,
   );
 
 
@@ -77,11 +61,11 @@ class NlpNls {
     'loginDate'=>'Login_Date',
     'contact'=>'Contact', 
     'nlSignup'=>'NLSignup',
-    'turfCut'=>'TurfCut',
+    'turfCut'=>'Turfcut',
     'turfDelivered'=>'TurfDelivered',
     'resultsReported'=>'ResultsReported',
     'asked'=>'Asked',
-    'notes'=>''
+    'notes'=>'Notes'
   );
   public $nlList = array(
     'mcid'=>'MCID',
@@ -97,10 +81,20 @@ class NlpNls {
     'homePhone'=>'HomePhone',
     'cellPhone'=>'CellPhone'
   );
+  
+
+  const HISTORYASKED = 'Asked';
+  const HISTORYDECLINED = 'Declined';
+  const HISTORYSIGNEDUP = 'Signed up';
+  const HISTORYTURFCHECKEDIN = 'Checked in turf';
+  const HISTORYDELIVEREDTURF = 'Delivered turf';
+  const HISTORYREPORTEDRESULTS = 'Reported results';
+  const HISTORYQUIT = 'Quit';
+  
   private $historyList = array(
     'date' => 'Date',
     'mcid' => 'MCID',
-    'county' => 'MCID',
+    'county' => 'County',
     'cycle' => 'Cycle',
     'status' => 'Status',
     'nlFirstName' => 'NLfname',
@@ -108,11 +102,11 @@ class NlpNls {
   );
   
   private $nlVanHdr = array(
-      'mcid' => array('name'=>'My Campaign ID','err'=>'MCID'),
+      'mcid' => array('name'=>'VANID','err'=>'VANID'),
       'firstName' => array('name'=>'FirstName','err'=>'Name'),
       'lastName' => array('name'=>'LastName','err'=>'Name'),
       'nickname' => array('name'=>'Nickname','err'=>'Nickname'),
-      'county' => array('name'=>'County','err'=>'County'),
+      'county' => array('name'=>'CountyName','err'=>'County'),
       'hd' => array('name'=>'HD','err'=>'Legislative Districts'),
       'pct' => array('name'=>'PrecinctName','err'=>'PrecinctName'),
       'address' => array('name'=>'Address','err'=>'Primary Address (MyCampaign)'),
@@ -125,24 +119,27 @@ class NlpNls {
   
   
 
-  private function decodeNlHdr($fileHdr) {
+  public function decodeNlHdr($fileHdr) {
+    //voterdb_debug_msg('header', $fileHdr, __FILE__, __LINE__);
     $hdrErr = array();
     $hdrPos = array();
-    foreach (self::nlVanHdr as $nlpKey => $vanField) {
+    foreach ($this->nlVanHdr as $nlpKey => $vanField) {
       $found = FALSE;
       foreach ($fileHdr as $fileCol=>$fileColName) {
-        if($fileColName == $vanField['name']) {
+        if($fileColName == trim($vanField['name'])) {
           $hdrPos[$nlpKey] = $fileCol;
           $found = TRUE;
+          break;
         }
       }
       if(!$found) {
-        $hdrErr[] = 'The MyCasmpaign export option "'.$vanField['err'].'" is missing.';
+        $hdrErr[] = 'The MyCampaign export option "'.$vanField['err'].'" is missing.';
       }
     }
-    $fieldPos['fields'] = $hdrPos;
+    $fieldPos['pos'] = $hdrPos;
     $fieldPos['err'] = $hdrErr;
     $fieldPos['ok'] = empty($hdrErr);
+    //voterdb_debug_msg('fieldpos', $fieldPos, __FILE__, __LINE__);
     return $fieldPos;
   }
 
@@ -158,11 +155,14 @@ class NlpNls {
   
   
   public function createNl($nlRecord) {
+    //voterdb_debug_msg('nlrecord', $nlRecord, __FILE__, __LINE__);
     $fields = array();
     foreach ($nlRecord as $nlpKey => $dbField) {
-      $fields[$dbField] = $nlRecord[$nlpKey];
+      $dbKey = $this->nlList[$nlpKey];
+      $fields[$dbKey] = $dbField;
     }
-    $this->deleteNl($nlRecord['MCID']);
+    $this->deleteNl($nlRecord['mcid']);
+    //voterdb_debug_msg('fields', $fields, __FILE__, __LINE__);
     db_set_active('nlp_voterdb');
     try {
       db_insert(self::NLSTBL)
@@ -208,14 +208,14 @@ class NlpNls {
       $fields = $results->fetchAssoc();
       if(empty($fields)) {break;}
       $nlRecord = array();
-      foreach ($nlList  as $nlpKey => $dbKey) {
+      foreach ($this->nlList  as $nlpKey => $dbKey) {
         if(isset($fields[$dbKey])) {
           $nlRecord[$nlpKey] = $fields[$dbKey];
         } else {
           $nlRecord[$nlpKey] = NULL;
         }
       }
-      $mcid = $nlRecord['MCID'];
+      $mcid = $nlRecord['mcid'];
       $nlRecord['status'] = $this->getNlsStatus($mcid,$county);
       $nlRecords[$mcid] = $nlRecord;
     } while (TRUE);
@@ -258,27 +258,38 @@ class NlpNls {
     }
     $nlDbStaus = $result->fetchAssoc();
     if(empty($nlDbStaus)) {
+      //voterdb_debug_msg('nldbstatus', $nlDbStaus, __FILE__, __LINE__);
       $nlStaus = array();
-      $nlpKeys = key($this->statusList);
+      $nlpKeys = array_keys($this->statusList);
       foreach ($nlpKeys as $nlpKey) {
         $nlStaus[$nlpKey] = NULL;
       }
       $nlStaus['mcid'] = $mcid;
       $nlStaus['county'] = $county;
       $nlStaus['contact'] = self::CANVASS;
+      $nlStaus['asked'] = self::DASH;
+      //voterdb_debug_msg('nlstatus', $nlStaus, __FILE__, __LINE__);
     } else {
+      //voterdb_debug_msg('nldbstatus', $nlDbStaus, __FILE__, __LINE__);
       foreach ($this->statusList as $nlpKey => $dbFieldName) {
         $nlStaus[$nlpKey] = $nlDbStaus[$dbFieldName];
       }
+      //voterdb_debug_msg('nlstatus', $nlStaus, __FILE__, __LINE__);
+      $askListFlip = array_flip($this->askList);
+      //voterdb_debug_msg('asklistflipped', $askListFlip, __FILE__, __LINE__);
+      $nlStaus['asked'] = $askListFlip[$nlStaus['asked']];
     }
     db_set_active('default');
     return $nlStaus;
   }
 
   public function setNlsStatus($status) {
+    //voterdb_debug_msg('status', $status, __FILE__, __LINE__);
     foreach ($this->statusList as $nlpKey => $dbFieldName) {
       $nlDbStaus[$dbFieldName] = $status[$nlpKey];
     }
+    //voterdb_debug_msg('fields', $nlDbStaus, __FILE__, __LINE__);
+    $nlDbStaus['Asked'] = $this->askList[$nlDbStaus['Asked']];
     db_set_active('nlp_voterdb');
     try {
       db_merge(self::NLSSTATUSTBL)
@@ -291,7 +302,7 @@ class NlpNls {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      //voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
       return FALSE;
     }
     db_set_active('default');
@@ -320,6 +331,9 @@ class NlpNls {
   }
 
   public function createNlGrp($mcid,$county) {
+    //voterdb_debug_msg('mcid', $mcid, __FILE__, __LINE__);
+    db_set_active('nlp_voterdb');
+    
     try {
       db_insert(self::NLSGRPTBL)
         ->fields(array(
@@ -329,11 +343,10 @@ class NlpNls {
         ->execute();
     }
     catch (Exception $e) {
+      voterdb_debug_msg('error', $e->getMessage() , __FILE__, __LINE__);
       db_set_active('default');
-      $pn_error = $e->errorInfo;
-      voterdb_debug_msg('error', $pn_error , __FILE__, __LINE__);
-      db_set_active('nlp_voterdb');
     }
+   db_set_active('default');
   }
   
   public function deleteNlGrp($county) {
@@ -348,5 +361,6 @@ class NlpNls {
       voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
       return;
     }
+    db_set_active('default');
   }
 }

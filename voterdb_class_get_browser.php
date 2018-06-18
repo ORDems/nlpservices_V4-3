@@ -1,6 +1,10 @@
 <?php
+/**
+ * @file
+ * Contains Drupal\voterdb\GetBrowser.
+ */
 /*
- * Name: voterdb_class_get_browser.php   V4.0 2/16/18
+ * Name: voterdb_class_get_browser.php   V4.2 6/18/18
  *
  */
 

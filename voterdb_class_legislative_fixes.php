@@ -68,10 +68,11 @@ class NlpLegFix{
     $fixes = array();
     do {
       $fix = $result->fetchAssoc();
+      //voterdb_debug_msg('fix', $fix, __FILE__, __LINE__);
       if(empty($fix)) {break;}
       $nlpFix = array();
-      foreach ($fix as $nlpKey => $dbField) {
-        $nlpFix[$nlpKey] = $fix[$dbField];
+      foreach ($this->legList as $nlpKey => $dbKey) {
+        $nlpFix[$nlpKey] = $fix[$dbKey];
       }
       $fixes[$nlpFix['mcid']] = $nlpFix;
     } while (TRUE);

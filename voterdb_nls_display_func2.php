@@ -68,7 +68,7 @@ function voterdb_get_progress($nlRecord,$reportsObj) {
   $gp_progress['attempts'] = '';  // Voter contact attempts.
   $gp_progress['contacts'] = ''; // Voter contacts.
   $gp_progress['done'] = '';  // Every voter contacted. 
-  if($nlRecord['status']['turfDeliverd'] != 'Y') {
+  if($nlRecord['status']['turfDelivered'] != 'Y') {
     return $gp_progress;
   }
   // Get the voters assigned to this NL for all the turfs.
@@ -87,6 +87,7 @@ function voterdb_get_progress($nlRecord,$reportsObj) {
     return $gp_progress;
   }
   db_set_active('default');
+  if(empty($gp_tvoters)) {return $gp_progress;}
   $gp_voter_cnt = count($gp_tvoters);
   // Initialize array.
   $gp_voter['attempt'] = 0;
@@ -104,7 +105,7 @@ function voterdb_get_progress($nlRecord,$reportsObj) {
     $gp_vanid = $gp_report['vanid'];
     if(!empty($gp_voters[$gp_vanid])) {
       $gp_voters[$gp_vanid]['attempt'] = TRUE;
-      if($gp_report['type']==$reportsObj->CONTACT AND $gp_report['value']==$reportsObj->F2F) {
+      if($gp_report['type']==$reportsObj::CONTACT AND $gp_report['value']==$reportsObj::F2F) {
         $gp_voters[$gp_vanid]['contact'] = TRUE;
       }
     }
@@ -154,10 +155,10 @@ function voterdb_create_csv($cc_county,$cc_hd,$nlRecords) {
       'pct'=>'Pct',
       'lastName'=>'LastName',
       'nickname'=>'NickName',
-      'addr'=>'Address',
+      'address'=>'Address',
       'email'=>'Email',
       'phone'=>'Phone',
-      'nlSignup'=>'NL',
+      'asked'=>'NL',
       'turfCut'=>'TC',
       'turfDelivered'=>'TD',
       'contact'=>'CO',
@@ -196,17 +197,17 @@ function voterdb_create_csv($cc_county,$cc_hd,$nlRecords) {
             $cc_ordered_fields[$cc_key] = '';
           }
           break;
-        case 'nl':
-        case 'tc':
-        case 'td':
-        case 'li':
+        case 'asked':
+        case 'turfCut':
+        case 'turfDelivered':
+        case 'loginDate':
           if(!empty($nlRecord['status'])) {
             $cc_ordered_fields[$cc_key] = $nlRecord['status'][$cc_key];
           } else {
             $cc_ordered_fields[$cc_key] = '';
           }
           break;
-        case 'co':
+        case 'contact':
           if(!empty($nlRecord['status'])) {
             $newField = str_replace(',', ' ', $nlRecord['status'][$cc_key]);
             $cc_ordered_fields[$cc_key] = $newField;

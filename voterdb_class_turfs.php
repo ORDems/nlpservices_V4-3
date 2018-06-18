@@ -4,7 +4,7 @@
  * Contains Drupal\voterdb\NlpTurfs.
  */
 /*
- * Name: voterdb_class_turfs.php   V4.1  5/29/18
+ * Name: voterdb_class_turfs.php   V4.2  6/16/18
  */
 
 namespace Drupal\voterdb;
@@ -209,17 +209,25 @@ class NlpTurfs {
   
   public function setAllTurfsDelivered($mcid,$county) {
     db_set_active('nlp_voterdb');
-    $select = "SELECT * FROM {".self::TURFTBL."} WHERE  ".
-      "County = :county AND MCID = :mcid";
-    $args = array(
-      ':county' => $county,
-      ':mcid' => $mcid);
-    $result = db_query($select,$args);
-    $turfs = $result->fetchAll(PDO::FETCH_ASSOC);
-    foreach ($turfs as $turf) {
-      $this->setTurfDelivered($turf['TurfIndex']);
+    try {
+      $select = "SELECT * FROM {".self::TURFTBL."} WHERE  ".
+        "County = :county AND MCID = :mcid";
+      $args = array(
+        ':county' => $county,
+        ':mcid' => $mcid);
+      $result = db_query($select,$args);
+    } catch (Exception $e) {
+      db_set_active('default');
+      //watchdog('voterdb_class_turfs', 'set all turfs delivered failed');
+      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      return;
     }
     db_set_active('default');
+    do {
+      $turf = $result->fetchAssoc();
+      if(empty($turf)) {break;}
+      $this->setTurfDelivered($turf['TurfIndex']);
+    } while (TRUE);
   }
   
   

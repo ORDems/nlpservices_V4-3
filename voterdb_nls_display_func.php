@@ -38,7 +38,8 @@ function voterdb_build_nls_table(&$form,&$form_state) {
   );
   // Start the table.
   $form['nlform']['table_start'] = array(
-    '#markup' => " \r ".'<table class="tborder nowhite" style = "font-size:x-small; font-family: Trebuchet, Verdana, Arial, Sans-serif;">',
+    '#markup' => " \r ".'<table class="tborder nowhite" '
+      . 'style = "font-size:x-small; font-family: Trebuchet, Verdana, Arial, Sans-serif;">',
   );
 
   // Now construct the header information for each column title.  Uses the th
@@ -49,6 +50,8 @@ function voterdb_build_nls_table(&$form,&$form_state) {
   $nf_hdr_row .= " \n  ".'<th class ="hborder cell-pct cell-bold">Pct</th>';
   
   $nf_hdr_row .= " \n  ".'<th class ="hborder cell-name cell-bold">Name-MCID</th>';
+  
+  $nf_hdr_row .= " \n  ".'<th class ="hborder cell-addr cell-bold">Address</th>';
   
   $nf_hdr_row .= " \n  ".'<th class ="hborder cell-email cell-bold">Email-Phone</th>';
   
@@ -93,8 +96,8 @@ function voterdb_build_nls_table(&$form,&$form_state) {
   $nf_hdr_row .= " \n  ".'<th class ="hborder cell-cont cell-bold cell-color"><div id="hintth" ><p>Conts'.$nf_hint.'</p></div></th>';
   
   
-  $nf_sortable = array();
-  $form_state['voterdb']['sortable'] = $nf_sortable;
+  //$nf_sortable = array();
+  //$form_state['voterdb']['sortable'] = $nf_sortable;
   // Create the header row.
   $form['nlform']['header_row'] = array(
     '#markup' => " \n <thead> \n <tr>".$nf_hdr_row." \n </tr> \n </thead> ",
@@ -134,22 +137,23 @@ function voterdb_build_nls_table(&$form,&$form_state) {
       '#markup' => $nf_cell,
     );
     
-    $nf_addr_col = str_replace(',', '<br>', $nlRecord['addr']);
-    $nf_cell = " \n ".'<td class="cell-name nowhite">'.$nf_addr_col.'</td>';
+    $nf_addr_col = str_replace(',', '<br>', $nlRecord['address']);
+    $nf_cell = " \n ".'<td class="cell-addr nowhite">'.$nf_addr_col.'</td>';
     $form['nlform']['TX-'.$nf_mcid.'-addr'] = array(
       '#markup' => $nf_cell,
     );
     
     $nf_email_col = $nlRecord['email'].'<br>'.$nlRecord['phone'];
-    $nf_cell = " \n ".'<td class="cell-name nowhite">'.$nf_email_col.'</td>';
+    $nf_cell = " \n ".'<td class="cell-email nowhite">'.$nf_email_col.'</td>';
     $form['nlform']['TX-'.$nf_mcid.'-email'] = array(
       '#markup' => $nf_cell,
     );
     
     
     $nf_note_default = $nlRecord['status']['notes'];
-    $nf_wrap = wordwrap($nf_note_default,$nlsObj->NOTESWRAP,"\n",true);
-    $form['nlform']['TB-'.$nf_mcid.'notes'] = array(
+    $notesWrap = $nlsObj::NOTESWRAP;
+    $nf_wrap = wordwrap($nf_note_default,$notesWrap,"\n",true);
+    $form['nlform']['TB-'.$nf_mcid.'-notes'] = array(
       '#type' => 'textarea',
       '#attributes' => array('class' => array('textarea-width nowhite')),
       '#cols' => 10,
@@ -164,9 +168,14 @@ function voterdb_build_nls_table(&$form,&$form_state) {
       '#default_value' => $nf_wrap,
     );
     
+    //voterdb_debug_msg('nlrecord', $nlRecord, __FILE__, __LINE__);
+    //voterdb_debug_msg('aask', $nf_ask, __FILE__, __LINE__);
+    //$nf_asked = $nlRecord['status']['asked'];
     
+    //$nf_default_ask = $nlsObj->askList[$nf_asked];
     $nf_default_ask = $nlRecord['status']['asked'];
-    $form['nlform']["AS-".$nf_mcid.'ask'] = array(
+    
+    $form['nlform']["AS-".$nf_mcid.'-ask'] = array(
       '#type' => 'select',
       '#options' => $nf_ask,
       '#prefix' => " \n ".'<td class="cell_ask">',
@@ -182,7 +191,7 @@ function voterdb_build_nls_table(&$form,&$form_state) {
     
 
     $nf_default_tc = ($nlRecord['status']['turfCut']=='Y')?1:0;
-    $form['nlform']["TC-".$nf_mcid.'turfcut'] = array (
+    $form['nlform']["TC-".$nf_mcid.'-turfcut'] = array (
     '#type' => 'checkbox',
     '#default_value' => $nf_default_tc,
     '#prefix' => " \n ".'<td class="cell-chk">',
@@ -194,7 +203,7 @@ function voterdb_build_nls_table(&$form,&$form_state) {
     );
     
     $nf_default_td = ($nlRecord['status']['turfDelivered']=='Y')?1:0;
-    $form['nlform']["TD-".$nf_mcid.'turfdelivered'] = array (
+    $form['nlform']["TD-".$nf_mcid.'-turfdelivered'] = array (
     '#type' => 'checkbox',
     '#default_value' => $nf_default_td,
     '#prefix' => " \n ".'<td class="cell-chk">',
@@ -207,7 +216,7 @@ function voterdb_build_nls_table(&$form,&$form_state) {
     
     
     $nf_co_default = $nlRecord['status']['contact'];
-    $form['nlform']["CO-".$nf_mcid.'contact'] = array(
+    $form['nlform']["CO-".$nf_mcid.'-contact'] = array(
       '#type' => 'select',
       '#options' => $nf_contact,
       '#prefix' => " \n ".'<td class="cell-type">',
@@ -222,17 +231,17 @@ function voterdb_build_nls_table(&$form,&$form_state) {
     
     
 
-    $nf_cell = " \n ".'<td class="cell-name nowhite">'.$nlRecord['status']['loginDate'].'</td>';
+    $nf_cell = " \n ".'<td class="cell-lin nowhite">'.$nlRecord['status']['loginDate'].'</td>';
     $form['nlform']['TX-'.$nf_mcid.'-login'] = array(
       '#markup' => $nf_cell,
     );
     
-    $nf_cell = " \n ".'<td class="cell-name nowhite">'.$nlRecord['status']['atmps'].'</td>';
+    $nf_cell = " \n ".'<td class="cell-atmp nowhite">'.$nlRecord['progress']['attempts'].'</td>';
     $form['nlform']['TX-'.$nf_mcid.'-atmps'] = array(
       '#markup' => $nf_cell,
     );
     
-    $nf_cell = " \n ".'<td class="cell-name nowhite">'.$nlRecord['status']['conts'].'</td>';
+    $nf_cell = " \n ".'<td class="cell-cont nowhite">'.$nlRecord['progress']['contacts'].'</td>';
     $form['nlform']['TX-'.$nf_mcid.'-conts'] = array(
       '#markup' => $nf_cell,
     );
