@@ -19,14 +19,19 @@ require_once "voterdb_class_get_browser.php";
 require_once "voterdb_class_turfs.php";
 require_once "voterdb_class_nls.php";
 require_once "voterdb_class_nlreports_nlp.php";
+//require_once "voterdb_class_paths.php";
+require_once "voterdb_class_bigtest.php";
 require_once "voterdb_nls_display_func.php";
 require_once "voterdb_nls_display_func2.php";
 
 use Drupal\voterdb\NlpButton;
-use Drupal\voterdb\GetBrowser;
 use Drupal\voterdb\NlpTurfs;
 use Drupal\voterdb\NlpNls;
 use Drupal\voterdb\NlpReports;
+//use Drupal\voterdb\NlpBigTest;
+use Drupal\voterdb\GetBrowser;
+//use Drupal\voterdb\NlpPaths;
+
 
 // Constants for building the goals table.
 define('DC_LBL_W','130'); // Width of the label.
@@ -114,6 +119,9 @@ function voterdb_display_nls_form($form_id, &$form_state) {
   } 
   $dn_county = $form_state['voterdb']['county'];
   
+  //$bigObj = new NlpBigTest();
+  $browserObj = new GetBrowser();
+  
   if($form_state['voterdb']['csv-display'] == TRUE) {
     //voterdb_debug_msg('voterdb', $form_state['voterdb'], __FILE__, __LINE__);
     $nlRecords = $form_state['voterdb']['nlRecords'];
@@ -126,11 +134,12 @@ function voterdb_display_nls_form($form_id, &$form_state) {
       $dn_hd = $form_state['voterdb']['hd_array'][$dn_hdi-1];
     }
     $dn_ccv_url = voterdb_create_csv($dn_county,$dn_hd,$nlRecords); // func2.
-    voterdb_debug_msg('ccv url', $dn_ccv_url, __FILE__, __LINE__);
+    //voterdb_debug_msg('ccv url', $dn_ccv_url, __FILE__, __LINE__);
     
-    $dn_browser_obj = new GetBrowser();
-    $dn_browser = $dn_browser_obj->getBrowser();
-    $dn_browser_hint = $dn_browser['hint'];
+
+    //$dn_browser_obj = new GetBrowser();
+    $browser = $browserObj->getBrowser();
+    $dn_browser_hint = $browser['hint'];
     
     $form['csv-note'] = array (
     '#type' => 'markup',

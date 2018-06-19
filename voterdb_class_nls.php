@@ -285,6 +285,8 @@ class NlpNls {
 
   public function setNlsStatus($status) {
     //voterdb_debug_msg('status', $status, __FILE__, __LINE__);
+    //$backTrace = debug_backtrace(); 
+    //voterdb_debug_msg('caller, Line: '.$backTrace[0]['line'], $backTrace[0]['file'], __FILE__, __LINE__);
     foreach ($this->statusList as $nlpKey => $dbFieldName) {
       $nlDbStaus[$dbFieldName] = $status[$nlpKey];
     }
@@ -363,4 +365,99 @@ class NlpNls {
     }
     db_set_active('default');
   }
+  
+  public function getHdList($county) {
+    // Get the list of distinct HD numbers for this group, order numerically.
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::NLSGRPTBL, 'g');
+      $query->join(self::NLSTBL, 'n', 'g.MCID = n.MCID');
+      $query->addField('n', 'HD');
+      $query->distinct();
+      $query->condition('g.County',$county);
+      $query->orderBy('HD');
+      $result = $query->execute();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      return FALSE;
+    }
+    db_set_active('default');
+    $hdOptions  = array();
+    do {
+      $hd = $result->fetchAssoc();
+      if(empty($hd)) {break;}
+      $hdOptions[] = $hd['HD'];
+    } while (TRUE);
+    return $hdOptions;
+  }
+  
+  public function getPctList($county,$hd) {
+    // Get the list of precinct numbers with at least one prospective NL in 
+    // this HD, order numberically by precinct number.
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::NLSGRPTBL, 'g');
+      $query->join(self::NLSTBL, 'n', 'g.MCID = n.MCID');
+      $query->addField('n', 'Pct');
+      $query->distinct();
+      $query->condition('g.County',$county);
+      $query->condition('HD',$hd);
+      $query->orderBy('Pct');
+      $result = $query->execute();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage()  , __FILE__, __LINE__);
+      return FALSE;
+    }
+    db_set_active('default');
+    $pctOptions = array();
+    do {
+      $pct = $result->fetchAssoc();
+      if(empty($pct)) {break;}
+      $pctOptions[] = $pct['Pct'];
+    } while (TRUE);
+    return $pctOptions;
+  }
+  
+  function getNlList($county,$pct) {
+    // Get a list of the NLs in the selected precinct, order by name.
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::NLSGRPTBL, 'g');
+      $query->join(self::NLSTBL, 'n', 'g.MCID = n.MCID');
+      $query->addField('n', 'Nickname');
+      $query->addField('n', 'LastName');
+      $query->addField('n', 'Email');
+      $query->addField('n', 'MCID');
+      $query->condition('Pct',$pct);
+      $query->condition('g.County',$county);
+      $query->orderBy('LastName');
+      $query->orderBy('Nickname');
+      $result = $query->execute();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage()  , __FILE__, __LINE__);
+      return FALSE;
+    }
+    db_set_active('default');
+    $dbList = array_flip($this->nlList);
+    $nlOptions = array();
+    do {
+      $nl = $result->fetchAssoc();
+      if(empty($nl)) {break;}
+      $nlOptions[] = $nl['Nickname'].' '.$nl['LastName'].
+          ': '.$nl['Email'].', MCID['.$nl['MCID'].']';
+      
+      foreach ($nl as $dbKey => $dbValue) {
+        $nlNlp[$dbList[$dbKey]] = $dbValue;
+      }
+      $nlMcid[] = $nlNlp;
+    } while (TRUE);
+    return array('options'=>$nlOptions,'mcidArray'=>$nlMcid);
+  }
+
 }

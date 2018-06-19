@@ -4,9 +4,10 @@
  * Contains Drupal\voterdb\GetBrowser.
  */
 /*
- * Name: voterdb_class_get_browser.php   V4.2 6/18/18
- *
+ * Name: voterdb_class_get_browser.php   V4.2  6/18/18
  */
+
+namespace Drupal\voterdb;
 
 class GetBrowser {
   
@@ -19,15 +20,7 @@ class GetBrowser {
     'Internet Explorer' => 'Save target as',
   );
   
-
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   * getBrowser
-   * 
-   * Gets the name of the browser and the name of the OS.
-   * 
-   * Returns and array of information about the browser
-   */
-  function getBrowser() { 
+  public function getBrowser() { 
     $u_agent = $_SERVER['HTTP_USER_AGENT']; 
     $bname = 'Unknown';
     $platform = 'Unknown';
@@ -107,4 +100,6 @@ class GetBrowser {
         'pattern'    => $pattern
     );
   }
+  
+  
 }
