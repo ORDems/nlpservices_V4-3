@@ -168,8 +168,8 @@ function voterdb_build_nls_table(&$form,&$form_state) {
       '#default_value' => $nf_wrap,
     );
     
-    //voterdb_debug_msg('nlrecord', $nlRecord, __FILE__, __LINE__);
-    //voterdb_debug_msg('aask', $nf_ask, __FILE__, __LINE__);
+    //voterdb_debug_msg('nlrecord', $nlRecord);
+    //voterdb_debug_msg('aask', $nf_ask);
     //$nf_asked = $nlRecord['status']['asked'];
     
     //$nf_default_ask = $nlsObj->askList[$nf_asked];

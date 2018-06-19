@@ -194,13 +194,13 @@ function voterdb_turf_delete_form_submit($form, &$form_state) {
   $form_state['voterdb']['reenter'] = TRUE;
   $form_state['rebuild'] = TRUE;  // form_state will persist
   $form_state['voterdb']['pass'] = 'page_one';
-  //voterdb_debug_msg('form state', $form_state, __FILE__, __LINE__);
+  //voterdb_debug_msg('form state', $form_state);
   $fv_county = $form_state['voterdb']['county'];
   // From the list of turfs in the list, find the ones to be deleted.
   $turf_select = $form_state['input']['turf-select'];
   foreach ($turf_select as $fv_key => $fv_turf_option) {
     if ($fv_turf_option != '') {
-      //voterdb_debug_msg('turf option, key: '.$fv_key, $fv_turf_option, __FILE__, __LINE__);
+      //voterdb_debug_msg('turf option, key: '.$fv_key, $fv_turf_option);
       $fv_turf_delete = $fv_key;
       $fv_turf_choice = $form_state['voterdb']['turfs'][$fv_turf_delete];
       // Clear the assigned flag in each voter record
@@ -215,11 +215,11 @@ function voterdb_turf_delete_form_submit($form, &$form_state) {
       $turf['county'] = $fv_county;
       $turf['turfIndex'] = $fv_turf_index;
       $turf['pathObj'] = new NlpPaths();
-      //voterdb_debug_msg('turf', $turf, __FILE__, __LINE__);
+      //voterdb_debug_msg('turf', $turf);
       $status = $turfsObj->removeTurf($turf);
-      //voterdb_debug_msg('status', $status, __FILE__, __LINE__);
+      //voterdb_debug_msg('status', $status);
       if(!$status) {
-        voterdb_set_message("DEBUG",'Turf remove failed',__FILE__,__LINE__);
+        voterdb_debug_msg("DEBUG",'Turf remove failed');
         return;
       }
       // remove the list of voters in the turf from the grp table.

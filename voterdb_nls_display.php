@@ -123,7 +123,7 @@ function voterdb_display_nls_form($form_id, &$form_state) {
   $browserObj = new GetBrowser();
   
   if($form_state['voterdb']['csv-display'] == TRUE) {
-    //voterdb_debug_msg('voterdb', $form_state['voterdb'], __FILE__, __LINE__);
+    //voterdb_debug_msg('voterdb', $form_state['voterdb']);
     $nlRecords = $form_state['voterdb']['nlRecords'];
     //$dn_csv_hdr = $form_state['voterdb']['nl-csv-hdr'];
 
@@ -134,7 +134,7 @@ function voterdb_display_nls_form($form_id, &$form_state) {
       $dn_hd = $form_state['voterdb']['hd_array'][$dn_hdi-1];
     }
     $dn_ccv_url = voterdb_create_csv($dn_county,$dn_hd,$nlRecords); // func2.
-    //voterdb_debug_msg('ccv url', $dn_ccv_url, __FILE__, __LINE__);
+    //voterdb_debug_msg('ccv url', $dn_ccv_url);
     
 
     //$dn_browser_obj = new GetBrowser();
@@ -196,13 +196,13 @@ function voterdb_display_nls_form($form_id, &$form_state) {
   if (!isset($form_state['voterdb']['nlRecords'])) {
     $nlsObj = new NlpNls();
     $nlRecords = $nlsObj->getNls($dn_county,$dn_hd);
-    //voterdb_debug_msg('nlrecords', $nlRecords, __FILE__, __LINE__);
+    //voterdb_debug_msg('nlrecords', $nlRecords);
     $nlKeys = array_keys($nlRecords);
     $reportsObj = new NlpReports();
     foreach ($nlKeys as $mcid) {
-      //voterdb_debug_msg('mcid: '.$mcid, '', __FILE__, __LINE__);
+      //voterdb_debug_msg('mcid: '.$mcid, '');
       $nlRecords[$mcid]['progress']  = voterdb_get_progress($nlRecords[$mcid],$reportsObj);  // func2.
-      //voterdb_debug_msg('nlrecord', $nlRecords[$mcid], __FILE__, __LINE__);
+      //voterdb_debug_msg('nlrecord', $nlRecords[$mcid]);
     } 
     $form_state['voterdb']['nlRecords'] = $nlRecords;
   }  
@@ -218,7 +218,7 @@ function voterdb_display_nls_form($form_id, &$form_state) {
   );
   
   //$nf_tbl_csv = $form_state['voterdb']['tbl-csv'];
-  //voterdb_debug_msg('CSV Tbl', $nf_tbl_csv, __FILE__, __LINE__);
+  //voterdb_debug_msg('CSV Tbl', $nf_tbl_csv);
   
   return $form;
 }
@@ -235,10 +235,10 @@ function voterdb_display_nls_form_validate($form, &$form_state) {
   $form_state['voterdb']['reenter'] = TRUE;
   $nv_county = $form_state['voterdb']['county'];
   $nlsObj = new NlpNls();
-  //voterdb_debug_msg('nlsobj', $nlsObj, __FILE__, __LINE__);
+  //voterdb_debug_msg('nlsobj', $nlsObj);
   // No validation needed for the HD selection.
   $nv_element_clicked = $form_state['triggering_element']['#name'];
-  //voterdb_debug_msg('element clicked', $nv_element_clicked, __FILE__, __LINE__);
+  //voterdb_debug_msg('element clicked', $nv_element_clicked);
   if ($nv_element_clicked == 'hd-submit' OR 
       $nv_element_clicked == 'download-csv' OR 
       $nv_element_clicked == 'sort-submit' OR 
@@ -250,7 +250,7 @@ function voterdb_display_nls_form_validate($form, &$form_state) {
   $nv_status = $nlsObj->getNlsStatus($nv_mcid,$nv_county);
   //$nv_status = voterdb_nls_status('GET',$nv_mcid,$nv_county,'');  // Current status.
   $nv_value = $form_state['triggering_element']['#value'];
-  voterdb_debug_msg('value', $nv_value, __FILE__, __LINE__);
+  voterdb_debug_msg('value', $nv_value);
   
   //$nv_history = array(DZ_NL=>NY_SIGNEDUP,DZ_TC=>NY_TURFCHECKEDIN,DZ_TD=>NY_DELIVEREDTURF);
   // Process the checkbox, select or textbox for this NL.
@@ -352,7 +352,7 @@ function voterdb_display_nls_form_submit($form, &$form_state) {
   $form_state['rebuild'] = TRUE;  // form_state will persist.
   
   $dn_button_clicked = $form_state['triggering_element']['#name'];
-  //voterdb_debug_msg('button clicked', $dn_button_clicked, __FILE__, __LINE__);
+  //voterdb_debug_msg('button clicked', $dn_button_clicked);
   
   switch ($dn_button_clicked) {
     case 'hd-submit':
@@ -373,10 +373,10 @@ function voterdb_display_nls_form_submit($form, &$form_state) {
       break;
     
     case 'sort-submit':
-      //voterdb_debug_msg('values', $form_state['values'], __FILE__, __LINE__);
+      //voterdb_debug_msg('values', $form_state['values']);
       $dn_county = $form_state['voterdb']['county'];
       $dn_sortable = $form_state['voterdb']['sortable'];
-      //voterdb_debug_msg('sortable', $dn_sortable, __FILE__, __LINE__);
+      //voterdb_debug_msg('sortable', $dn_sortable);
       //$dn_column = $dn_sortable[$columnKey];
       $columnKey = $form_state['values']['sortselect'];
 
@@ -385,7 +385,7 @@ function voterdb_display_nls_form_submit($form, &$form_state) {
       
       
       $dn_sorted_data = voterdb_sort_nls($nlRecords,$columnKey);
-      //voterdb_debug_msg('sorted', $dn_sorted_data, __FILE__, __LINE__);
+      //voterdb_debug_msg('sorted', $dn_sorted_data);
       $form_state['voterdb']['nlRecords'] = $dn_sorted_data;
       
       $dn_info = "Column requested for sort: ".$dn_sortable[$columnKey];

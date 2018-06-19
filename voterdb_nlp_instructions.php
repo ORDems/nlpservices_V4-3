@@ -229,7 +229,7 @@ function voterdb_nlp_instructions_form_validate($form, &$form_state) {
   $form_state['voterdb'][NE_ABSENTEE]['tmp'] = $fv_absentee_tmp;
   $form_state['voterdb'][NE_ABSENTEE]['title'] = $fv_absentee_title;
   $form_state['voterdb'][NE_ABSENTEE]['blurb'] = $fv_absentee_blurb;
-  //voterdb_debug_msg('Validate', $form_state['voterdb'], __FILE__, __LINE__);
+  //voterdb_debug_msg('Validate', $form_state['voterdb']);
 }
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

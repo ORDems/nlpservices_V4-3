@@ -47,7 +47,7 @@ function voterdb_goals( $gg_func, $gg_goal_info ) {
       }
       catch (Exception $e) {
         db_set_active('default');
-        voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+        voterdb_debug_msg('e', $e->getMessage() );
         return FALSE;
       }
       $gg_goals_list = $gg_result->fetchAll(PDO::FETCH_ASSOC);
@@ -218,7 +218,7 @@ function voterdb_goals_form_submit($form, &$form_state) {
   voterdb_goals( 'PUT', $hg_goal_info );
     
   // Update the goal for each HD in county
-  //voterdb_debug_msg('goals array', $form_state['values']['hdgoals'], __FILE__, __LINE__);
+  //voterdb_debug_msg('goals array', $form_state['values']['hdgoals']);
   foreach ($form_state['values']['hdgoals'] as $hg_hdi => $hg_hdgoal_array) {
     $hg_hd = $hg_hd_array[$hg_hdi];
     $hg_goal_info['hd'] = $hg_hd;

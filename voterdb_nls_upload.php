@@ -41,7 +41,7 @@ function voterdb_prepare_NL_database($form_state){
   // Open the MyCampaign export file of prospective nls.
   $pn_nl_fh = fopen($pn_file_name, "r");
   if ($pn_nl_fh == FALSE) {
-    voterdb_set_message("Failed to open NLP Voters File",'',__FILE__,__LINE__);
+    voterdb_debug_msg("Failed to open NLP Voters File",'');
     return FALSE;
   }
   // Discard the first record, it's the header and it was already checked.
@@ -65,6 +65,10 @@ function voterdb_prepare_NL_database($form_state){
     if(empty($pn_MCID)) {continue;} // Skip an empty record.
     $pn_NLfname =  str_replace("'", "&#039;",$pn_nl_info[$pn_field_pos['firstName']]);
     $pn_NLlname = str_replace("'", "&#039;",$pn_nl_info[$pn_field_pos['lastName']]);
+    $pn_NLnickname = $pn_nl_info[$pn_field_pos['nickname']];
+    if(empty($pn_NLnickname)) {
+      $pn_NLnickname = $pn_NLfname;
+    }
     
     $pn_ncounty = $pn_nl_info[$pn_field_pos['county']];
     // Check for bad MyCampaign record.
@@ -76,10 +80,10 @@ function voterdb_prepare_NL_database($form_state){
     }
     $pn_HDraw = $pn_nl_info[$pn_field_pos['hd']];
     $pn_NLHD = ltrim($pn_HDraw, "0");
-    $pn_pct_name = $pn_nl_info[$pn_field_pos['pct']];
+    $pn_pct = $pn_nl_info[$pn_field_pos['pct']];
     // Protect the apostrophe if used in a last name like O'Brian.
     // Check if the HD or Pct is missing.
-    if (empty($pn_pct_name) OR empty($pn_NLHD)) {
+    if (empty($pn_pct) OR empty($pn_NLHD)) {
       // Check if we have a repair record.
       if (isset ($pn_fixes['mcid']))  {  
         // Use the fixes for HD and Pct.
@@ -93,21 +97,22 @@ function voterdb_prepare_NL_database($form_state){
     }
         
     $nlRecord['mcid'] = $pn_MCID;
-    $nlRecord['nlLastName'] = $pn_NLlname;
-    $nlRecord['nlFirstName'] = $pn_NLfname;
+    $nlRecord['lastName'] = $pn_NLlname;
+    $nlRecord['firstName'] = $pn_NLfname;
     $nlRecord['nickname'] = $pn_NLnickname;
     $nlRecord['hd'] = $pn_NLHD;
     $nlRecord['county'] = $pn_ncounty;
     $nlRecord['pct'] = $pn_pct;
-    $nlRecord['address'] = $pn_nl_info[$pn_field_pos[HR_ADDR]].', '.$pn_nl_info[$pn_field_pos[HR_CITY]];
-    $nlRecord['email'] = $pn_nl_info[$pn_field_pos[HR_EMAIL]];
-    $nlRecord['phone'] = (empty($pn_nl_info[$pn_field_pos[HR_PHONE]]))?NULL:$pn_nl_info[$pn_field_pos[HR_PHONE]];
-    $nlRecord['homePhone'] = empty($pn_nl_info[$pn_field_pos[HR_HOMEPHONE]])?NULL:$pn_nl_info[$pn_field_pos[HR_HOMEPHONE]];
-    $nlRecord['cellPhone'] = empty($pn_nl_info[$pn_field_pos[HR_CELLPHONE]])?NULL:$pn_nl_info[$pn_field_pos[HR_CELLPHONE]];
-    $insertStatus = $nlObj->createNl($nlRecord);
-    
+    $nlRecord['address'] = $pn_nl_info[$pn_field_pos['address']].', '.$pn_nl_info[$pn_field_pos['city']];
+    $nlRecord['email'] = $pn_nl_info[$pn_field_pos['email']];
+    $nlRecord['phone'] = (empty($pn_nl_info[$pn_field_pos['phone']]))?NULL:$pn_nl_info[$pn_field_pos['phone']];
+    $nlRecord['homePhone'] = empty($pn_nl_info[$pn_field_pos['homePhone']])?NULL:$pn_nl_info[$pn_field_pos['homePhone']];
+    $nlRecord['cellPhone'] = empty($pn_nl_info[$pn_field_pos['cellPhone']])?NULL:$pn_nl_info[$pn_field_pos['cellPhone']];
+    //voterdb_debug_msg('nlrecord', $nlRecord);
+    $insertOk = $nlObj->createNl($nlRecord);
+    //voterdb_debug_msg('insertok', $insertOk);
     // INSERT this NL into the list for this group.
-    if(!$insertStatus) {
+    if($insertOk) {
       $nlObj->createNlGrp($pn_MCID,$pn_county);
       // Create a status record if on does not already exist.
       $pn_nl_status = $nlObj->getNlsStatus($pn_MCID,$pn_county);
@@ -211,29 +216,21 @@ function voterdb_nlupload_form_validate($form, &$form_state) {
     $vv_column_header = explode("\t", $vv_header_record);
     
     $nlObj = $form_state['voterdb']['nlObj'];
-    $vv_hdr_decode = $nlObj->decodeNlHdr($fileHdr);
+    //voterdb_debug_msg('nlObj', $nlObj);
+    $vv_hdr_decode = $nlObj->decodeNlHdr($vv_column_header);
+    //voterdb_debug_msg('decoe', $vv_hdr_decode);
     if(!$vv_hdr_decode['ok']) {
-    
-    //$vv_header_array = unserialize(DH_HEADER_ARRAY);
-    //$vv_field_pos = voterdb_decode_header($vv_column_header,$vv_header_array);
-    //if (count($vv_field_pos) == 0 OR $vv_field_pos[HR_MCID] != "0") {
-      if(empty($vv_hdr_decode['mcid']) OR $vv_hdr_decode['mcid']!=0) {
-        drupal_set_message('Not a MC export file', 'error');
-        form_set_error('upload', 'Fix the problem before resubmit.');
-        return FALSE;
-      } else {
-        foreach ($vv_hdr_decode['err'] as $errMsg) {
-          drupal_set_message($errMsg,'warning');
-        }
-        form_set_error('upload', 'Fix the problem before resubmit.');
-        return FALSE;
+      foreach ($vv_hdr_decode['err'] as $errMsg) {
+        drupal_set_message($errMsg,'warning');
       }
+      form_set_error('upload', 'Fix the problem before resubmit.');
+      return FALSE;
     }
 
     fclose($vv_nls_fh);
     // Set files to form_state, to process when form is submitted.
     $form_state['voterdb']['file'] = $vv_tmp_name;
-    $form_state['voterdb']['pos'] = $vv_field_pos;
+    $form_state['voterdb']['pos'] = $vv_hdr_decode['pos'];
   } else {
     // Set error.
     drupal_set_message('The file was not uploaded.', 'error');

@@ -353,7 +353,7 @@ function voterdb_turf_deliver_form_submit($form, &$form_state) {
       '@phone' => $df_phone,
       '@email' => $df_semail,));
   $df_params['message'] = $df_message;
-  //voterdb_debug_msg('Param', $df_params, __FILE__, __LINE__);
+  //voterdb_debug_msg('Param', $df_params);
   // Specify 'to' and 'from' addresses.
   $df_to = $df_nl[NH_EMAIL];
   if (empty($df_to)) {
@@ -365,7 +365,7 @@ function voterdb_turf_deliver_form_submit($form, &$form_state) {
   $df_from .= '>';
   // Send the email.
   $result = drupal_mail($df_module, $df_key, $df_to, $df_language, $df_params, $df_from, $df_send);
-  //voterdb_debug_msg('Result', $result, __FILE__, __LINE__);
+  //voterdb_debug_msg('Result', $result);
   // Report results, track the send, and update the "delivered" status.
   $df_info = 'CO [' . $df_cofname . ' ' . $df_colname . '] NL [' . $df_nl[NH_NICKNAME] .
           ' ' . $df_nl[NH_LNAME] . ' - ' . $df_nl[NH_EMAIL] . ']';

@@ -21,7 +21,7 @@ function voterdb_get_county_names() {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return FALSE;
   }
   
@@ -36,7 +36,7 @@ function voterdb_get_county_names() {
   if(empty($ch_county_names)) {return FALSE;}
 
   ksort($ch_county_names);
-  //voterdb_debug_msg('County Array: ', $ch_county_names , __FILE__, __LINE__);
+  //voterdb_debug_msg('County Array: ', $ch_county_names );
   // Return the array of HD numbers and the county index.
   return $ch_county_names;
 }

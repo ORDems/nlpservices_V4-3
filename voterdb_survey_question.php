@@ -108,7 +108,7 @@ function voterdb_survey_question_form_validate($form, &$form_state) {
   $ad_response_list = $form_state['values']['voterdb_survey_responses'];
   if (!empty($ad_response_list)) {
     $ad_response_options = explode(',',$form_state['values']['voterdb_survey_responses']);
-    //voterdb_debug_msg('options', $ad_response_options, __FILE__, __LINE__);
+    //voterdb_debug_msg('options', $ad_response_options);
     $ad_rend = count($ad_response_options);
     for ($ad_ri = 1; $ad_ri < $ad_rend; $ad_ri++) {
       $ad_text = trim(preg_replace('/\s+/',' ', $ad_response_options[$ad_ri]));

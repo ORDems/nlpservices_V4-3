@@ -90,7 +90,7 @@ function voterdb_turf_checkin_form($form, &$form_state) {
   $fv_hd_options = $nlsObj->getHdList($fv_county);
   //$fv_hd_options = voterdb_hd_list($fv_county);  // func.
   
-  //voterdb_debug_msg('hd options', $fv_hd_options, __FILE__, __LINE__);
+  //voterdb_debug_msg('hd options', $fv_hd_options);
   if (empty($fv_hd_options)) { 
     drupal_set_message("The prospective NL list has not been uploaded", 
             "status");
@@ -153,7 +153,7 @@ function voterdb_turf_checkin_form($form, &$form_state) {
   $fv_nls_choices = $nlsObj->getNlList($fv_county,$fv_pct);
   
   
-  //voterdb_debug_msg('nl options', $fv_nls_choices, __FILE__, __LINE__);
+  //voterdb_debug_msg('nl options', $fv_nls_choices);
   $form_state['voterdb']['mcid_array'] = $fv_nls_choices['mcidArray'];
   $form_state['voterdb']['nls_choices'] = $fv_nls_choices['options'];
   // Offer a set of radio buttons for selection of an NL. 
@@ -333,7 +333,7 @@ function voterdb_turf_checkin_form_validate($form,&$form_state) {
 function voterdb_turf_checkin_form_submit($form,&$form_state) {
   $form_state['voterdb']['reenter'] = TRUE;
   $form_state['rebuild'] = TRUE;  // form_state will persist.
-  //voterdb_debug_msg('voterdb', $form_state['voterdb'], __FILE__, __LINE__);
+  //voterdb_debug_msg('voterdb', $form_state['voterdb']);
   $tc_nls_selected = $form_state['values']['nls-select'];
   $tc_mcid_array = $form_state['voterdb']['mcid_array'];
   $tc_mcid = $tc_mcid_array[$tc_nls_selected]['mcid'];
@@ -353,7 +353,7 @@ function voterdb_turf_checkin_form_submit($form,&$form_state) {
   // Now check if there is any overlap of voter assignment to NLs.
   $tc_turf_overlap = voterdb_turf_overlap($form_state);  // func2.
   if(isset($form_state['voterdb']['Debug'])) {
-    voterdb_debug_msg("Form state:",$form_state,__FILE__,__LINE__);
+    voterdb_debug_msg("Form state:",$form_state);
     return FALSE;
   }
   if ($tc_turf_overlap == 'err') {
@@ -374,7 +374,7 @@ function voterdb_turf_checkin_form_submit($form,&$form_state) {
     $turfsObj = $form_state['voterdb']['turfsObj'];
     
     $tc_turf_oarray = $turfsObj->getTurf($tc_turf_overlap);
-    //voterdb_debug_msg('overlayednturf', $tc_turf_oarray , __FILE__, __LINE__);
+    //voterdb_debug_msg('overlayednturf', $tc_turf_oarray );
 
     $turf['county'] = $tc_county;
     $turf['turfIndex'] = $tc_turf_oarray['TurfIndex'];
@@ -428,7 +428,7 @@ function voterdb_turf_checkin_form_submit($form,&$form_state) {
   $tc_nls_status['tufCut'] = 'Y'; 
 
   $tc_nls_status['asked'] = 'yes'; 
-  //voterdb_debug_msg('nlstatus', $tc_nls_status, __FILE__, __LINE__);
+  //voterdb_debug_msg('nlstatus', $tc_nls_status);
   $nlsObj->setNlsStatus($tc_nls_status);
   //voterdb_nls_status('PUT',$tc_mcid,$tc_county,$tc_nls_status);
   //voterdb_nl_status_history($tc_county,$tc_mcid,NY_TURFCHECKEDIN);

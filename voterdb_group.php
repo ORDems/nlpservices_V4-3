@@ -31,14 +31,14 @@ function voterdb_county_hd($ch_county) {
   $ch_i = 0;
   do {
     $ch_hd_rec = $ch_hdquery->fetchAssoc();
-    //voterdb_debug_msg('hd rec: ', $ch_hd_rec, __FILE__, __LINE__);
+    //voterdb_debug_msg('hd rec: ', $ch_hd_rec);
     if(!$ch_hd_rec) {break;}
     $ch_hd_list[$ch_i++] = $ch_hd_rec[HD_NUMBER];
   } while (TRUE);
   db_set_active('default');
   if(empty($ch_hd_list)) {return FALSE;}
 
-  //voterdb_debug_msg('HD Array: ', $ch_hd_list , __FILE__, __LINE__);
+  //voterdb_debug_msg('HD Array: ', $ch_hd_list );
   // Return the array of HD numbers and the county index.
   return $ch_hd_list;
 }
@@ -82,6 +82,6 @@ function voterdb_get_group(&$form_state) {
     }
   }
 
-  //voterdb_debug_msg('form_state: ', $form_state, __FILE__, __LINE__);
+  //voterdb_debug_msg('form_state: ', $form_state);
   return TRUE;
 }

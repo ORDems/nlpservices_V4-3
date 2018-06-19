@@ -35,7 +35,7 @@ function voterdb_update_rpt_history($ur_cycle) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return;
   }
   db_set_active('default');
@@ -48,7 +48,7 @@ function voterdb_update_rpt_history($ur_cycle) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return;
   }
   db_set_active('default');
@@ -68,7 +68,7 @@ function voterdb_update_rpt_history($ur_cycle) {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return;
     }
     $ut_nl = $ut_nresult->fetchAssoc();
@@ -97,7 +97,7 @@ function voterdb_update_rpt_history($ur_cycle) {
       }
         catch (Exception $e) {
         db_set_active('default');
-        voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+        voterdb_debug_msg('e', $e->getMessage() );
         return;
       }
     }
@@ -123,7 +123,7 @@ function voterdb_get_history($gh_cycle,$gh_previous_cycle) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return;
   }
   db_set_active('default');

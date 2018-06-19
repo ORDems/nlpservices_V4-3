@@ -53,7 +53,7 @@ function voterdb_insert_turf(&$form_state) {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
   } 
@@ -86,7 +86,7 @@ function voterdb_insert_turf(&$form_state) {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
   }

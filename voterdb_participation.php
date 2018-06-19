@@ -44,7 +44,7 @@ function voterdb_get_survey_response_counts() {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return 0;
   }
   db_set_active('default');
@@ -100,7 +100,7 @@ function voterdb_get_signedup_nl() {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return 0;
   }
   db_set_active('default');
@@ -157,7 +157,7 @@ function voterdb_get_logincnt() {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return 0;
   }
   db_set_active('default');
@@ -189,7 +189,7 @@ function voterdb_get_nlcnt($gc_type) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return 0;
   }
   db_set_active('default');
@@ -213,7 +213,7 @@ function voterdb_get_voter_count() {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return 0;
   }
   db_set_active('default');
@@ -239,7 +239,7 @@ function voterdb_voterdb_contact_attempts($vc_cycle) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return 0;
   }
   db_set_active('default');
@@ -268,7 +268,7 @@ function voterdb_get_report_counts($gr_county) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return FALSE;
   }
   db_set_active('default');
@@ -346,7 +346,7 @@ function voterdb_nl_info($ns_mcid) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return NULL;
   }
   $ns_nl = $ns_result->fetchAssoc();
@@ -375,7 +375,7 @@ function voterdb_get_participating_counties() {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return NULL;
   }
   $pc_county_list = $pc_result->fetchAll(PDO::FETCH_ASSOC);
@@ -417,7 +417,7 @@ function voterdb_participation_cnts($pc_file_uri) {
   $pc_counties = voterdb_get_participating_counties();
   foreach ($pc_counties as $pc_county) {
     $pc_counts = voterdb_get_report_counts($pc_county);
-    //voterdb_debug_msg('county counts', $pc_counts, __FILE__, __LINE__);
+    //voterdb_debug_msg('county counts', $pc_counts);
     // List of NLs with turfs.
     db_set_active('nlp_voterdb');
     try {
@@ -429,7 +429,7 @@ function voterdb_participation_cnts($pc_file_uri) {
     }
     catch (Exception $e) {
         db_set_active('default');
-        voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+        voterdb_debug_msg('e', $e->getMessage() );
         return NULL;
     }
     db_set_active('default');  

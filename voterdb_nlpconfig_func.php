@@ -94,9 +94,9 @@ function voterdb_build_form(&$form,&$form_state) {
     '#type' => 'fieldset',
   );
   $fv_passwordObj = new NlpMagicWords();
-  //voterdb_debug_msg('password obj', $fv_passwordObj, __FILE__, __LINE__);
+  //voterdb_debug_msg('password obj', $fv_passwordObj);
   $fv_password_array = $fv_passwordObj->getMagicWords('default');
-  //voterdb_debug_msg('password array', $fv_password_array, __FILE__, __LINE__);
+  //voterdb_debug_msg('password array', $fv_password_array);
 
   $form['nlp']['voterdb_password'] = array(
     '#type' => 'textfield',
@@ -408,7 +408,7 @@ function voterdb_build_countypw(&$form, &$form_state) {
   foreach ($bc_county_array as $bc_county) {
     $form = array();
     $bc_password_array = $bc_passwordObj->isSetMagicWords($bc_county);
-    voterdb_debug_msg('password array '.$bc_county, $bc_password_array, __FILE__, __LINE__);
+    voterdb_debug_msg('password array '.$bc_county, $bc_password_array);
     if($bc_password_array['password'] != '' OR $bc_password_array['passwordAlt'] != '') {
       $bc_display .= 'County: '.$bc_county.' PW: <b>'.$bc_password_array['password']. '</b> Alt PW: <b>'.$bc_password_array['passwordAlt'].'</b><br>';
     }

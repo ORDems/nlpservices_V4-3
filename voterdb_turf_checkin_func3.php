@@ -156,7 +156,7 @@ function voterdb_get_voters($ti_voter_fh,&$form_state) {
   do {
     $ti_voter_raw = fgets($ti_voter_fh);
     if (!$ti_voter_raw) {break;}  // We've processed the last voter.
-    //voterdb_debug_msg('raw voter', $ti_voter_raw, __FILE__, __LINE__);
+    //voterdb_debug_msg('raw voter', $ti_voter_raw);
     
     // remove any stuff that might be a security risk.
     $ti_voter_record = sanitize_string($ti_voter_raw);

@@ -171,7 +171,7 @@ function voterdb_get_voter_list($gv_lists,$gv_selected_mcid) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return NULL;
   }
   db_set_active('default');
@@ -208,7 +208,7 @@ function voterdb_get_reports($gr_vanids) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e[errorInfo] , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e[errorInfo] );
     return array();
   }
   db_set_active('default');
@@ -459,7 +459,7 @@ function voterdb_build_report_list($form,&$form_state) {
   $rl_reports = $form_state['voterdb']['reports'];
   // Get the reports for this NL.
   $rl_rpts = voterdb_report_list($rl_reports,$rl_cycle);
-  //voterdb_debug_msg('reports', $rl_rpts, __FILE__, __LINE__);
+  //voterdb_debug_msg('reports', $rl_rpts);
   $form_state['voterdb']['nl-reports'] = $rl_rpts;
   $rl_mcid = $form_state['voterdb']['selected']['nl'];
   $rl_turf_name = $form_state['voterdb']['tnames'][$rl_mcid];
@@ -513,7 +513,7 @@ function voterdb_set_active_status($form_state) {
       }
       catch (Exception $e) {
         db_set_active('default');
-        voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+        voterdb_debug_msg('e', $e->getMessage() );
         return FALSE;
       }
     }

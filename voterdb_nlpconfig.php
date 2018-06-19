@@ -42,7 +42,7 @@ function voterdb_config_form($form, &$form_state) {
   } 
   
   //$form_state['voterdb']['county'] = 'Washington';
-  //voterdb_debug_msg('pass', $form_state['voterdb']['pass'], __FILE__, __LINE__);
+  //voterdb_debug_msg('pass', $form_state['voterdb']['pass']);
   switch ($form_state['voterdb']['pass']) {
     case 'config':
       voterdb_build_form($form,$form_state);  // func.
@@ -103,12 +103,12 @@ function voterdb_cycle_validate($cv_cycle) {
  * @return boolean
  */
 function voterdb_config_form_validate($form, &$form_state) {
-  //voterdb_debug_msg('validate triggering', $form_state['triggering_element'], __FILE__, __LINE__);
+  //voterdb_debug_msg('validate triggering', $form_state['triggering_element']);
   switch ($form_state['voterdb']['pass']) {
     
     case 'config':
       $fv_trigger = $form_state['triggering_element']['#name'];
-      //voterdb_debug_msg(' trigger', $fv_trigger, __FILE__, __LINE__);
+      //voterdb_debug_msg(' trigger', $fv_trigger);
       if ($fv_trigger != 'configsubmit') {
         return;
       }
@@ -198,9 +198,9 @@ function voterdb_config_form_validate($form, &$form_state) {
     case 'countypw':
       $fv_trigger = $form_state['triggering_element']['#name'];
 
-      //voterdb_debug_msg(' trigger', $fv_trigger, __FILE__, __LINE__);
+      //voterdb_debug_msg(' trigger', $fv_trigger);
       if ($fv_trigger != 'pwback') { 
-        //voterdb_debug_msg(' not back', '', __FILE__, __LINE__);
+        //voterdb_debug_msg(' not back', '');
         if($form_state['values']['county_altpassword']!='' AND $form_state['values']['county_password']=='' ) {
           form_set_error('county_password', t('The password cannot be blank.'));
           //return;
@@ -212,9 +212,9 @@ function voterdb_config_form_validate($form, &$form_state) {
       case 'verfifyvb':
       $fv_trigger = $form_state['triggering_element']['#name'];
 
-      //voterdb_debug_msg(' trigger', $fv_trigger, __FILE__, __LINE__);
+      //voterdb_debug_msg(' trigger', $fv_trigger);
       if ($fv_trigger != 'vbback') { 
-        //voterdb_debug_msg(' not back', '', __FILE__, __LINE__);
+        //voterdb_debug_msg(' not back', '');
         
         
         // verify stuff
@@ -236,10 +236,10 @@ function voterdb_config_form_validate($form, &$form_state) {
  * @param type $form_state
  */
 function voterdb_config_form_submit($form, &$form_state) {
-  //voterdb_debug_msg('submit triggering', $form_state['triggering_element'], __FILE__, __LINE__);
+  //voterdb_debug_msg('submit triggering', $form_state['triggering_element']);
   $fv_trigger = $form_state['triggering_element']['#name'];
-  //voterdb_debug_msg('submit trigger', $fv_trigger, __FILE__, __LINE__);
-  //voterdb_debug_msg('submit pass', $form_state['voterdb']['pass'], __FILE__, __LINE__);
+  //voterdb_debug_msg('submit trigger', $fv_trigger);
+  //voterdb_debug_msg('submit pass', $form_state['voterdb']['pass']);
   switch ($form_state['voterdb']['pass']) {
     
     case 'config':
@@ -338,7 +338,7 @@ function voterdb_config_form_submit($form, &$form_state) {
   
   
       
-  //voterdb_debug_msg('reset', $cs_reset, __FILE__, __LINE__);
+  //voterdb_debug_msg('reset', $cs_reset);
   
   return;
 }

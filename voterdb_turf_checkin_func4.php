@@ -45,7 +45,7 @@ function voterdb_mailing_list($form_state) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return 0;
   }
   $ml_vtr_list = $ml_result->fetchAll(PDO::FETCH_ASSOC);

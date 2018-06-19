@@ -42,7 +42,7 @@ function voterdb_get_duplicates($form_state) {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
   $vo_ol_vtrs = $vo_result->fetchAll(PDO::FETCH_ASSOC);
@@ -66,7 +66,7 @@ function voterdb_get_duplicates($form_state) {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
   $vo_dup_vtrs = $vo_vresult->fetchAll(PDO::FETCH_ASSOC);

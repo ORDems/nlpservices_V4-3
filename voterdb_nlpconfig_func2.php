@@ -20,10 +20,10 @@ use Drupal\voterdb\NlpActivistCodes;
  * 
  */
 function voterdb_process_vbverify(&$form_state) {
-  //voterdb_debug_msg('form state', $form_state, __FILE__, __LINE__);
-  //voterdb_debug_msg('form state input', $form_state['input'], __FILE__, __LINE__);
-  //voterdb_debug_msg('form state values', $form_state['values'], __FILE__, __LINE__);
-  //voterdb_debug_msg('form state voterdb', $form_state['voterdb'], __FILE__, __LINE__);
+  //voterdb_debug_msg('form state', $form_state);
+  //voterdb_debug_msg('form state input', $form_state['input']);
+  //voterdb_debug_msg('form state values', $form_state['values']);
+  //voterdb_debug_msg('form state voterdb', $form_state['voterdb']);
   
   $questionObj = $form_state['voterdb']['questionObj'];
   
@@ -37,7 +37,7 @@ function voterdb_process_vbverify(&$form_state) {
     $surveyQuestionId = $form_state['values']['questionChoice'];
     drupal_set_message('The survey question is selected.','status');
     $questionsArray = $form_state['voterdb']['questionsArray'];
-    //voterdb_debug_msg('questions array',$questionsArray, __FILE__, __LINE__);
+    //voterdb_debug_msg('questions array',$questionsArray);
     $questionObj->setSurveyQuestion($questionsArray[$surveyQuestionId],$surveyQuestionId);
   }
   
@@ -51,11 +51,11 @@ function voterdb_process_vbverify(&$form_state) {
   
   if($form_state['values']['activistCode'] > 1) {
     $activistCodes = $form_state['voterdb']['activistCodes'];
-    //voterdb_debug_msg('activist codes',$activistCodes, __FILE__, __LINE__);
+    //voterdb_debug_msg('activist codes',$activistCodes);
     $nlpActivistCodeObj = new NlpActivistCodes();
     $activistCode = $activistCodes[$form_state['values']['activistCode']];
     $activistCode['functionName'] = 'NotADem';
-    //voterdb_debug_msg('activist code',$activistCode, __FILE__, __LINE__);
+    //voterdb_debug_msg('activist code',$activistCode);
     $nlpActivistCodeObj->setActivistCode($activistCode);
   }
   
@@ -81,10 +81,10 @@ function voterdb_build_verify_votebuilder(&$form, &$form_state) {
   $apiResultCodesObj = new ApiResponseCodes();
  
   $apiKnownResultCodes = $apiResultCodesObj->getApiKnownResultCodes($countyAuthenticationObj,$database);
-  //voterdb_debug_msg('known', $apiKnownResultCodes, __FILE__, __LINE__);
+  //voterdb_debug_msg('known', $apiKnownResultCodes);
   
   $apiExpectedResultCodes = $apiResultCodesObj->getApiExpectedResultCodes();
-  //voterdb_debug_msg('expected', $apiExpectedResultCodes, __FILE__, __LINE__);
+  //voterdb_debug_msg('expected', $apiExpectedResultCodes);
   
    
     
@@ -129,11 +129,11 @@ function voterdb_build_verify_votebuilder(&$form, &$form_state) {
 
   
   $apiQuestionsObj = new ApiSurveyQuestions(NULL);
-  //voterdb_debug_msg('Folders object', $questionsObj, __FILE__, __LINE__);
+  //voterdb_debug_msg('Folders object', $questionsObj);
   $form_state['voterdb']['apiQuestionObj'] = $apiQuestionsObj;
   
   $questionsInfoObj = $apiQuestionsObj->getApiSurveyQuestions($countyAuthenticationObj,$database,'All');
-  //voterdb_debug_msg('Questions info', $questionsInfoObj, __FILE__, __LINE__);
+  //voterdb_debug_msg('Questions info', $questionsInfoObj);
   $form_state['voterdb']['questionsArray'] = $questionsInfoObj->result;
   
   $questionList = array();
@@ -187,7 +187,7 @@ function voterdb_build_verify_votebuilder(&$form, &$form_state) {
   $activistCodeObj = new ApiActivistCodes();
   $activistCodes = $activistCodeObj->getApiActivistCodes($countyAuthenticationObj,$database);
   $form_state['voterdb']['activistCodes'] = $activistCodes;
-  //voterdb_debug_msg('Activist Codes', $activistCodes, __FILE__, __LINE__);
+  //voterdb_debug_msg('Activist Codes', $activistCodes);
   
   $activistCodeList = $activistCodeObj->getActivistCodeList($activistCodes);
   

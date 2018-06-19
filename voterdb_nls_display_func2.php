@@ -83,7 +83,7 @@ function voterdb_get_progress($nlRecord,$reportsObj) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return $gp_progress;
   }
   db_set_active('default');
@@ -178,7 +178,7 @@ function voterdb_create_csv($cc_county,$cc_hd,$nlRecords) {
   
   $cc_hdr_record = implode(',', $cc_hdr).",Voters\n";
   fwrite($cc_csv_fh,$cc_hdr_record);
-  //voterdb_debug_msg('hdr', $cc_hdr, __FILE__, __LINE__);
+  //voterdb_debug_msg('hdr', $cc_hdr);
   $cc_keys = array_keys($cc_hdr);
   foreach ($nlRecords as $nlRecord) {
     foreach ($cc_keys as $cc_key) {

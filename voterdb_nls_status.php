@@ -34,7 +34,7 @@ function voterdb_nls_status($su_func,$su_mcid,$su_county,$su_status) {
       }
       catch (Exception $e) {
         db_set_active('default');
-        voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+        voterdb_debug_msg('e', $e->getMessage() );
         return FALSE;
       }
       $su_nl_status = $su_nls_status->fetchAssoc();
@@ -66,7 +66,7 @@ function voterdb_nls_status($su_func,$su_mcid,$su_county,$su_status) {
       }
       catch (Exception $e) {
         db_set_active('default');
-        voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+        voterdb_debug_msg('e', $e->getMessage() );
         return FALSE;
       }
       $su_nl_status = $su_status;
@@ -98,7 +98,7 @@ function voterdb_nl_status_history($nh_county,$nh_mcid,$nh_status) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return FALSE;
   }
   $nh_nlr = $nh_result->fetchAll(PDO::FETCH_ASSOC);
@@ -121,7 +121,7 @@ function voterdb_nl_status_history($nh_county,$nh_mcid,$nh_status) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return FALSE;
   }
   return;

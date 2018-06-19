@@ -394,7 +394,7 @@ function voterdb_build_tables($bg_enum,$bg_tbl_names,$bg_field_names,$bg_databas
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return 0;
     }
     try {
@@ -410,7 +410,7 @@ function voterdb_build_tables($bg_enum,$bg_tbl_names,$bg_field_names,$bg_databas
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return 0;
     }
     db_set_active('default');
@@ -447,7 +447,7 @@ function voterdb_hd_build($hb_county_defs) {
         }
       catch (Exception $e) {
         db_set_active('default');
-        voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+        voterdb_debug_msg('e', $e->getMessage() );
         return 0;
         }
       db_set_active('default');
@@ -480,7 +480,7 @@ function voterdb_goals_build($gb_county_defs) {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
 
@@ -498,7 +498,7 @@ function voterdb_goals_build($gb_county_defs) {
       }
       catch (Exception $e) {
         db_set_active('default');
-        voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+        voterdb_debug_msg('e', $e->getMessage() );
         return FALSE;
       }
       db_set_active('default');
@@ -605,7 +605,7 @@ function voterdb_create_node($cn_name,$cn_title,$cn_type,$cn_promote) {
 function voterdb_prepare_county($pc_file_name){
   $pc_county_fh = fopen($pc_file_name, "r");
   if ($pc_county_fh == FALSE) {
-    voterdb_set_message("Failed to open the county name File",'',__FILE__,__LINE__);
+    voterdb_debug_msg("Failed to open the county name File",'');
     return FALSE;
   }
   $pc_counties = array();
@@ -618,7 +618,7 @@ function voterdb_prepare_county($pc_file_name){
     $pc_county_info = explode(",", $pc_county_record);
     $pc_count = count($pc_county_info);
     if($pc_count < 2) {
-      voterdb_debug_msg('county', $pc_county_raw, __FILE__, __LINE__);
+      voterdb_debug_msg('county', $pc_county_raw);
       drupal_set_message('There must be at least one HD.','error');
       return FALSE;
     }
