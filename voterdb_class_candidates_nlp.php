@@ -27,7 +27,7 @@ class NlpCandidates {
   }
 
   private function insertCandidate($candidateArray) {
-    voterdb_debug_msg('candidate array', $candidateArray , __FILE__, __LINE__);
+    voterdb_debug_msg('candidate array', $candidateArray );
     db_set_active('nlp_voterdb');
     try {
       db_insert('candidates')
@@ -74,7 +74,7 @@ class NlpCandidates {
     }
     catch (Exception $e) {
       db_set_active('default');
-      //voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+      //voterdb_debug_msg('e', $e->getMessage() );
       drupal_set_message('Opps','error');
       return NULL;
     }
@@ -159,7 +159,7 @@ class NlpCandidates {
       }
       catch (Exception $e) {
         db_set_active('default');
-        voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+        voterdb_debug_msg('e', $e->getMessage() );
         return NULL;
       }
       db_set_active('default');

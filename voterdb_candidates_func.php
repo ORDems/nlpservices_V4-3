@@ -193,7 +193,7 @@ function voterdb_build_cscope(&$form,&$form_state) {
     '#description' => t('Select one of the candidate survey questions known to the API.'),
   );
 
-  //voterdb_debug_msg('scope '.$fv_scope, '', __FILE__, __LINE__);
+  //voterdb_debug_msg('scope '.$fv_scope, '');
   // And, ask for the district.
   switch ($fv_scope) {
     case 'Group of Precincts':
@@ -283,7 +283,7 @@ function voterdb_get_candidates($gc_scope,$gc_all,$gc_county) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return FALSE;
   }
   db_set_active('default');

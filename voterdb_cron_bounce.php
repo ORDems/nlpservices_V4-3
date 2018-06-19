@@ -176,7 +176,7 @@ function voterdb_bounce_notify($bn_bouncer) {
   catch (Exception $e) {
     $bn_error = $e->getMessage();
     watchdog('voterdb_cron_bounce','notification insert failed: '.$bn_error,WATCHDOG_DEBUG);
-    //watchdog_exception('my_module', $e, t('Caught an error: ' . $bn_error));
+    //watchdog_exception('my_module', $e->getMessage() t('Caught an error: ' . $bn_error));
     return;
   }
 }

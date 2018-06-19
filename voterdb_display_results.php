@@ -45,7 +45,7 @@ function voterdb_get_nlscount($gc_county,$gc_hd,$gc_type) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return 0;
   }
   db_set_active('default');
@@ -68,7 +68,7 @@ function voterdb_get_participating_counties() {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return FALSE;
   }
   $pc_county_list = $pc_result->fetchAll(PDO::FETCH_ASSOC);
@@ -97,7 +97,7 @@ function voterdb_get_voter_count($vc_county) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return 0;
   }
   db_set_active('default');
@@ -121,7 +121,7 @@ function voterdb_get_voted($gv_county) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return 0;
   }
   db_set_active('default');
@@ -149,7 +149,7 @@ function voterdb_contacted($co_county) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return 0;
   }
   db_set_active('default');
@@ -179,7 +179,7 @@ function voterdb_voting_contact($vc_county) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return 0;
   }
   db_set_active('default');

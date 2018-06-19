@@ -39,7 +39,7 @@ function voterdb_get_participating_counties() {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return NULL;
   }
   $pc_county_list = $pc_result->fetchAll(PDO::FETCH_ASSOC);
@@ -98,7 +98,7 @@ function voterdb_create_blob($an_all,$an_county,$dd_blob_uri) {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return NULL;
     }
     $an_nl_list = $an_result->fetchAll(PDO::FETCH_ASSOC);
@@ -106,7 +106,7 @@ function voterdb_create_blob($an_all,$an_county,$dd_blob_uri) {
     // For each NL, add the email to 
     $an_delimit = FALSE;
     foreach ($an_nl_list as $an_nl) {
-      //voterdb_debug_msg('NL', $an_nl, __FILE__, __LINE__);
+      //voterdb_debug_msg('NL', $an_nl);
       $an_hd = $an_nl[NH_HD];
       if($an_hd != $an_current_hd) {
         $an_current_hd = $an_hd;

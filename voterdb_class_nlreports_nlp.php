@@ -33,19 +33,23 @@ class NlpReports {
   
   
   private $resultsList = array(
-    'rIndex'=>'Rindex',
+    'rindex'=>'Rindex',
     'recorded'=>'Recorded',
     'cycle'=>'Cycle',
     'county'=>'County', 
     'active'=>'Active',
-    'mcid'=>'MCID',
     'vanid'=>'VANID',
+    'mcid'=>'MCID',
+    'cdate'=>'Cdate',
     'type'=>'Type',
     'value'=>'Value',
-    'text'=>'Text'
+    'text'=>'Text',
+    'qid'=>'Qid',
+    'rid'=>'Rid'
   );
 
-  private function getNlpReports($vanid) {
+  public function getNlpReports($vanid) {
+    //voterdb_debug_msg('vanid', $vanid);
     db_set_active('nlp_voterdb');
     try {
       $query = db_select(self::NLPRESULTSTBL, 'v');
@@ -53,21 +57,21 @@ class NlpReports {
       $query->condition('VANID',$vanid);
       $query->condition('Active',TRUE);
       $query->condition('Type','Activist','<>');
-      $query->orderBy('Date', 'DESC');
+      $query->orderBy('Cdate', 'DESC');
       $result = $query->execute();
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return '';
     }
     db_set_active('default');
 
-    $voterReports = array();
+    $voterReports = $voterReport = array();
     do {
       $report = $result->fetchAssoc();
       if(!$report) {break;}
-      foreach ($resultsList as $nlpKey=>$dbKey) {
+      foreach ($this->resultsList as $nlpKey=>$dbKey) {
         $voterReport[$nlpKey] = $report[$dbKey];
       }
       $voterReports[$report['VANID']][] = $voterReport;
@@ -76,7 +80,7 @@ class NlpReports {
     return $voterReports;
   }
   
-  private function getNlpVoterReports($mcid,$cycle) {
+  public function getNlpVoterReports($mcid,$cycle) {
     db_set_active('nlp_voterdb');
     try {
       $query = db_select(self::NLPRESULTSTBL, 'v');
@@ -92,7 +96,7 @@ class NlpReports {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return '';
     }
     db_set_active('default');
@@ -123,7 +127,7 @@ class NlpReports {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return '';
     }
     db_set_active('default');
@@ -158,25 +162,25 @@ class NlpReports {
     foreach ($voterReports as $reports) {
       foreach ($reports as $report) {
 
-        $reportType = $report['Type'];
-        $cycleType = ($report['Cycle'] == $currentCycle) ? 'current':'historic';   
+        $reportType = $report['type'];
+        $cycleType = ($report['cycle'] == $currentCycle) ? 'current':'historic';   
         switch ($reportType) {
           case 'ID':
             // For the ID, add the candidate name.
-            $reportDisplay = $report['Text'].' ['.$report['Value'].']';
+            $reportDisplay = $report['text'].' ['.$report['value'].']';
             break;
           case 'Contact':
-            $reportDisplay = $report['Value'];
+            $reportDisplay = $report['value'];
             break;
           case 'Comment':
-            $reportDisplay = $report['Text'];
+            $reportDisplay = $report['text'];
             break;
           case 'Survey':
-            $reportDisplay = $report['Text'].': '.$report['Value'];
+            $reportDisplay = $report['text'].': '.$report['value'];
             break;
           case 'Activist':
-            $activistCodeName = $report['Text'];
-            $activistCodeValue = $report['Value'];
+            $activistCodeName = $report['text'];
+            $activistCodeValue = $report['value'];
             $voterReportsDisplay['current']['Activist'][$activistCodeName]['value'] = $activistCodeValue;
             $reportDisplay = NULL;
             break;
@@ -186,7 +190,7 @@ class NlpReports {
           if (!empty($voterReportsDisplay[$cycleType][$reportType])) {
             $voterReportsDisplay[$cycleType][$reportType] .= '<br/>';
           }
-          $newReport = $report['Cdate'].': '.$reportDisplay;
+          $newReport = $report['cdate'].': '.$reportDisplay;
           $voterReportsDisplay[$cycleType][$reportType] .= '<span style="color:'.$reportColor[$cycleType].';">'.$newReport.'</span>';
         }
       } 
@@ -223,7 +227,7 @@ class NlpReports {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return NULL;
     }
     db_set_active('default');
@@ -267,7 +271,7 @@ class NlpReports {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return '';
     }
     db_set_active('default');
@@ -284,7 +288,7 @@ class NlpReports {
   
   public function setNlAcReport($canvassResult) {
     
-    //voterdb_debug_msg('canvass report', $canvassResult, __FILE__, __LINE__);
+    //voterdb_debug_msg('canvass report', $canvassResult);
     $rindex = $canvassResult['rindex'];
     if($rindex != 0) {
       
@@ -298,7 +302,7 @@ class NlpReports {
       }
       catch (Exception $e) {
         db_set_active('default');
-        voterdb_debug_msg('e', $e->getMessage(), __FILE__, __LINE__);
+        voterdb_debug_msg('e', $e->getMessage());
         return FALSE;
       }
      

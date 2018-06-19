@@ -191,7 +191,7 @@ function voterdb_build_others_list($form_state) {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return '';
     }
     $bn_nl_list = $bn_result->fetchAll(PDO::FETCH_ASSOC);

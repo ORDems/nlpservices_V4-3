@@ -120,7 +120,7 @@ class NlpNls {
   
 
   public function decodeNlHdr($fileHdr) {
-    //voterdb_debug_msg('header', $fileHdr, __FILE__, __LINE__);
+    //voterdb_debug_msg('header', $fileHdr);
     $hdrErr = array();
     $hdrPos = array();
     foreach ($this->nlVanHdr as $nlpKey => $vanField) {
@@ -139,7 +139,7 @@ class NlpNls {
     $fieldPos['pos'] = $hdrPos;
     $fieldPos['err'] = $hdrErr;
     $fieldPos['ok'] = empty($hdrErr);
-    //voterdb_debug_msg('fieldpos', $fieldPos, __FILE__, __LINE__);
+    //voterdb_debug_msg('fieldpos', $fieldPos);
     return $fieldPos;
   }
 
@@ -155,14 +155,14 @@ class NlpNls {
   
   
   public function createNl($nlRecord) {
-    //voterdb_debug_msg('nlrecord', $nlRecord, __FILE__, __LINE__);
+    //voterdb_debug_msg('nlrecord', $nlRecord);
     $fields = array();
     foreach ($nlRecord as $nlpKey => $dbField) {
       $dbKey = $this->nlList[$nlpKey];
       $fields[$dbKey] = $dbField;
     }
     $this->deleteNl($nlRecord['mcid']);
-    //voterdb_debug_msg('fields', $fields, __FILE__, __LINE__);
+    //voterdb_debug_msg('fields', $fields);
     db_set_active('nlp_voterdb');
     try {
       db_insert(self::NLSTBL)
@@ -175,7 +175,7 @@ class NlpNls {
       $args = $e->args;
       $error['MCID'] = $args[':db_insert_placeholder_0'];
       $error['LName'] = $args[':db_insert_placeholder_1'];
-      voterdb_debug_msg('error', $error , __FILE__, __LINE__);
+      voterdb_debug_msg('error', $error );
       return FALSE;
     }
     return TRUE;
@@ -198,7 +198,7 @@ class NlpNls {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return NULL;
     }
     db_set_active('default');
@@ -234,7 +234,7 @@ class NlpNls {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
     db_set_active('default');
@@ -253,12 +253,12 @@ class NlpNls {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
     $nlDbStaus = $result->fetchAssoc();
     if(empty($nlDbStaus)) {
-      //voterdb_debug_msg('nldbstatus', $nlDbStaus, __FILE__, __LINE__);
+      //voterdb_debug_msg('nldbstatus', $nlDbStaus);
       $nlStaus = array();
       $nlpKeys = array_keys($this->statusList);
       foreach ($nlpKeys as $nlpKey) {
@@ -268,15 +268,15 @@ class NlpNls {
       $nlStaus['county'] = $county;
       $nlStaus['contact'] = self::CANVASS;
       $nlStaus['asked'] = self::DASH;
-      //voterdb_debug_msg('nlstatus', $nlStaus, __FILE__, __LINE__);
+      //voterdb_debug_msg('nlstatus', $nlStaus);
     } else {
-      //voterdb_debug_msg('nldbstatus', $nlDbStaus, __FILE__, __LINE__);
+      //voterdb_debug_msg('nldbstatus', $nlDbStaus);
       foreach ($this->statusList as $nlpKey => $dbFieldName) {
         $nlStaus[$nlpKey] = $nlDbStaus[$dbFieldName];
       }
-      //voterdb_debug_msg('nlstatus', $nlStaus, __FILE__, __LINE__);
+      //voterdb_debug_msg('nlstatus', $nlStaus);
       $askListFlip = array_flip($this->askList);
-      //voterdb_debug_msg('asklistflipped', $askListFlip, __FILE__, __LINE__);
+      //voterdb_debug_msg('asklistflipped', $askListFlip);
       $nlStaus['asked'] = $askListFlip[$nlStaus['asked']];
     }
     db_set_active('default');
@@ -284,13 +284,13 @@ class NlpNls {
   }
 
   public function setNlsStatus($status) {
-    //voterdb_debug_msg('status', $status, __FILE__, __LINE__);
+    //voterdb_debug_msg('status', $status);
     //$backTrace = debug_backtrace(); 
-    //voterdb_debug_msg('caller, Line: '.$backTrace[0]['line'], $backTrace[0]['file'], __FILE__, __LINE__);
+    //voterdb_debug_msg('caller, Line: '.$backTrace[0]['line'], $backTrace[0]['file']);
     foreach ($this->statusList as $nlpKey => $dbFieldName) {
       $nlDbStaus[$dbFieldName] = $status[$nlpKey];
     }
-    //voterdb_debug_msg('fields', $nlDbStaus, __FILE__, __LINE__);
+    //voterdb_debug_msg('fields', $nlDbStaus);
     $nlDbStaus['Asked'] = $this->askList[$nlDbStaus['Asked']];
     db_set_active('nlp_voterdb');
     try {
@@ -304,7 +304,7 @@ class NlpNls {
     }
     catch (Exception $e) {
       db_set_active('default');
-      //voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      //voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
     db_set_active('default');
@@ -326,14 +326,14 @@ class NlpNls {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
     return;
   }
 
   public function createNlGrp($mcid,$county) {
-    //voterdb_debug_msg('mcid', $mcid, __FILE__, __LINE__);
+    //voterdb_debug_msg('mcid', $mcid);
     db_set_active('nlp_voterdb');
     
     try {
@@ -345,7 +345,7 @@ class NlpNls {
         ->execute();
     }
     catch (Exception $e) {
-      voterdb_debug_msg('error', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('error', $e->getMessage() );
       db_set_active('default');
     }
    db_set_active('default');
@@ -360,7 +360,7 @@ class NlpNls {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return;
     }
     db_set_active('default');
@@ -380,7 +380,7 @@ class NlpNls {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
     db_set_active('default');
@@ -409,7 +409,7 @@ class NlpNls {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage()  , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage()  );
       return FALSE;
     }
     db_set_active('default');
@@ -440,7 +440,7 @@ class NlpNls {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage()  , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage()  );
       return FALSE;
     }
     db_set_active('default');

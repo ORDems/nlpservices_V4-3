@@ -71,36 +71,36 @@ class ApiVoter {
      $expandOptions = '?$expand=phones,emails,addresses,codes,districts,electionRecords';
     
     $url = 'https://'.$user.':'.$apiKey.'|'.$database.'@'.$apiURL.'/people/'.$vanid.$expandOptions;
-    //voterdb_debug_msg('voter URL', $url, __FILE__, __LINE__);
+    //voterdb_debug_msg('voter URL', $url);
 
     $ch = curl_init($url);
       
     if(!curl_setopt($ch, CURLOPT_HEADER, "Content-type: application/json")) {
-      voterdb_debug_msg('setopt HEADER error', curl_error($ch),__FILE__, __LINE__);
+      voterdb_debug_msg('setopt HEADER error', curl_error($ch));
     }
     //if(!curl_setopt($ch, CURLOPT_USERPWD, $user.':'.$apiKey.'|'.$database)) {
-    //  voterdb_debug_msg('setopt USERPWD error', curl_error($ch),__FILE__, __LINE__);
+    //  voterdb_debug_msg('setopt USERPWD error', curl_error($ch));
     //}
 
     if(!curl_setopt($ch, CURLOPT_RETURNTRANSFER, true)) {
-      voterdb_debug_msg('setopt USERPWD error', curl_error($ch),__FILE__, __LINE__);
+      voterdb_debug_msg('setopt USERPWD error', curl_error($ch));
     }
 
 
     $result = curl_exec($ch);
 
     if($result === FALSE) {
-      voterdb_debug_msg('setopt exec error', curl_error($ch),__FILE__, __LINE__);
+      voterdb_debug_msg('setopt exec error', curl_error($ch));
       return FALSE;
     }
     //$info = curl_getinfo($ch);
-    //voterdb_debug_msg('info', $info, __FILE__, __LINE__);
-    //voterdb_debug_msg('result', $result, __FILE__, __LINE__);
-    //voterdb_debug_msg('curl hdl', $ch, __FILE__, __LINE__);
+    //voterdb_debug_msg('info', $info);
+    //voterdb_debug_msg('result', $result);
+    //voterdb_debug_msg('curl hdl', $ch);
     curl_close($ch);
     
     $resultObj = json_decode($result);
-    //voterdb_debug_msg('result array', $resultObj, __FILE__, __LINE__);
+    //voterdb_debug_msg('result array', $resultObj);
     
     $voter[VN_VANID] = $resultObj->vanId;
     $voter[VN_FIRSTNAME] = $resultObj->firstName;
@@ -117,7 +117,7 @@ class ApiVoter {
     
     if(!empty($resultObj->addresses)) {
       foreach ($resultObj->addresses as $addressObj) {
-        //voterdb_debug_msg('address object', $addressObj, __FILE__, __LINE__);
+        //voterdb_debug_msg('address object', $addressObj);
         $type = $addressObj->type;
         switch ($type) {
           case 'Voting':
@@ -180,7 +180,7 @@ class ApiVoter {
     if(!empty($resultObj->electionRecords)) {
       $electionArrays = array();
       foreach ($resultObj->electionRecords as $electionObj) {
-        //voterdb_debug_msg('election object', $electionObj, __FILE__, __LINE__);
+        //voterdb_debug_msg('election object', $electionObj);
         $electionType = $electionObj->electionRecordType;
         $electionTypeFields = explode('-', $electionType);
         $year = trim($electionTypeFields[0]);
@@ -195,7 +195,7 @@ class ApiVoter {
         }
       }
       ksort($electionArrays);
-      //voterdb_debug_msg('sorted voting', $electionArrays, __FILE__, __LINE__);
+      //voterdb_debug_msg('sorted voting', $electionArrays);
       $voting = '';
       for ($index = 0; $index < 4; $index++) {
         $electionArray = array_pop($electionArrays);

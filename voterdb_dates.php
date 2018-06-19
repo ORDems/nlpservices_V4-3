@@ -21,7 +21,7 @@ require_once "voterdb_debug.php";
  */
 function voterdb_get_brindexes() {
   // Create the array that relates county name to county index.
-  //voterdb_debug_msg('brdates: ', '', __FILE__, __LINE__); 
+  //voterdb_debug_msg('brdates: ', ''); 
   db_set_active('nlp_voterdb');
   $gd_dselect = "SELECT * FROM {".DB_DATE_TBL."} WHERE  1";
   $gd_dates = db_query($gd_dselect);
@@ -36,7 +36,7 @@ function voterdb_get_brindexes() {
   } while (TRUE);
   db_set_active('default');
 
-  //voterdb_debug_msg('Date Indexes: ', $gd_date_indexes, __FILE__, __LINE__);
+  //voterdb_debug_msg('Date Indexes: ', $gd_date_indexes);
 return $gd_date_indexes;
 }
 
@@ -79,7 +79,7 @@ return TRUE;
  */
 function voterdb_get_brdates() {
   // Create the array that relates county name to county index.
-  //voterdb_debug_msg('brdates: ', '', __FILE__, __LINE__); 
+  //voterdb_debug_msg('brdates: ', ''); 
   db_set_active('nlp_voterdb');
   $gd_dselect = "SELECT * FROM {".DB_DATE_TBL."} WHERE  1";
   $gd_dates = db_query($gd_dselect);
@@ -94,7 +94,7 @@ function voterdb_get_brdates() {
   } while (TRUE);
   db_set_active('default');
 
-  //voterdb_debug_msg('Date Indexes: ', $gd_date_indexes, __FILE__, __LINE__);
+  //voterdb_debug_msg('Date Indexes: ', $gd_date_indexes);
 return $gd_date_indexes;
 }
 

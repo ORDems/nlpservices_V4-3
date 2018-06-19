@@ -61,13 +61,13 @@ class ApiSurveyQuestions {
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $result = curl_exec($ch);
     if($result === FALSE) {
-      voterdb_debug_msg('setopt exec error', curl_error($ch),__FILE__, __LINE__);
+      voterdb_debug_msg('setopt exec error', curl_error($ch));
       curl_close($ch);
       return FALSE;
     }
     curl_close($ch);
     $resultObj = json_decode($result);
-    //voterdb_debug_msg('survey questions',$resultObj,__FILE__, __LINE__);
+    //voterdb_debug_msg('survey questions',$resultObj);
     $questionsArray = array();
     foreach ($resultObj->items as $questionsObj) {
       $type = $questionsObj->type;

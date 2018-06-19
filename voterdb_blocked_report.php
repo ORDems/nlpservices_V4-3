@@ -38,7 +38,7 @@ function voterdb_bounced_status($bs_report_id) {
     $br_dresult = $br_dquery->execute();
   }
   catch (Exception $e) {
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return '';
   }
   $br_bounced = $br_dresult->fetchAssoc();
@@ -65,7 +65,7 @@ function voterdb_blocked_status($bs_remail) {
     $br_dresult = $br_dquery->execute();
   }
   catch (Exception $e) {
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return '';
   }
   $br_blocked = $br_dresult->fetchAssoc();
@@ -95,7 +95,7 @@ function voterdb_blocked_report() {
     $br_bresult = $br_rquery->execute();
     }
   catch (Exception $e) {
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return $output;
   }
   $cd_out = '<table style="white-space: nowrap; width:600px;">';

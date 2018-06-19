@@ -213,7 +213,7 @@ function voterdb_lists($form_state) {
   $turfIndex = $form_state['voterdb']['turfIndex'];
   $turf = $form_state['voterdb']['turfArray']['turfs'][$turfIndex];
   
-  //voterdb_debug_msg('turf array', $form_state['voterdb'], __FILE__, __LINE__);
+  //voterdb_debug_msg('turf array', $form_state['voterdb']);
   $ra_county = $form_state['voterdb']['county'];
   $ra_call_file = $form_state['voterdb']['call-file'];
   $form_element['lists'] = array (
@@ -314,7 +314,7 @@ function voterdb_instruct_disp($form_state) {
         " \n ".'<td style="width:100px; margin:0px; padding:0px 2px">',);
   // Create the URL to the instructions for this canvass (or postcard).
   $id_instructions = voterdb_get_instructions($id_county);
-  //voterdb_debug_msg('instructions', $id_instructions, __FILE__, __LINE__);
+  //voterdb_debug_msg('instructions', $id_instructions);
   $id_path = voterdb_get_path('INST',$id_county);
   
   

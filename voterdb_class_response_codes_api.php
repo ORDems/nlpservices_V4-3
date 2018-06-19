@@ -57,12 +57,12 @@ class ApiResponseCodes {
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $result = curl_exec($ch);
     if($result === FALSE) {
-      voterdb_debug_msg('curl error', curl_error($ch),__FILE__, __LINE__);
+      voterdb_debug_msg('curl error', curl_error($ch));
       return FALSE;
     }
     curl_close($ch);
     $resultArray = json_decode($result);
-    //voterdb_debug_msg('result array', $resultArray, __FILE__, __LINE__);
+    //voterdb_debug_msg('result array', $resultArray);
     $contactTypes = array();
     foreach ($resultArray as $contactTypeObj) {
       $contactTypes[$contactTypeObj->name] = $contactTypeObj->contactTypeId;
@@ -86,12 +86,12 @@ class ApiResponseCodes {
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $result = curl_exec($ch);
     if($result === FALSE) {
-      voterdb_debug_msg('curl error', curl_error($ch),__FILE__, __LINE__);
+      voterdb_debug_msg('curl error', curl_error($ch));
       return FALSE;
     }
     curl_close($ch);
     $resultArray = json_decode($result);
-    //voterdb_debug_msg('result array', $resultArray, __FILE__, __LINE__);
+    //voterdb_debug_msg('result array', $resultArray);
 
     $resultCodes = array();
     foreach ($resultArray as $resultCodeObj) {
@@ -104,14 +104,14 @@ class ApiResponseCodes {
   public function getApiKnownResultCodes($countyAuthenticationObj,$database) {
 
     $contactTypes = $this->getApiContactTypes($countyAuthenticationObj,$database);
-    //voterdb_debug_msg('contact types', $contactTypes, __FILE__, __LINE__);
+    //voterdb_debug_msg('contact types', $contactTypes);
     $knownResultCodes = array();
     foreach ($this->expectedContactTypes as $contactName=>$eResultArray) {
       if(!empty($contactTypes[$contactName])) {
         $contactTypeId = $contactTypes[$contactName];
         $knownResultCodes[$contactName]['code'] = $contactTypeId;
         $resultCodes = $this->getApiResultCodes($countyAuthenticationObj,$database,$contactTypeId);
-        //voterdb_debug_msg('response codes', $resultCodes, __FILE__, __LINE__);
+        //voterdb_debug_msg('response codes', $resultCodes);
 
         foreach ($eResultArray as $expectedResultArray) {
           $expectedResultText = $expectedResultArray['text'];

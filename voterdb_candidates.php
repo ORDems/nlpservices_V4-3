@@ -40,7 +40,7 @@ function voterdb_candidates_form($form, &$form_state) {
     $form_state['voterdb']['scope'] = "unknown";  // Scope is not yet known.
     $form_state['voterdb']['func'] = "add"; 
     $form_state['voterdb']['definedCandidates'] = 'unknown';
-    //voterdb_debug_msg('voterdb, form', $form_state['voterdb'], __FILE__, __LINE__);
+    //voterdb_debug_msg('voterdb, form', $form_state['voterdb']);
     if(empty($form_state['voterdb']['ALL'])) {
       $form_state['voterdb']['ALL'] = FALSE;
     }
@@ -62,7 +62,7 @@ function voterdb_candidates_form($form, &$form_state) {
     '#markup' => $fv_banner
   );
   $stateCommittee = variable_get('voterdb_state_committee', 'DPO');
-  //voterdb_debug_msg('voterdb', $form_state['voterdb'], __FILE__, __LINE__);
+  //voterdb_debug_msg('voterdb', $form_state['voterdb']);
   if($form_state['voterdb']['definedCandidates'] == 'unknown') {
     $candidatesObj = new NlpCandidates();
     $form_state['voterdb']['candidatesObj'] = $candidatesObj;
@@ -92,7 +92,7 @@ function voterdb_candidates_form($form, &$form_state) {
     
     
     $form_state['voterdb']['availableCandidates'] = $availableCandidates;
-    voterdb_debug_msg('voterdb', $form_state['voterdb'], __FILE__, __LINE__);
+    voterdb_debug_msg('voterdb', $form_state['voterdb']);
     
   }
   
@@ -112,7 +112,7 @@ function voterdb_candidates_form($form, &$form_state) {
       $candidatesArray = $form_state['voterdb']['candidatesArray'];
       $scopeArray = voterdb_build_candidate_list($candidatesArray);  // func.
       
-      voterdb_debug_msg('scope array', $scopeArray , __FILE__, __LINE__);
+      voterdb_debug_msg('scope array', $scopeArray );
       
       $all = $form_state['voterdb']['ALL'];
       foreach ($scopeArray as $cat => $candidateList) {

@@ -36,9 +36,9 @@ function voterdb_fetch_voters(&$form_state) {
   //$fv_cycle = variable_get('voterdb_ecycle', 'xxxx-mm-G');
   $fv_county = $form_state['voterdb']['county'];
   // Get the voter info for all voters in this turf, use turf walksheet order.
-  //voterdb_debug_msg('fetch voters', '', __FILE__, __LINE__);
+  //voterdb_debug_msg('fetch voters', '');
   $nlpReportsObj = new NlpReports();
-  //voterdb_debug_msg('report obj', $nlpReportsObj, __FILE__, __LINE__);
+  //voterdb_debug_msg('report obj', $nlpReportsObj);
   
   db_set_active('nlp_voterdb');
   try {
@@ -60,11 +60,12 @@ function voterdb_fetch_voters(&$form_state) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return NULL;
   }
   db_set_active('default');
   $fv_brdates = voterdb_get_brdates();  // matchback dates.
+  //voterdb_debug_msg('brdates', $fv_brdates);
   // Now build the array from the records.
   $fv_voters = array();
   $fv_vcnt = $fv_pcnt = 0;
@@ -72,6 +73,7 @@ function voterdb_fetch_voters(&$form_state) {
   foreach ($fv_tvoters as $fv_voter_info) {
     $fv_vanid = $fv_voter_info[VN_VANID];
     $fv_voter_status = voterdb_get_voter_status($fv_vanid, $fv_voter_info[VN_DORCURRENT]);  // func4.
+    //voterdb_debug_msg('voterstatus', $fv_voter_status);
     // Check if the NL reported that this voter has moved, is deceased or is hostile.
     $fv_voter_info['status'] = $fv_voter_status; 
     $fv_date = ''; // Hasn't voted yet.
@@ -83,14 +85,15 @@ function voterdb_fetch_voters(&$form_state) {
       $fv_date = $fv_star.$fv_brdates[$fv_mbindex];
     }
     $fv_voter_info['status']['voted'] = $fv_date; 
-    
+    voterdb_debug_msg('date', $fv_date);
     //Search for existing reports on this voter.
     $fv_rresult = $nlpReportsObj->getNlpReports($fv_vanid);
+    voterdb_debug_msg('results', $fv_rresult);
     $fv_acresult = $nlpReportsObj->getNlpAcReport($fv_vanid);
-    //voterdb_debug_msg('ac report '.$fv_vanid, $fv_acresult, __FILE__, __LINE__);
+    voterdb_debug_msg('ac report '.$fv_vanid, $fv_acresult);
     
     $fv_display = $nlpReportsObj->displayNlReports($fv_rresult);
-    //voterdb_debug_msg('report display', $fv_display, __FILE__, __LINE__);
+    voterdb_debug_msg('report display', $fv_display);
     // Remember each report string for display later.
     $fv_voter_info['current']= $fv_display['current'];
     $fv_voter_info['historic'] = $fv_display['historic'];
@@ -170,18 +173,18 @@ function voterdb_dselect_callback($form, &$form_state) {
  * @return type
  */
 function voterdb_checkbox_callback($form, &$form_state) {
-  //voterdb_debug_msg('form - voters - vform', array_keys($form['voters']['vform']['cell-0-2']['ND-73920']), __FILE__, __LINE__);
-  //voterdb_debug_msg('form - voters - vform - checked', array_keys($form['voters']['vform']['cell-0-2']['ND-73920']['#checked']), __FILE__, __LINE__);
-  //voterdb_debug_msg('form state - complete form', $form_state['complete form']['voters']['vform']['cell-0-2']['ND-73920']['#checked'], __FILE__, __LINE__);
-  //voterdb_debug_msg('form state - complete form', array_keys($form_state['complete form']['voters']['vform']['cell-0-2']['ND-73920']), __FILE__, __LINE__);
-  //voterdb_debug_msg('form state triggering element', $form_state['triggering_element'], __FILE__, __LINE__);
+  //voterdb_debug_msg('form - voters - vform', array_keys($form['voters']['vform']['cell-0-2']['ND-73920']));
+  //voterdb_debug_msg('form - voters - vform - checked', array_keys($form['voters']['vform']['cell-0-2']['ND-73920']['#checked']));
+  //voterdb_debug_msg('form state - complete form', $form_state['complete form']['voters']['vform']['cell-0-2']['ND-73920']['#checked']);
+  //voterdb_debug_msg('form state - complete form', array_keys($form_state['complete form']['voters']['vform']['cell-0-2']['ND-73920']));
+  //voterdb_debug_msg('form state triggering element', $form_state['triggering_element']);
   $pv_cell = $form_state['triggering_element']['#array_parents'][2];
-  //voterdb_debug_msg('cell: '.$pv_cell,'', __FILE__, __LINE__);
+  //voterdb_debug_msg('cell: '.$pv_cell,'');
   $pv_element_clicked = $form_state['triggering_element']['#name'];
-  //voterdb_debug_msg('clicked: '.$pv_element_clicked,'', __FILE__, __LINE__);
+  //voterdb_debug_msg('clicked: '.$pv_element_clicked,'');
   
   $pv_value = strip_tags(filter_var($form_state['triggering_element']['#value'], FILTER_SANITIZE_STRING));
-  //voterdb_debug_msg('value: '.$pv_value,'', __FILE__, __LINE__);
+  //voterdb_debug_msg('value: '.$pv_value,'');
   
   $form_state['complete form']['voters']['vform'][$pv_cell][$pv_element_clicked]['#checked'] = $pv_value;
   $form['voters']['vform'][$pv_cell][$pv_element_clicked]['#checked'] = $pv_value;
@@ -198,9 +201,9 @@ function voterdb_checkbox_callback($form, &$form_state) {
  * @return boolean
  */
 function voterdb_process_voter_info(&$form_state) {
-  //voterdb_debug_msg('input', $form_state['input'], __FILE__, __LINE__);
-  //voterdb_debug_msg('values', $form_state['values'], __FILE__, __LINE__);
-  //voterdb_debug_msg('trigger', $form_state['triggering_element'], __FILE__, __LINE__);
+  //voterdb_debug_msg('input', $form_state['input']);
+  //voterdb_debug_msg('values', $form_state['values']);
+  //voterdb_debug_msg('trigger', $form_state['triggering_element']);
   
   //$nlpReportsObj = new NlpCanvassResponse();
   $nlpReportsObj = new NlpReports();
@@ -224,6 +227,8 @@ function voterdb_process_voter_info(&$form_state) {
   // Determine which element triggered the AJAX event.
   $pv_element_clicked = $form_state['triggering_element']['#name'];
   $pv_value = strip_tags(filter_var($form_state['triggering_element']['#value'], FILTER_SANITIZE_STRING));
+  voterdb_debug_msg('elementclicked', $pv_element_clicked);
+  
   //$pv_types = unserialize(DE_TYPE_ARRAY); // Names of fields.
   $pv_id_array = explode('-', $pv_element_clicked);
   $pv_vanid = $pv_id_array[1];  // VANID of affected NL (or zero).
@@ -320,8 +325,8 @@ function voterdb_process_voter_info(&$form_state) {
         $rid = $pv_value;
         $pv_result['rid'] = $rid;
         
-        //voterdb_debug_msg('response list '.$rid, $canvassResponseList, __FILE__, __LINE__);
-        //voterdb_debug_msg('rid '.$rid,'', __FILE__, __LINE__);
+        //voterdb_debug_msg('response list '.$rid, $canvassResponseList);
+        //voterdb_debug_msg('rid '.$rid,'');
         
         $pv_contact_name = $canvassResponseList[$rid];
         $pv_result['type'] = 'Contact';
@@ -350,12 +355,12 @@ function voterdb_process_voter_info(&$form_state) {
       
       // Not a Dem.
     case 'ND':  
-      //voterdb_debug_msg('input', $form_state['input'], __FILE__, __LINE__);
-      //voterdb_debug_msg('values', $form_state['values'], __FILE__, __LINE__);
+      //voterdb_debug_msg('input', $form_state['input']);
+      //voterdb_debug_msg('values', $form_state['values']);
       // Get the text associated with the new contact selection.
-      //voterdb_debug_msg('form state', $form_state, __FILE__, __LINE__);
+      //voterdb_debug_msg('form state', $form_state);
       
-      //voterdb_debug_msg('activist',$pv_voters[$pv_vanid]['activist'], __FILE__, __LINE__);
+      //voterdb_debug_msg('activist',$pv_voters[$pv_vanid]['activist']);
       $pv_result['rindex'] = 0; 
       if(!empty($pv_voters[$pv_vanid]['activist']['NotADem']['Rindex'])) {
         $pv_result['rindex'] = $pv_voters[$pv_vanid]['activist']['NotADem']['Rindex'];
@@ -370,12 +375,12 @@ function voterdb_process_voter_info(&$form_state) {
       $nlpReportsObj->setNlAcReport($pv_result);
 
       $form_state['voterdb']['voters'][$pv_vanid]['activist']['NotADem']['value'] = $pv_value;
-      //voterdb_debug_msg('voter',$form_state['voterdb']['voters'][$pv_vanid], __FILE__, __LINE__);
+      //voterdb_debug_msg('voter',$form_state['voterdb']['voters'][$pv_vanid]);
       voterdb_report_track($pv_result);
 
       //$form_state['values'][$pv_element_clicked] = '';  // Clear entry.
       //$form_state['input'][$pv_element_clicked] = '';
-      //voterdb_debug_msg('input', $form_state['input'], __FILE__, __LINE__);
+      //voterdb_debug_msg('input', $form_state['input']);
       
       //$form_state['complete form']['voters']['vform']['cell-0-2']['ND-73920']['#checked'] = 0;
       //$form['voters']['vform']['cell-0-2']['ND-73920']['#checked'] = 0;
@@ -383,9 +388,9 @@ function voterdb_process_voter_info(&$form_state) {
       $pv_cell = $form_state['triggering_element']['#array_parents'][2];
       $form_state['complete form']['voters']['vform'][$pv_cell][$pv_element_clicked]['#checked'] = $pv_value;
       //$form['voters']['vform']['cell-0-2'][$pv_element_clicked]['#checked'] = 0;
-      //voterdb_debug_msg('cell',$pv_cell, __FILE__, __LINE__);
+      //voterdb_debug_msg('cell',$pv_cell);
       
-      //voterdb_debug_msg('form checkbox', $form[$pv_element_clicked], __FILE__, __LINE__);
+      //voterdb_debug_msg('form checkbox', $form[$pv_element_clicked]);
       //$form['checkboxes_fieldset']['checkboxes'][$option]['#checked'] = FALSE;
 
       break;
@@ -418,7 +423,7 @@ function voterdb_process_voter_info(&$form_state) {
         $form_state['values'][$pv_element_clicked] = '';  // Clear entry.
         $form_state['input'][$pv_element_clicked] = '';
       }
-      //voterdb_debug_msg('input', $form_state['input'], __FILE__, __LINE__);
+      //voterdb_debug_msg('input', $form_state['input']);
       break;   
     // The Month was changed.
     case 'MO': 

@@ -33,7 +33,7 @@ function voterdb_col_names($cn_tbl) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return NULL;
   }
   db_set_active('default');
@@ -66,7 +66,7 @@ function voterdb_export_nlsreports() {
   // Use a date in the name to make the file unique., just in case two people 
   // are doing an export at the same time.
   $nr_cdate = date('Y-m-d-H-i-s',time());
-  //voterdb_debug_msg('cdate', $nr_cdate, __FILE__, __LINE__);
+  //voterdb_debug_msg('cdate', $nr_cdate);
   // Open a temp file for receiving the records.
   $nr_fname = NR_NLS_REPORTS.'-'.$nr_cdate.'.txt';
   $nr_temp_uri = $nr_temp_dir.'/'.$nr_fname;
@@ -77,7 +77,7 @@ function voterdb_export_nlsreports() {
   file_save($nr_file_object);
   // Open the new remp file for writing by PHP functions.
   $nr_file_fh = fopen($nr_temp_uri,"w");
-  //voterdb_debug_msg('fh', $nr_file_fh, __FILE__, __LINE__);
+  //voterdb_debug_msg('fh', $nr_file_fh);
   // Get the column names for the export and add the NL name to ease editting.
   $nr_col_names = voterdb_col_names(DB_NLPRESULTS_TBL);
   $nr_col_names[] = NH_NICKNAME;
@@ -96,7 +96,7 @@ function voterdb_export_nlsreports() {
     }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return;
     }
   db_set_active('default');

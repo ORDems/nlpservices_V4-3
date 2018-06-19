@@ -101,7 +101,7 @@ function voterdb_build_voter_tbl(&$form_state) {
   // Create the DIV for the AJAX redraw of the table.
   $bv_voters = $form_state['voterdb']['voters'];
   $bv_history = $form_state['voterdb']['history'];
-  
+  voterdb_debug_msg('history', $bv_history);
   $surveyQuestionObj = new NlpSurveyQuestion();
   $questionArray = $surveyQuestionObj->getSurveyQuestion();
   if(!empty($questionArray)) {
@@ -232,14 +232,14 @@ function voterdb_build_voter_tbl(&$form_state) {
     if(!empty($notADemAC)) {
       $bv_default = FALSE;
       //$bv_color = 'black';
-      //voterdb_debug_msg('activist', $bv_voter_info['activist'], __FILE__, __LINE__);
+      //voterdb_debug_msg('activist', $bv_voter_info['activist']);
       if(!empty($bv_voter_info['activist']['NotADem']['Value'])) {
         $bv_default = $bv_voter_info['activist']['NotADem']['Value'];
         //if($bv_default) {
         //  $bv_color = 'red';
         //}
       }
-      //voterdb_debug_msg('default', $bv_default, __FILE__, __LINE__);
+      //voterdb_debug_msg('default', $bv_default);
       $form_element['vform']["cell-$bv_vcnt-2"]["ND-".$bv_vanid] = array(
         '#type' => 'checkbox',
         '#default_value' => $bv_default,
@@ -309,10 +309,10 @@ function voterdb_build_voter_tbl(&$form_state) {
       // Show the ID selection if a candiate was chosen.
       if ($bv_qid != 0) {
         // Then the ID select.
-        //voterdb_debug_msg('qid '.$bv_qid, '', __FILE__, __LINE__);
+        //voterdb_debug_msg('qid '.$bv_qid, '');
         $candidateObj = new NlpCandidates();
         //$questionObj = $form_state['voterdb']['questionObj'];
-        //voterdb_debug_msg('question obj ', $questionObj, __FILE__, __LINE__);
+        //voterdb_debug_msg('question obj ', $questionObj);
         $responsesList = $candidateObj->getResponsesList($bv_qid);
         $form_state['voterdb']['ID'][$bv_qid] = $responsesList;
 

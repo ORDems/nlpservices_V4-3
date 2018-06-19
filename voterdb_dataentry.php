@@ -156,14 +156,16 @@ function voterdb_dataentry_form($form_id, &$form_state) {
  * data entry. 
  */
     case 'data-entry':
+      voterdb_debug_msg('dataentry', '');
       // Build the table of voters if we haven't already done it.
       if(!isset($form_state['voterdb']['voters'])) {
+        voterdb_debug_msg('fetchvoters', '');
         $form_state['voterdb']['voters'] = voterdb_fetch_voters($form_state);  // func5.
         $form_state['voterdb']['call-file'] = voterdb_build_call_list($form_state);  // func2.
         
         //$questionObj = new NlpSurveyQuestion();
         //$form_state['voterdb']['questionObj'] = $questionObj;
-        //voterdb_debug_msg('question obj ', $questionObj, __FILE__, __LINE__);
+        //voterdb_debug_msg('question obj ', $questionObj);
         
         $candiatesObj = new NlpCandidates();
         $district['hd'] = $form_state['voterdb']['turf-hd'];
@@ -179,6 +181,7 @@ function voterdb_dataentry_form($form_id, &$form_state) {
         $turfObj->setLastTurfAccess($turfIndex,NULL);
         
       }
+      voterdb_debug_msg('voters', $form_state['voterdb']['voters']);
       $form['info-box-c0'] = array(
         '#markup' => " \n".'<div>'.
         " \n".'<!-- Info box table -->'." \n".'<table class="noborder" style="width:840px; margin:0px 0px 6px 0px; padding:0px">'.
@@ -257,6 +260,8 @@ function voterdb_dataentry_form($form_id, &$form_state) {
  * @return boolean
  */
 function voterdb_dataentry_form_validate($form, &$form_state) {
+  //voterdb_debug_msg('validate', $form_state['voterdb']);
+  voterdb_debug_msg('validate', '');
   $page = $form_state['voterdb']['page'];
   switch ($page) {
 /* * * * * * * * * * * * *
@@ -352,6 +357,8 @@ function voterdb_dataentry_form_validate($form, &$form_state) {
  * @param type $form_state
  */
 function voterdb_dataentry_form_submit($form, &$form_state) {
+  //voterdb_debug_msg('submit', $form_state['voterdb']);
+  voterdb_debug_msg('submit', '');
   $page = $form_state['voterdb']['page'];
   switch ($page) {
 /* * * * * * * * * * * * *

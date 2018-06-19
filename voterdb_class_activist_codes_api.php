@@ -20,7 +20,7 @@ class ApiActivistCodes {
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $result = curl_exec($ch);
     if($result === FALSE) {
-      voterdb_debug_msg('curl error', curl_error($ch),__FILE__, __LINE__);
+      voterdb_debug_msg('curl error', curl_error($ch));
       return FALSE;
     }
     curl_close($ch);

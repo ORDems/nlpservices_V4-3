@@ -75,7 +75,7 @@ class NlpResponseCodes {
     $this->deleteResponseCodes();
     foreach ($apiResponseCodes as $contactType=>$contactArray) {
       $this->insertResponseCode($contactType,NULL,$contactArray['code']);
-      //voterdb_debug_msg('contact array', $contactArray, __FILE__, __LINE__);
+      //voterdb_debug_msg('contact array', $contactArray);
       $responsesArray = $contactArray['responses'];
       foreach ($responsesArray as $responseName => $responseCode) {
         $this->insertResponseCode($contactType,$responseName,$responseCode);

@@ -41,7 +41,7 @@ class NlpLegFix{
     }
      catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
     db_set_active('default');
@@ -62,13 +62,13 @@ class NlpLegFix{
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
     $fixes = array();
     do {
       $fix = $result->fetchAssoc();
-      //voterdb_debug_msg('fix', $fix, __FILE__, __LINE__);
+      //voterdb_debug_msg('fix', $fix);
       if(empty($fix)) {break;}
       $nlpFix = array();
       foreach ($this->legList as $nlpKey => $dbKey) {
@@ -89,7 +89,7 @@ class NlpLegFix{
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
     db_set_active('default');

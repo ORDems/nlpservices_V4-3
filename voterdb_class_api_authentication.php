@@ -28,7 +28,7 @@ class ApiAuthentication {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return NULL;
     }
     $countyAuthentication = $result->fetchAssoc();
@@ -50,7 +50,7 @@ class ApiAuthentication {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return;
     }
     try {
@@ -64,7 +64,7 @@ class ApiAuthentication {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return;
     }
     db_set_active('default');

@@ -56,7 +56,7 @@ function voterdb_display_voting($di_link,$di_county,$di_mcid) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return '';
   }
   // Count the number of voters who returned ballots.
@@ -69,7 +69,7 @@ function voterdb_display_voting($di_link,$di_county,$di_mcid) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return '';
   }
   $di_npercent = ($di_nvtr > 0)?round($di_rbvtd/$di_nvtr*100,1).'%':'0%';
@@ -83,7 +83,7 @@ function voterdb_display_voting($di_link,$di_county,$di_mcid) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return '';
   }
   // Count the number of this NLs voters who returned ballots.
@@ -97,7 +97,7 @@ function voterdb_display_voting($di_link,$di_county,$di_mcid) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return '';
   }
   $di_vpercent = ($di_vtr > 0)?round($di_vtd/$di_vtr*100,1).'%':'0%';
@@ -164,7 +164,7 @@ function voterdb_get_nlscount($gc_county,$gc_hd,$gc_type) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return '';
   }
   db_set_active('default');
@@ -195,7 +195,7 @@ function voterdb_set_voter_status($mv_vanid, $mv_dorc, $mv_field) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return FALSE;
   }
   return TRUE;
@@ -224,7 +224,7 @@ function voterdb_get_voter_status($mv_vanid, $mv_dorc) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return $mv_null;
   }
   db_set_active('default');

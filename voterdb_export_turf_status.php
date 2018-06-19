@@ -53,7 +53,7 @@ function voterdb_get_turf_list($gt_county) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return NULL;
   }
   db_set_active('default');
@@ -82,7 +82,7 @@ function voterdb_get_voters_in_turf($vt_turf_index) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return NULL;
   }
   db_set_active('default');
@@ -109,7 +109,7 @@ function voterdb_who_voted($wv_vanid) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return FALSE;
   }
   db_set_active('default');
@@ -140,7 +140,7 @@ function voterdb_voter_contacted($vc_vanid) {
   }
   catch (Exception $e) {
     db_set_active('default');
-    voterdb_debug_msg('e', $e , __FILE__, __LINE__);
+    voterdb_debug_msg('e', $e->getMessage() );
     return FALSE;
   }
   db_set_active('default');
@@ -272,7 +272,7 @@ function voterdb_export_turf_status() {
   $dd_browser_obj = new GetBrowser();
   $dd_browser = $dd_browser_obj->getBrowser();
   $dd_browser_hint = $dd_browser['hint'];
-  //voterdb_debug_msg('hint', $dd_browser_hint, __FILE__, __LINE__);
+  //voterdb_debug_msg('hint', $dd_browser_hint);
   
   if($dd_turf_results) {
     $dd_url = file_create_url($dd_temp_uri);

@@ -187,7 +187,7 @@ function voterdb_save_candidate($form_state) {
       break;
   }
   
-  voterdb_debug_msg('form state ', $form_state, __FILE__, __LINE__);
+  voterdb_debug_msg('form state ', $form_state);
   
   $fv_qid = $form_state['values']['qid'];
   $fv_weight = $form_state['values']['weight'];

@@ -48,7 +48,7 @@ class NlpTurfs {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage()  , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage()  );
       return FALSE;
     }
   db_set_active('default');
@@ -66,7 +66,7 @@ class NlpTurfs {
   }
 
   public function removeTurf($turf) {
-    //voterdb_debug_msg('turf', $turf, __FILE__, __LINE__);
+    //voterdb_debug_msg('turf', $turf);
     $turfIndex = $turf['turfIndex'];
     $county = $turf['county'];
     // Get the filenames the PDF walksheet, mail list, and call list.
@@ -80,11 +80,11 @@ class NlpTurfs {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
     $fileNames = $result->fetchAssoc();
-    //voterdb_debug_msg('file names', $fileNames, __FILE__, __LINE__);
+    //voterdb_debug_msg('file names', $fileNames);
     db_set_active('default');
     // Delete the PDF, mail list and call list files.
     $pathObj = $turf['pathObj'];
@@ -102,7 +102,7 @@ class NlpTurfs {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
     db_set_active('default');
@@ -135,7 +135,7 @@ class NlpTurfs {
   }
   
   public function getTurfs($turfReq) {
-    //voterdb_debug_msg('turf list called', $turfReq , __FILE__, __LINE__);
+    //voterdb_debug_msg('turf list called', $turfReq );
     // Order the list of turfs.
     $county = $turfReq['county'];
     db_set_active('nlp_voterdb');
@@ -158,7 +158,7 @@ class NlpTurfs {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
     db_set_active('default');
@@ -201,7 +201,7 @@ class NlpTurfs {
     } catch (Exception $e) {
       db_set_active('default');
       watchdog('voterdb_class_turfs', 'set turf delivered failed');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return;
     }
     db_set_active('default');
@@ -219,7 +219,7 @@ class NlpTurfs {
     } catch (Exception $e) {
       db_set_active('default');
       //watchdog('voterdb_class_turfs', 'set all turfs delivered failed');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return;
     }
     db_set_active('default');
@@ -270,7 +270,7 @@ class NlpTurfs {
     catch (Exception $e) {
       db_set_active('default');
       watchdog('voterdb_co_notify', 'coordinator table query failed');
-      //voterdb_debug_msg('e', $e->getMessage()  , __FILE__, __LINE__);
+      //voterdb_debug_msg('e', $e->getMessage()  );
       return;
     }
     db_set_active('default');
@@ -287,7 +287,7 @@ class NlpTurfs {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
     db_set_active('default');
@@ -319,7 +319,7 @@ class NlpTurfs {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
 

@@ -29,19 +29,19 @@ class NlpActivistCodes {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return;
     }
     db_set_active('default');
   }
   
   public function setActivistCode($activistCode) { 
-    //voterdb_debug_msg('$activistCode', $activistCode , __FILE__, __LINE__);
+    //voterdb_debug_msg('$activistCode', $activistCode );
     $this->deleteCode($activistCode['functionName']);
     foreach ($this->activistCodeMap as $dbKey => $nlpKey) {
       $fieldArray[$dbKey] = $activistCode[$nlpKey];
     }
-    //voterdb_debug_msg('fields', $fieldArray , __FILE__, __LINE__);
+    //voterdb_debug_msg('fields', $fieldArray );
     db_set_active('nlp_voterdb');
     try {
       db_insert(self::ACTIVISTCODETBL)
@@ -50,7 +50,7 @@ class NlpActivistCodes {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return;
     }
     db_set_active('default');
@@ -66,7 +66,7 @@ class NlpActivistCodes {
     }
     catch (Exception $e) {
       db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() , __FILE__, __LINE__);
+      voterdb_debug_msg('e', $e->getMessage() );
       return NULL;
     }
     $activistCodeRecord = $result->fetchAssoc();
