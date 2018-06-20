@@ -1,14 +1,17 @@
 <?php
 /**
- * Name: voterdb_nlp_instructions.php    V4.0  2/19/18
+ * Name: voterdb_nlp_instructions.php    V4.2  6/19/18
  * 
 */
 require_once "voterdb_constants_nlp_instructions_tbl.php";
 require_once "voterdb_group.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_debug.php";
-require_once "voterdb_path.php";
+require_once "voterdb_class_paths.php";
 require_once "voterdb_class_button.php";
+
+use Drupal\voterdb\NlpButton;
+use Drupal\voterdb\NlpPaths;
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_nlp_instructions_form
@@ -21,7 +24,8 @@ require_once "voterdb_class_button.php";
  * @return string - form.
  */
 function voterdb_nlp_instructions_form($form,&$form_state) {
-  $ni_button_obj = new NlpButton;
+  voterdb_debug_msg('form', '');
+  $ni_button_obj = new NlpButton();
   $ni_button_obj->setStyle();
   // Verify we know the group.
   if (!isset($form_state['voterdb']['reenter'])) {
@@ -31,12 +35,14 @@ function voterdb_nlp_instructions_form($form,&$form_state) {
   } 
   // Get the instruction file names for this county, canvass and postcard.
   $ni_county = $form_state['voterdb']['county'];
+  voterdb_debug_msg('county', $ni_county);
   db_set_active('nlp_voterdb');
   $ni_tselect = "SELECT * FROM {".DB_INSTRUCTIONS_TBL."} WHERE  ".NI_COUNTY. " = :county ";
   $ni_targs = array(':county' => $ni_county);
   $ni_result = db_query($ni_tselect,$ni_targs);
   $ni_instructs = $ni_result->fetchAll(PDO::FETCH_ASSOC);
   db_set_active('default');
+  voterdb_debug_msg('instructs', $ni_instructs);
   // Display the current canvass and postcard file names (or not loaded yet")
   //  and remember the file names in the form_state incase it will be deleted.
   $ni_tlist = array(NE_CANVASS,NE_POSTCARD,NE_ABSENTEE);
@@ -50,6 +56,7 @@ function voterdb_nlp_instructions_form($form,&$form_state) {
     $ni_type = $ni_instruct[NI_TYPE];
     $ni_current[$ni_type] = $ni_instruct;
   } 
+  voterdb_debug_msg('current', $ni_current);
   $form_state['voterdb']['current'] = $ni_current;
   // Create the form to display of all the NLs
   $hg_banner = voterdb_build_banner ($ni_county);
@@ -147,7 +154,6 @@ function voterdb_nlp_instructions_form($form,&$form_state) {
  * @return type
  */
 function voterdb_nlp_instructions_form_validate($form, &$form_state) {
-  $form_state['voterdb']['reenter'] = TRUE;
   $fv_type = $form_state['triggering_element']['#type'];
   if ($fv_type != 'submit') {return;}
   // The submit button was clicked.
@@ -229,7 +235,8 @@ function voterdb_nlp_instructions_form_validate($form, &$form_state) {
   $form_state['voterdb'][NE_ABSENTEE]['tmp'] = $fv_absentee_tmp;
   $form_state['voterdb'][NE_ABSENTEE]['title'] = $fv_absentee_title;
   $form_state['voterdb'][NE_ABSENTEE]['blurb'] = $fv_absentee_blurb;
-  //voterdb_debug_msg('Validate', $form_state['voterdb']);
+  //voterdb_debug_msg('Validate', $form_state['voterdb'],__FILE__,__LINE__);
+  
 }
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -246,17 +253,24 @@ function voterdb_update_instructions_file($form_state,$ui_type) {
   $ui_filename = $form_state['voterdb'][$ui_type]['new'];
   $ui_title = $form_state['voterdb'][$ui_type]['title'];
   $ui_blurb = $form_state['voterdb'][$ui_type]['blurb'];
+  $pathsObj = new NlpPaths();
   // If we have a new instruction, delete the current one and save the new one.
   if ($ui_filename != '') {
     // If a file already exists, delete it.
     if($form_state['voterdb']['current'][$ui_type][NI_FILENAME] != '') {
       // Delete the current file.
-      $ui_current_full = voterdb_get_path('INST', $ui_county).$form_state['voterdb']['current'][$ui_type][NI_FILENAME];
+      //$ui_current_full = voterdb_get_path('INST', $ui_county).$form_state['voterdb']['current'][$ui_type][NI_FILENAME];
+      
+      $ui_current_full = $pathsObj->getPath('INST',$ui_county).
+              $form_state['voterdb']['current'][$ui_type][NI_FILENAME];
+      
       drupal_unlink($ui_current_full);
     }
     // Move the temp to the permanent location.
     $ui_tmp_fname = $form_state['voterdb'][$ui_type]['tmp'];
-    $ui_full_name = voterdb_get_path('INST',$ui_county).$ui_filename;
+    //$ui_full_name = voterdb_get_path('INST',$ui_county).$ui_filename;
+    $ui_full_name = $pathsObj->getPath('INST',$ui_county).$ui_filename;
+            
     drupal_move_uploaded_file($ui_tmp_fname, $ui_full_name);
     // Remember the file name.
     db_set_active('nlp_voterdb');
