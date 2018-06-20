@@ -85,15 +85,15 @@ function voterdb_fetch_voters(&$form_state) {
       $fv_date = $fv_star.$fv_brdates[$fv_mbindex];
     }
     $fv_voter_info['status']['voted'] = $fv_date; 
-    voterdb_debug_msg('date', $fv_date);
+    //voterdb_debug_msg('date', $fv_date);
     //Search for existing reports on this voter.
     $fv_rresult = $nlpReportsObj->getNlpReports($fv_vanid);
-    voterdb_debug_msg('results', $fv_rresult);
+    //voterdb_debug_msg('results', $fv_rresult);
     $fv_acresult = $nlpReportsObj->getNlpAcReport($fv_vanid);
-    voterdb_debug_msg('ac report '.$fv_vanid, $fv_acresult);
+    //voterdb_debug_msg('ac report '.$fv_vanid, $fv_acresult);
     
     $fv_display = $nlpReportsObj->displayNlReports($fv_rresult);
-    voterdb_debug_msg('report display', $fv_display);
+    //voterdb_debug_msg('report display', $fv_display);
     // Remember each report string for display later.
     $fv_voter_info['current']= $fv_display['current'];
     $fv_voter_info['historic'] = $fv_display['historic'];
@@ -227,7 +227,7 @@ function voterdb_process_voter_info(&$form_state) {
   // Determine which element triggered the AJAX event.
   $pv_element_clicked = $form_state['triggering_element']['#name'];
   $pv_value = strip_tags(filter_var($form_state['triggering_element']['#value'], FILTER_SANITIZE_STRING));
-  voterdb_debug_msg('elementclicked', $pv_element_clicked);
+  //voterdb_debug_msg('elementclicked', $pv_element_clicked);
   
   //$pv_types = unserialize(DE_TYPE_ARRAY); // Names of fields.
   $pv_id_array = explode('-', $pv_element_clicked);

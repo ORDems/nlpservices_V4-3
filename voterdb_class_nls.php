@@ -181,6 +181,37 @@ class NlpNls {
     return TRUE;
   }
   
+  public function getNl($firstName, $lastName, $county) {
+    // Replace the apostrophe with the HTML code for MySQL.
+    // This lets us have names like O'Brian in the database.
+    $lname = str_replace("'", "&#039;", trim ( $lastName , " \t\n\r\0\x0B" ));
+    $fname = str_replace("'", "&#039;", trim ( $firstName , " \t\n\r\0\x0B" ));
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::NLSTBL, 'n');
+      $query->join(self::NLSGRPTBL, 'g', 'g.MCID = n.MCID');
+      $query->addField('n', 'MCID');
+      $query->addField('n', 'HD');
+      $query->addField('n', 'Pct');
+      $query->condition('Nickname',$fname);
+      $query->condition('LastName',$lname);
+      $query->condition('g.County',$county);
+      $result = $query->execute();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return FALSE;
+    }
+    $nl = $result->fetchAssoc();
+    if(empty($nl)) {return FALSE;}  // NL not known.
+    $nlListFlip = array_flip($this->nlList);
+    foreach ($nl as $dbKey => $nlValue) {
+      $nlRecord[$nlListFlip[$dbKey]] = $nlValue;
+    }
+    return $nlRecord;  //return the MCID and HD.
+  }
+  
   function getNls($county,$hd) {
     db_set_active('nlp_voterdb');
     try {
@@ -458,6 +489,6 @@ class NlpNls {
       $nlMcid[] = $nlNlp;
     } while (TRUE);
     return array('options'=>$nlOptions,'mcidArray'=>$nlMcid);
-  }
-
+  } 
+  
 }

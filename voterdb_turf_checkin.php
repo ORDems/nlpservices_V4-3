@@ -17,7 +17,6 @@ require_once "voterdb_banner.php";
 require_once "voterdb_path.php";
 require_once "voterdb_van_hdr.php";
 require_once "voterdb_debug.php";
-require_once "voterdb_nls_validate.php";
 require_once "voterdb_class_button.php";
 require_once "voterdb_class_turfs.php";
 require_once "voterdb_class_paths.php";

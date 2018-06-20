@@ -8,6 +8,8 @@
  * voterdb_coordinator_disp
  */
 
+use Drupal\voterdb\NlpPaths;
+
 define('DE_MONTH_ARRAY', serialize(array(
     'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
     'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC')));
@@ -222,7 +224,8 @@ function voterdb_lists($form_state) {
     . ' border: 1px solid #3090cc;" class="nowhite">',
     );
   // Get the PDF and Mail list file name associated with this turf.
-  $pathsObj = $form_state['voterdb']['pathsObj'];
+  //$pathsObj = $form_state['voterdb']['pathsObj'];
+  $pathsObj = new NlpPaths();
   $ra_turf_pdfname = $turf['TurfPDF'];  // The PDF file name.
   // If we have a PDF, add the link to it in the aside box.
   if ($ra_turf_pdfname!='') {
@@ -239,6 +242,7 @@ function voterdb_lists($form_state) {
         '#suffix' => " \n   ".'</section>',
     );
   }
+  //voterdb_debug_msg('pdf', '');
   // Mail list.
   $ra_mail_pathname = $GLOBALS['base_url'] .'/'.VO_MAILLIST_PAGE;
   

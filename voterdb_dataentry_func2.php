@@ -14,6 +14,7 @@ use Drupal\voterdb\NlpSurveyQuestion;
 use Drupal\voterdb\NlpCandidates;
 use Drupal\voterdb\NlpResponseCodes;
 use Drupal\voterdb\NlpActivistCodes;
+use Drupal\voterdb\NlpPaths;
 
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -52,7 +53,11 @@ function voterdb_build_call_list(&$form_state) {
   $cl_mcid = $form_state['voterdb']['mcid'];
   $cl_turfindex = $form_state['voterdb']['turfIndex'];       
   // Open a call sheet file.
-  $cl_call_path = voterdb_get_path('CALL',$cl_county);
+  
+  $pathsObj = $form_state['voterdb']['pathsObj'];
+  $cl_call_path = $pathsObj->getPath('CALL',$cl_county);
+  
+  //$cl_call_path = voterdb_get_path('CALL',$cl_county);
   $cl_fname = 'CALL-'.$cl_mcid.'-'.$cl_turfindex;
   $cl_call_uri = $cl_call_path . $cl_fname;
   file_save_data('', $cl_call_uri, FILE_EXISTS_REPLACE);
@@ -101,7 +106,7 @@ function voterdb_build_voter_tbl(&$form_state) {
   // Create the DIV for the AJAX redraw of the table.
   $bv_voters = $form_state['voterdb']['voters'];
   $bv_history = $form_state['voterdb']['history'];
-  voterdb_debug_msg('history', $bv_history);
+  //voterdb_debug_msg('history', $bv_history);
   $surveyQuestionObj = new NlpSurveyQuestion();
   $questionArray = $surveyQuestionObj->getSurveyQuestion();
   if(!empty($questionArray)) {

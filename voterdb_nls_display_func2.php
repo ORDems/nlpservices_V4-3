@@ -98,15 +98,17 @@ function voterdb_get_progress($nlRecord,$reportsObj) {
   // Now get all the reports from this NL for this cycle.
   $gp_cycle = variable_get('voterdb_ecycle', 'xxxx-mm-G');
   $gp_reports = $reportsObj->getNlpVoterReports($gp_mcid,$gp_cycle);
-
+  //voterdb_debug_msg('reports', $gp_reports);
   // Flag the voters with whom the NL had a face-to-face contact.  (There 
   // could have been more than one.)
-  foreach ($gp_reports as $gp_report) {
-    $gp_vanid = $gp_report['vanid'];
-    if(!empty($gp_voters[$gp_vanid])) {
-      $gp_voters[$gp_vanid]['attempt'] = TRUE;
-      if($gp_report['type']==$reportsObj::CONTACT AND $gp_report['value']==$reportsObj::F2F) {
-        $gp_voters[$gp_vanid]['contact'] = TRUE;
+  foreach ($gp_reports as $gp_voter_reports) {
+    foreach ($gp_voter_reports as $gp_report) {
+      $gp_vanid = $gp_report['vanid'];
+      if(!empty($gp_voters[$gp_vanid])) {
+        $gp_voters[$gp_vanid]['attempt'] = TRUE;
+        if($gp_report['type']==$reportsObj::CONTACT AND $gp_report['value']==$reportsObj::F2F) {
+          $gp_voters[$gp_vanid]['contact'] = TRUE;
+        }
       }
     }
   }

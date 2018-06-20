@@ -91,7 +91,7 @@ class NlpReports {
       if(!empty($cycle)) {
         $query->condition('Cycle',$cycle);
       }
-      $query->orderBy('Date', 'DESC');
+      $query->orderBy('Cdate', 'DESC');
       $result = $query->execute();
     }
     catch (Exception $e) {
@@ -101,11 +101,11 @@ class NlpReports {
     }
     db_set_active('default');
 
-    $voterReports = array();
+    $voterReports = $voterReport = array();
     do {
       $report = $result->fetchAssoc();
       if(!$report) {break;}
-      foreach ($resultsList as $nlpKey=>$dbKey) {
+      foreach ($this->resultsList as $nlpKey=>$dbKey) {
         $voterReport[$nlpKey] = $report[$dbKey];
       }
       $voterReports[$report['MCID']][] = $voterReport;

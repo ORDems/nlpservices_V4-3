@@ -29,8 +29,8 @@ function voterdb_debug_msg($dm_msg,$dm_structure) {
   $backTrace = debug_backtrace(); 
   $caller = voterdb_current_file($backTrace[0]['file']);
   $callerLine = $backTrace[0]['line'];
-  drupal_set_message("DEBUG ".$dm_msg." (".$caller." ".$callerLine.")"   ,'error');
-  if ($dm_structure != '') {
+  drupal_set_message("DEBUG ".$dm_msg." (".$caller." ".$callerLine.")"   ,'status');
+  if (!empty($dm_structure)) {
     drupal_set_message('<pre>'.print_r($dm_structure, true).'</pre>','status');
   }
 }

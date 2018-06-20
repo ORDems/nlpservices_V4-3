@@ -12,7 +12,6 @@ require_once "voterdb_fix_report_func.php";
 require_once "voterdb_fix_report_func2.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_track.php";
-require_once "voterdb_nls_validate.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_class_button.php";
 require_once "voterdb_class_turfs.php";

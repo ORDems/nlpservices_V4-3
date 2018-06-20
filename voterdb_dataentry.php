@@ -1,19 +1,19 @@
 <?php
 /*
- * Name: voterdb_dataentry.php      V4.1  5/29/18
+ * Name: voterdb_dataentry.php      V4.2  6/18/18
  */
-require_once "voterdb_constants_goals_tbl.php";
+//require_once "voterdb_constants_goals_tbl.php";
 require_once "voterdb_constants_mb_tbl.php";
 require_once "voterdb_constants_voter_tbl.php";
-require_once "voterdb_constants_rr_tbl.php";
+//require_once "voterdb_constants_rr_tbl.php";
 require_once "voterdb_constants_log_tbl.php"; 
-require_once "voterdb_constants_turf_tbl.php";
+//require_once "voterdb_constants_turf_tbl.php";
 require_once "voterdb_constants_date_tbl.php";
-require_once "voterdb_constants_candidates_tbl.php";
+//require_once "voterdb_constants_candidates_tbl.php";
 require_once "voterdb_constants_nlp_instructions_tbl.php";
 require_once "voterdb_group.php";
 require_once "voterdb_debug.php";
-require_once "voterdb_nls_validate.php";
+//require_once "voterdb_nls_validate.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_track.php";
 require_once "voterdb_path.php";
@@ -36,6 +36,7 @@ require_once "voterdb_class_nlreports_nlp.php";
 require_once "voterdb_class_activist_codes_nlp.php";
 require_once "voterdb_class_turfs.php";
 require_once "voterdb_class_paths.php";
+require_once "voterdb_class_nls.php";
 
 
 use Drupal\voterdb\NlpMagicWords;
@@ -43,6 +44,7 @@ use Drupal\voterdb\NlpCandidates;
 use Drupal\voterdb\NlpSurveyQuestion;
 use Drupal\voterdb\NlpTurfs;
 use Drupal\voterdb\NlpPaths;
+use Drupal\voterdb\NlpNls;
 
 
 define('DE_BLUE','color:blue;');
@@ -113,6 +115,7 @@ define('DC_HINTS',
  * @return array - $form.
  */
 function voterdb_dataentry_form($form_id, &$form_state) {
+  //voterdb_debug_msg('form', '');
   // Verify we know the group
   if (!isset($form_state['voterdb']['reenter'])) {
     if(!voterdb_get_group($form_state)) {return;}
@@ -156,18 +159,17 @@ function voterdb_dataentry_form($form_id, &$form_state) {
  * data entry. 
  */
     case 'data-entry':
-      voterdb_debug_msg('dataentry', '');
+      //voterdb_debug_msg('dataentry', '');
       // Build the table of voters if we haven't already done it.
       if(!isset($form_state['voterdb']['voters'])) {
-        voterdb_debug_msg('fetchvoters', '');
+        //voterdb_debug_msg('fetchvoters', '');
         $form_state['voterdb']['voters'] = voterdb_fetch_voters($form_state);  // func5.
+        //voterdb_debug_msg('voters', $form_state['voterdb']['voters']);
         $form_state['voterdb']['call-file'] = voterdb_build_call_list($form_state);  // func2.
-        
-        //$questionObj = new NlpSurveyQuestion();
-        //$form_state['voterdb']['questionObj'] = $questionObj;
-        //voterdb_debug_msg('question obj ', $questionObj);
+        //voterdb_debug_msg('callfile', $form_state['voterdb']['call-file']);
         
         $candiatesObj = new NlpCandidates();
+        //voterdb_debug_msg('candidatesobj', $candiatesObj);
         $district['hd'] = $form_state['voterdb']['turf-hd'];
         $district['pct'] = $form_state['voterdb']['turf-pct'];
         $district['cd'] = $form_state['voterdb']['turf-cd'];
@@ -178,10 +180,11 @@ function voterdb_dataentry_form($form_id, &$form_state) {
         // Record the date of this access to the turf by the NL.
         $turfIndex = $form_state['voterdb']['turfIndex'];
         $turfObj = $form_state['voterdb']['turfObj'];
+        //voterdb_debug_msg('turfobj', $turfObj);
         $turfObj->setLastTurfAccess($turfIndex,NULL);
         
       }
-      voterdb_debug_msg('voters', $form_state['voterdb']['voters']);
+      //voterdb_debug_msg('voters', $form_state['voterdb']['voters']);
       $form['info-box-c0'] = array(
         '#markup' => " \n".'<div>'.
         " \n".'<!-- Info box table -->'." \n".'<table class="noborder" style="width:840px; margin:0px 0px 6px 0px; padding:0px">'.
@@ -261,7 +264,7 @@ function voterdb_dataentry_form($form_id, &$form_state) {
  */
 function voterdb_dataentry_form_validate($form, &$form_state) {
   //voterdb_debug_msg('validate', $form_state['voterdb']);
-  voterdb_debug_msg('validate', '');
+  //voterdb_debug_msg('validate', '');
   $page = $form_state['voterdb']['page'];
   switch ($page) {
 /* * * * * * * * * * * * *
@@ -276,16 +279,20 @@ function voterdb_dataentry_form_validate($form, &$form_state) {
       $dv_browser = getBrowser();
       // Verify we know this NL.
       // Note: resolve the case where there are two NLs with the same name.
-      $dv_nls_info = voterdb_nls_validate($dv_fname, $dv_lname,$dv_county);  // nls_validate.
+      $nlsObj = new NlpNls();
+      //voterdb_debug_msg('nlsobj', $nlsObj);
+      $dv_nls_info = $nlsObj->getNl($dv_fname, $dv_lname, $dv_county);
+      //voterdb_debug_msg('nlsinfo', $dv_nls_info);
+      //$dv_nls_info = voterdb_nls_validate($dv_fname, $dv_lname,$dv_county);  // nls_validate.
       // Stop if we don't have this person in the database.
       if (!$dv_nls_info) {
         $dv_info = $dv_fname.' '.$dv_lname.' : '.$dv_browser['platform'].' '.$dv_browser['browser'];
         voterdb_login_tracking('login',$dv_county, 'Invalid User Name',$dv_info);  // func
-        form_set_error('nllname','Your name is not on our list.');
+        form_set_error('nllname','Your name is not on our list of active Neighborhood Leaders.  Please contact your coordinator.');
         form_set_error('nlfname','');
         return FALSE;
       }
-      $dv_mcid = $dv_nls_info[NH_MCID];
+      $dv_mcid = $dv_nls_info['mcid'];
       // Check that the password is reasonably close.  This just stops the Russian bots.
 
       $dv_passwordObj = new NlpMagicWords();
@@ -303,13 +310,15 @@ function voterdb_dataentry_form_validate($form, &$form_state) {
       $form_state['voterdb']['fname'] = $dv_fname;
       $form_state['voterdb']['lname'] = $dv_lname;
       $form_state['voterdb']['mcid'] = $dv_mcid;
-      $form_state['voterdb']['HD'] = $dv_nls_info[NH_HD];
-      $form_state['voterdb']['pct'] = $dv_nls_info[NH_PCT];
+      $form_state['voterdb']['HD'] = $dv_nls_info['hd'];
+      $form_state['voterdb']['pct'] = $dv_nls_info['pct'];
       // Check if this NL has one or more turfs
       
       
       $turfObj = $form_state['voterdb']['turfObj'];
+      //voterdb_debug_msg('turfobj', $turfObj);
       $turfArray = $turfObj->turfExists($dv_mcid,$dv_county);
+      //voterdb_debug_msg('turf', $turfArray);
       $form_state['voterdb']['turfArray'] = $turfArray;
       
       if (empty($turfArray)) {
@@ -358,7 +367,7 @@ function voterdb_dataentry_form_validate($form, &$form_state) {
  */
 function voterdb_dataentry_form_submit($form, &$form_state) {
   //voterdb_debug_msg('submit', $form_state['voterdb']);
-  voterdb_debug_msg('submit', '');
+  //voterdb_debug_msg('submit', '');
   $page = $form_state['voterdb']['page'];
   switch ($page) {
 /* * * * * * * * * * * * *
