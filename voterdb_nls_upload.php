@@ -116,10 +116,9 @@ function voterdb_prepare_NL_database($form_state){
       $nlObj->createNlGrp($pn_MCID,$pn_county);
       // Create a status record if on does not already exist.
       $pn_nl_status = $nlObj->getNlsStatus($pn_MCID,$pn_county);
-      //$pn_nl_status = voterdb_nls_status('GET',$pn_MCID,$pn_county,NULL);
+      //
       if (!empty($pn_nl_status)) {
         $nlObj->setNlsStatus($pn_nl_status);
-        //voterdb_nls_status('PUT',$pn_MCID,$pn_county,$pn_nl_status);
       }
     }
       

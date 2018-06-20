@@ -1,10 +1,9 @@
 <?php
 /*
- * Name:  voterdb_coordinators.php               V4.1 5/29/18
+ * Name:  voterdb_coordinators.php               V4.2 6/20/18
  */
 require_once "voterdb_constants_coordinator_tbl.php";
 require_once "voterdb_group.php";
-require_once "voterdb_nls_status.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_track.php";
 require_once "voterdb_banner.php";
