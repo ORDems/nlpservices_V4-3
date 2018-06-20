@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_display_results.php   V4.0 2/18/18
+ * Name: voterdb_display_results.php   V4.2 6/20/18
  */
 require_once "voterdb_constants_rr_tbl.php";
 require_once "voterdb_constants_log_tbl.php";
@@ -8,7 +8,6 @@ require_once "voterdb_constants_voter_tbl.php";
 require_once "voterdb_constants_mb_tbl.php";
 require_once "voterdb_constants_bc_tbl.php";
 require_once "voterdb_constants_nls_tbl.php";
-require_once "voterdb_constants_turf_tbl.php";
 require_once "voterdb_get_county_names.php";
 require_once "voterdb_group.php";
 require_once "voterdb_path.php";

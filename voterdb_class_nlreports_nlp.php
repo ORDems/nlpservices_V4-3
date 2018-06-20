@@ -6,7 +6,6 @@
 
 namespace Drupal\voterdb;
 
-//require_once "voterdb_constants_rr_tbl.php";
 require_once "voterdb_debug.php";
 
 
@@ -29,7 +28,6 @@ class NlpReports {
     'Phone Contact', 'Voice Mail', 'Disconnected', 'Not at this Number',
     self::DECEASED, self::HOSTILE, 'Inaccessible', self::MOVED, 'Refused Contact'
   );
-  
   
   
   private $resultsList = array(
@@ -256,8 +254,6 @@ class NlpReports {
   }
   
   public function getNlpAcReport($vanId) {
-    //$cycle = variable_get('voterdb_ecycle', 'yyyy-mm-t');
-
     db_set_active('nlp_voterdb');
     try {
       $query = db_select(self::NLPRESULTSTBL, 'v');
@@ -265,8 +261,7 @@ class NlpReports {
       $query->condition('VANID',$vanId);
       $query->condition('Active',TRUE);
       $query->condition('Type','Activist');
-      //$query->condition('Cycle',$cycle);
-      $query->orderBy(NC_CDATE, 'DESC');
+      $query->orderBy('Cdate', 'DESC');
       $result = $query->execute();
     }
     catch (Exception $e) {
@@ -275,23 +270,17 @@ class NlpReports {
       return '';
     }
     db_set_active('default');
-    
-
     $report = $result->fetchAssoc();
     if(!$report) {return NULL;}
     $acName = $report['Text'];
     $voterReport[$acName] = $report;
-
-
     return $voterReport;
   }
   
   public function setNlAcReport($canvassResult) {
-    
     //voterdb_debug_msg('canvass report', $canvassResult);
     $rindex = $canvassResult['rindex'];
     if($rindex != 0) {
-      
       try {
         db_set_active('nlp_voterdb');
         db_merge(self::NLPRESULTSTBL)
@@ -305,11 +294,8 @@ class NlpReports {
         voterdb_debug_msg('e', $e->getMessage());
         return FALSE;
       }
-     
     }
-
     $this->setNlReport($canvassResult);
-
   }
 
 }
