@@ -252,16 +252,6 @@ function voterdb_menu() {
     'file' => 'voterdb_nlp_instructions.php',
     'type' => MENU_CALLBACK,
   );
-  $items ['nlpsurvey'] = array (
-    'title' => 'Create the survey question',
-    'description' => 'Create the survey question and responses.',
-    'access arguments' => array('access voterdb tools'),
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('voterdb_survey_question_form'),
-    'file' => 'voterdb_survey_question.php',
-    'type' => MENU_CALLBACK,
-  );
-  
   $items ['nlpadmin'] = array (
     'title' => 'NLP Admin Page',
     'description' => 'Navigate to various functions',
@@ -270,32 +260,29 @@ function voterdb_menu() {
     'file' => 'voterdb_nlpadmin.php',
     'type' => MENU_CALLBACK,
   );
-
-$items['nlpcron'] = array(
-    'title' => 'Cron Example',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('voterdb_cron_form'),
-    'file' => 'voterdb_cron_cmd.php',
-    'access arguments' => array('Access VoterDB tools'),
-);
-
-$items['nlpblocked'] = array(
-    'title' => 'Email Blocked Report',
-    'description' => 'Display list of email bounce reports',
-    'access arguments' => array('access voterdb tools'),
-    'page callback' => 'voterdb_blocked_report',
-    'file' => 'voterdb_blocked_report.php',
-    'type' => MENU_CALLBACK,
-);
-
-$items['nlpnlhistory'] = array(
-    'title' => 'History of NL participation',
-    'description' => 'Create history file for NL participation',
-    'access arguments' => array('access voterdb tools'),
-    'page callback' => 'voterdb_export_nls_status_history',
-    'file' => 'voterdb_export_nls_status_history.php',
-    'type' => MENU_CALLBACK,
-);
+  $items['nlpcron'] = array(
+      'title' => 'Cron Example',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('voterdb_cron_form'),
+      'file' => 'voterdb_cron_cmd.php',
+      'access arguments' => array('Access VoterDB tools'),
+  );
+  $items['nlpblocked'] = array(
+      'title' => 'Email Blocked Report',
+      'description' => 'Display list of email bounce reports',
+      'access arguments' => array('access voterdb tools'),
+      'page callback' => 'voterdb_blocked_report',
+      'file' => 'voterdb_blocked_report.php',
+      'type' => MENU_CALLBACK,
+  );
+  $items['nlpnlhistory'] = array(
+      'title' => 'History of NL participation',
+      'description' => 'Create history file for NL participation',
+      'access arguments' => array('access voterdb tools'),
+      'page callback' => 'voterdb_export_nls_status_history',
+      'file' => 'voterdb_export_nls_status_history.php',
+      'type' => MENU_CALLBACK,
+  );
 return $items;
 };
 

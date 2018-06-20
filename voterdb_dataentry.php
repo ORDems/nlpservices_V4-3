@@ -12,7 +12,6 @@ require_once "voterdb_debug.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_track.php";
 require_once "voterdb_dates.php";
-require_once "voterdb_instructions_get.php"; 
 require_once "voterdb_coordinators_get.php"; 
 require_once "voterdb_dataentry_func.php";
 require_once "voterdb_dataentry_func2.php";
