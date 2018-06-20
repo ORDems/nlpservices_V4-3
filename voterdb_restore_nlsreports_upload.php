@@ -142,7 +142,7 @@ function voterdb_restore_nlsreports_upload($um_arg,&$um_context) {
       catch (Exception $e) {
         db_set_active('default');
         watchdog('voterdb_reports_restore_upload', 'insert error record: @rec', 
-          array('@rec' =>  print_r($e->getMessage() true)),WATCHDOG_DEBUG);
+          array('@rec' =>  print_r($e->getMessage(), true)),WATCHDOG_DEBUG);
         break;
       }
       db_set_active('default');
@@ -184,7 +184,7 @@ function voterdb_restore_nlsreports_upload($um_arg,&$um_context) {
       catch (Exception $e) {
         db_set_active('default');
         watchdog('voterdb_reports_restore_upload', 'insert error record: @rec', 
-          array('@rec' =>  print_r($e->getMessage() true)),WATCHDOG_DEBUG);
+          array('@rec' =>  print_r($e->getMessage(), true)),WATCHDOG_DEBUG);
       }
       db_set_active('default');
     }

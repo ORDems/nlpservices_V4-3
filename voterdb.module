@@ -59,13 +59,13 @@ function voterdb_menu() {
     'type' => MENU_CALLBACK,
   );
 
-  $items ['nlphdfix'] = array (
+  $items ['nlplegislativefixes'] = array (
     'title' => 'Manage Legislative District fixes',
     'description' => 'Fix the HD and Pct if incorrectly set by VoteBuilder',
     'access arguments' => array('access voterdb tools'),
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('voterdb_hd_fix_form'),
-    'file' => 'voterdb_hd_fix.php',
+    'page arguments' => array('voterdb_legislative_fixes_form'),
+    'file' => 'voterdb_legislative_fixes.php',
     'type' => MENU_CALLBACK,
   );
   $items ['nlpfixreport'] = array (

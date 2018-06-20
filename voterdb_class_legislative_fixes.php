@@ -65,6 +65,7 @@ class NlpLegFix{
       voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
+    db_set_active('default');
     $fixes = array();
     do {
       $fix = $result->fetchAssoc();
