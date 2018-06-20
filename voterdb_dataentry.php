@@ -2,23 +2,16 @@
 /*
  * Name: voterdb_dataentry.php      V4.2  6/18/18
  */
-//require_once "voterdb_constants_goals_tbl.php";
 require_once "voterdb_constants_mb_tbl.php";
 require_once "voterdb_constants_voter_tbl.php";
-//require_once "voterdb_constants_rr_tbl.php";
 require_once "voterdb_constants_log_tbl.php"; 
-//require_once "voterdb_constants_turf_tbl.php";
 require_once "voterdb_constants_date_tbl.php";
-//require_once "voterdb_constants_candidates_tbl.php";
 require_once "voterdb_constants_nlp_instructions_tbl.php";
 require_once "voterdb_group.php";
 require_once "voterdb_debug.php";
-//require_once "voterdb_nls_validate.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_track.php";
-require_once "voterdb_path.php";
 require_once "voterdb_dates.php";
-require_once "voterdb_get_browser.php";
 require_once "voterdb_instructions_get.php"; 
 require_once "voterdb_coordinators_get.php"; 
 require_once "voterdb_dataentry_func.php";
@@ -26,11 +19,10 @@ require_once "voterdb_dataentry_func2.php";
 require_once "voterdb_dataentry_func3.php";
 require_once "voterdb_dataentry_func4.php";
 require_once "voterdb_dataentry_func5.php";
-
 require_once "voterdb_class_magic_words.php";
+require_once "voterdb_class_get_browser.php";
 require_once "voterdb_class_candidates_nlp.php";
 require_once "voterdb_class_survey_question_nlp.php";
-//require_once "voterdb_class_canvass_response_nlp.php";
 require_once "voterdb_class_response_codes.php";
 require_once "voterdb_class_nlreports_nlp.php";
 require_once "voterdb_class_activist_codes_nlp.php";
@@ -40,6 +32,7 @@ require_once "voterdb_class_nls.php";
 
 
 use Drupal\voterdb\NlpMagicWords;
+use Drupal\voterdb\GetBrowser;
 use Drupal\voterdb\NlpCandidates;
 use Drupal\voterdb\NlpSurveyQuestion;
 use Drupal\voterdb\NlpTurfs;
@@ -276,14 +269,14 @@ function voterdb_dataentry_form_validate($form, &$form_state) {
       $dv_fname = $form_state['values']['nlfname'];
       $dv_ln = $form_state['values']['nllname'];
       $dv_lname = str_replace("'", "&#039;", $dv_ln); // fix the apostrophies.
-      $dv_browser = getBrowser();
+      $browserObj = new GetBrowser();
+      $dv_browser = $browserObj->getBrowser();
       // Verify we know this NL.
       // Note: resolve the case where there are two NLs with the same name.
       $nlsObj = new NlpNls();
       //voterdb_debug_msg('nlsobj', $nlsObj);
       $dv_nls_info = $nlsObj->getNl($dv_fname, $dv_lname, $dv_county);
       //voterdb_debug_msg('nlsinfo', $dv_nls_info);
-      //$dv_nls_info = voterdb_nls_validate($dv_fname, $dv_lname,$dv_county);  // nls_validate.
       // Stop if we don't have this person in the database.
       if (!$dv_nls_info) {
         $dv_info = $dv_fname.' '.$dv_lname.' : '.$dv_browser['platform'].' '.$dv_browser['browser'];
