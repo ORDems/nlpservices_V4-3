@@ -1,22 +1,21 @@
 <?php
 /*
- * Name:  voterdb_turf_delete.php               V4.1 5/29/18
+ * Name:  voterdb_turf_delete.php               V4.2 6/20/18
  */
-require_once "voterdb_constants_turf_tbl.php";
 require_once "voterdb_constants_voter_tbl.php";
 require_once "voterdb_group.php";
-require_once "voterdb_nls_status.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_track.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_class_button.php";
 require_once "voterdb_class_turfs.php";
 require_once "voterdb_class_paths.php";
+require_once "voterdb_class_nls.php";
 
 use Drupal\voterdb\NlpButton;
 use Drupal\voterdb\NlpTurfs;
 use Drupal\voterdb\NlpPaths;
-
+use Drupal\voterdb\NlpNls;
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_hd_selected_callback
@@ -231,9 +230,12 @@ function voterdb_turf_delete_form_submit($form, &$form_state) {
         ->execute();
       db_set_active('default');
       // Clear the turf cut and turf delivered status.
-      $fv_nls_status = voterdb_nls_status("GET",$fv_mcid,$fv_county,NULL);
-      $fv_nls_status[NN_TURFCUT] =  $fv_nls_status[NN_TURFDELIVERED] = '';
-      voterdb_nls_status("PUT",$fv_mcid,$fv_county,$fv_nls_status);
+      $nlsObj = new NlpNls();
+      $fv_nls_status = $nlsObj->getNlsStatus($fv_mcid,$fv_county);
+
+      $fv_nls_status['turfCut'] =  $fv_nls_status['turfDelivered'] = '';
+      $nlsObj->setNlsStatus($fv_nls_status);
+
       // Track the delete incase we need to help the turf cutter.
       $fv_info = $fv_fname." ".$fv_lname." ".$fv_tname;
       voterdb_login_tracking('turf',$fv_county,'Deleted turf', $fv_info);

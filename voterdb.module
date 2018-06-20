@@ -1,6 +1,6 @@
 <?php
 /**
- * Name:  voteredb_module     V4.1  6/2/18
+ * Name:  voteredb_module     V4.2  6/20/18
  * @file
  * Implements the nlp voter database
  */
@@ -225,15 +225,6 @@ function voterdb_menu() {
     'file' => 'voterdb_nls_display.php',
     'type' => MENU_CALLBACK,
   );
-  $items ['nlpgoals'] = array (
-    'title' => 'Neighborhood Leader Recruitment Goals',
-    'description' => 'Get the NL recruitment goals',
-    'access arguments' => array('access voterdb tools'),
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('voterdb_goals_form'),
-    'file' => 'voterdb_nlp_goals.php',
-    'type' => MENU_CALLBACK,
-  );
   $items ['nlpcoordinators'] = array (
     'title' => 'Manage the list of NLP coordinators',
     'description' => 'Create or delete names for coordinators.',
@@ -301,8 +292,8 @@ $items['nlpnlhistory'] = array(
     'title' => 'History of NL participation',
     'description' => 'Create history file for NL participation',
     'access arguments' => array('access voterdb tools'),
-    'page callback' => 'voterdb_nls_status_history',
-    'file' => 'voterdb_nls_status_history.php',
+    'page callback' => 'voterdb_export_nls_status_history',
+    'file' => 'voterdb_export_nls_status_history.php',
     'type' => MENU_CALLBACK,
 );
 return $items;

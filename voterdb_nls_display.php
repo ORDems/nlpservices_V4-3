@@ -5,11 +5,7 @@
  *
  */
 require_once "voterdb_constants_nls_tbl.php";
-require_once "voterdb_constants_rr_tbl.php";
-require_once "voterdb_constants_goals_tbl.php";
-require_once "voterdb_constants_turf_tbl.php";
 require_once "voterdb_constants_voter_tbl.php";
-require_once "voterdb_nls_status.php";
 require_once "voterdb_group.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_track.php";
@@ -19,7 +15,6 @@ require_once "voterdb_class_get_browser.php";
 require_once "voterdb_class_turfs.php";
 require_once "voterdb_class_nls.php";
 require_once "voterdb_class_nlreports_nlp.php";
-//require_once "voterdb_class_paths.php";
 require_once "voterdb_class_bigtest.php";
 require_once "voterdb_nls_display_func.php";
 require_once "voterdb_nls_display_func2.php";
@@ -28,9 +23,7 @@ use Drupal\voterdb\NlpButton;
 use Drupal\voterdb\NlpTurfs;
 use Drupal\voterdb\NlpNls;
 use Drupal\voterdb\NlpReports;
-//use Drupal\voterdb\NlpBigTest;
 use Drupal\voterdb\GetBrowser;
-//use Drupal\voterdb\NlpPaths;
 
 
 // Constants for building the goals table.
@@ -248,7 +241,7 @@ function voterdb_display_nls_form_validate($form, &$form_state) {
   $nv_id_array = explode('-', $nv_element_clicked);
   $nv_mcid = $nv_id_array[1];  // MCID of affected NL.
   $nv_status = $nlsObj->getNlsStatus($nv_mcid,$nv_county);
-  //$nv_status = voterdb_nls_status('GET',$nv_mcid,$nv_county,'');  // Current status.
+  //
   $nv_value = $form_state['triggering_element']['#value'];
   voterdb_debug_msg('value', $nv_value);
   
@@ -266,7 +259,7 @@ function voterdb_display_nls_form_validate($form, &$form_state) {
       $nv_status['turfDelivered'] = $nv_cell_display;
       
       $nlsObj->setNlsStatus($nv_status);
-      //voterdb_nls_status('PUT',$nv_mcid,$nv_county,$nv_status);
+      //
       
       $form_state['voterdb']['nl-list'][$nv_mcid]['status']['turfDelivered'] = $nv_cell_display;
       
@@ -288,7 +281,7 @@ function voterdb_display_nls_form_validate($form, &$form_state) {
       $nv_status['turfCut'] = $nv_cell_display;
       
       $nlsObj->setNlsStatus($nv_status);
-      //voterdb_nls_status('PUT',$nv_mcid,$nv_county,$nv_status);
+      //
       
       $form_state['voterdb']['nl-list'][$nv_mcid]['status']['turfCut'] = $nv_cell_display;
       
@@ -307,7 +300,7 @@ function voterdb_display_nls_form_validate($form, &$form_state) {
       
       $nlsObj->setNlsStatus($nv_status);
       
-      //voterdb_nls_status('PUT',$nv_mcid,$nv_county,$nv_status);
+      //
       $form_state['voterdb']['nlRecords'][$nv_mcid]['status']['notes'] = $nv_trunc;
       break;
     
@@ -324,7 +317,7 @@ function voterdb_display_nls_form_validate($form, &$form_state) {
       }
       $nv_status['asked'] = $nv_value;
       $form_state['voterdb']['nl-list'][$nv_mcid]['status']['asked'] = $nv_value;
-      //voterdb_nls_status('PUT',$nv_mcid,$nv_county,$nv_status);
+      //
       $nlsObj->setNlsStatus($nv_status);
       
       $statusHistory['mcid'] = $nv_mcid;

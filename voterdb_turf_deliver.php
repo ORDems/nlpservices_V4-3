@@ -1,28 +1,27 @@
 <?php
 
 /*
- * Name:  voterdb_turf_deliver.php               V4.1 5/30/18
+ * Name:  voterdb_turf_deliver.php               V4.2 6/20/18
  */
-//require_once "voterdb_constants_turf_tbl.php";
 require_once "voterdb_constants_voter_tbl.php";
 require_once "voterdb_constants_nls_tbl.php";
 require_once "voterdb_constants_nlp_instructions_tbl.php";
 require_once "voterdb_constants_coordinator_tbl.php";
 require_once "voterdb_group.php";
-require_once "voterdb_nls_status.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_track.php";
 require_once "voterdb_banner.php";
-require_once "voterdb_nls_status.php";
 require_once "voterdb_instructions_get.php";
 require_once "voterdb_coordinators_get.php";
 require_once "voterdb_class_button.php";
 require_once "voterdb_class_turfs.php";
 require_once "voterdb_class_paths.php";
+require_once "voterdb_class_nls.php";
 
 use Drupal\voterdb\NlpButton;
 use Drupal\voterdb\NlpTurfs;
 use Drupal\voterdb\NlpPaths;
+use Drupal\voterdb\NlpNls;
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_hd_selected_callback
@@ -254,13 +253,15 @@ function voterdb_turf_deliver_form_submit($form, &$form_state) {
   }
   // Check if this NL is signed up to send a postcard.
   $df_contact_array = unserialize(CT_CONTACT_ARRAY);
-  $df_nls_status = voterdb_nls_status('GET', $df_mcid, $df_county, '');
+  $nlsObj = new NlpNls();
+  $df_nls_status = $nlsObj->getNlsStatus($df_mcid,$df_county);
+
   $df_mail = ($df_nls_status[NN_CONTACT] == $df_contact_array[CT_MAIL]);
   // Get the external URI for the instructions.
   $pathsObj = new NlpPaths();
   $df_path = $pathsObj->getPath('INST',$df_county);
   
-  //$df_path = voterdb_get_path('INST', $df_county);
+  
   $df_curl = file_create_url($df_path . $df_instuctions[NE_CANVASS][NI_FILENAME]);
   $df_purl = file_create_url($df_path . $df_instuctions[NE_POSTCARD][NI_FILENAME]);
   // Get the info about the NL for the email.
@@ -371,9 +372,11 @@ function voterdb_turf_deliver_form_submit($form, &$form_state) {
           ' ' . $df_nl[NH_LNAME] . ' - ' . $df_nl[NH_EMAIL] . ']';
   if ($result['result'] == TRUE) {
     // Update the NLs status to indicate the turf was delivered.
-    $df_nls_status = voterdb_nls_status('GET', $df_mcid, $df_county, '');
-    $df_nls_status[NN_TURFDELIVERED] = 'Y';
-    voterdb_nls_status('PUT', $df_mcid, $df_county, $df_nls_status);
+
+    $df_nls_status = $nlsObj->getNlsStatus($df_mcid,$df_county);
+    $df_nls_status['turfDelivered'] = 'Y';
+    $nlsObj->setNlsStatus($df_nls_status);
+
     // Now update date the turf was delivered.
     $turfsObj = $form_state['voterdb']['turfsObj'];
     $turfsObj->setTurfDelivered($tc_turf_array['TurfIndex']);

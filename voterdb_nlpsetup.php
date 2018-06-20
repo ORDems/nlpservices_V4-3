@@ -1,13 +1,12 @@
 <?php
 /*
- * Name: voterdb_nlpsetup.php   V4.0 4/5/18
+ * Name: voterdb_nlpsetup.php   V4.2 6/20/18
  * 
  * Creates the MySQL tables used by the module.  And, the table for the 
  * house district numbers is populated.  And, two basic pages are created
  * for use to display the call list and the mail list for an NL.
  */
 require_once "voterdb_constants_bc_tbl.php";
-require_once "voterdb_constants_goals_tbl.php";
 require_once "voterdb_constants_hd_tbl.php";
 require_once "voterdb_constants_ld_tbl.php";
 require_once "voterdb_constants_log_tbl.php";
@@ -53,13 +52,6 @@ define('DBC_PARTY',serialize (array(BC_PARTY,'CHAR(4)',DB_COLLATE,"COMMENT 'Name
 define('DBC_VOTERS',serialize (array(BC_REG_VOTERS,'INT',"COMMENT 'Total count of registered voters'")));
 define('DBC_VOTED',serialize (array(BC_REG_VOTED,'INT',"COMMENT 'Count of ballots recieved for the county or party'")));
 define('DBC_BALLOTCOUNT_FDEF', serialize (array(DBC_COUNTY,DBC_PARTY,DBC_VOTERS,DBC_VOTED)));
-// NLP GOALS ----------------------------------------------------
-// NL Recruitment goals for each county and each HD in the county
-define('DNG_GOALS_TDEF',serialize(array(DB_NLPGOALS_TBL,'Goals for NL recruitment for HDs and County.',' UNIQUE INDEX GoalIndex USING BTREE ('.NM_COUNTY.','.NM_HD.') ')));
-define('DNG_COUNTY',serialize (array(NM_COUNTY,DB_COUNTY_TYPE,'NOT NULL',DB_COLLATE, "COMMENT 'County Name'")));
-define('DNG_HD',serialize (array(NM_HD,DB_HD_TYPE,'NOT NULL', DB_COLLATE,"COMMENT 'HD Number or ALL for County'")));
-define('DNG_NLPGOAL',serialize (array(NM_NLPGOAL,'INT','DEFAULT 0', "COMMENT 'Goal for the HD or County'")));
-define('DNG_GOALS_FDEF',serialize (array(DNG_COUNTY,DNG_HD, DNG_NLPGOAL)));
 // NLP RESULTS -----------------------------------------------------
 // Results reported by an NL, one result for each voter for each report
 define('DNG_RESULTS_TDEF',serialize(array(DB_NLPRESULTS_TBL,'Result submitted by NL for a voter contact.',' INDEX('.NC_VANID.') ')));
@@ -457,55 +449,6 @@ function voterdb_hd_build($hb_county_defs) {
   return;
 }
 
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_goals_build
- * 
- * Fill up the Goals tables with values to simplify code checking later.
- * The values are all zero to start.
- * 
- * Nothing is returned.
- */
-function voterdb_goals_build($gb_county_defs) {
-  foreach ($gb_county_defs as $gb_county=>$gb_hd_def) {
-    //$gb_county_info = unserialize($hd_county_def);
-    db_set_active('nlp_voterdb');
-    try {
-      db_insert(DB_NLPGOALS_TBL)
-        ->fields(array(
-          NM_COUNTY => $gb_county,
-          NM_HD => 0,  // indicates the entire county.
-          NM_NLPGOAL => 0,
-        ))
-        ->execute();
-    }
-    catch (Exception $e) {
-      db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() );
-      return FALSE;
-    }
-
-    foreach ($gb_hd_def as $gb_hd_num) {
-      // Insert a record for the HD number in the county.
-      db_set_active('nlp_voterdb');
-      try {
-        db_insert(DB_NLPGOALS_TBL)
-          ->fields(array(
-            NM_COUNTY => $gb_county,
-            NM_HD => $gb_hd_num,
-            NM_NLPGOAL => 0,
-          ))
-          ->execute();
-      }
-      catch (Exception $e) {
-        db_set_active('default');
-        voterdb_debug_msg('e', $e->getMessage() );
-        return FALSE;
-      }
-      db_set_active('default');
-    }
-  }
-}
-
 function voterdb_create_front_page($fp_name,$fp_counties) {
   $fp_county_names = array_keys($fp_counties);
   $fp_module_path = drupal_get_path('module','voterdb');
@@ -758,7 +701,6 @@ function voterdb_setup_form_submit($form, &$form_state) {
   voterdb_build_tables($fs_enum,DB_DRUPAL_TBLS_ARRAY,DB_DRUPAL_FIELDS_ARRAY,'default');
   // Initial values for static fields.
   voterdb_hd_build($fs_counties);
-  voterdb_goals_build($fs_counties);
   // Create the nodes we use for navigation and display.
   voterdb_create_node(VO_CALLLIST_PAGE,'GOTV Call List','php',FALSE);
   voterdb_create_node(VO_MAILLIST_PAGE,'Post Card Mailing List','php',FALSE);

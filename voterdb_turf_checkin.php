@@ -4,17 +4,13 @@
  * This include file contains the code to upload a turf exported from the
  * VAN and add it to the voter database.
  */
-
-require_once "voterdb_constants_turf_tbl.php";
 require_once "voterdb_constants_voter_tbl.php";
 require_once "voterdb_constants_nls_tbl.php";
 require_once "voterdb_constants_van_tbl.php";
 require_once "voterdb_constants_voter_tbl.php";
 require_once "voterdb_group.php";
-require_once "voterdb_nls_status.php";
 require_once "voterdb_track.php";
 require_once "voterdb_banner.php";
-require_once "voterdb_path.php";
 require_once "voterdb_van_hdr.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_class_button.php";
@@ -401,7 +397,11 @@ function voterdb_turf_checkin_form_submit($form,&$form_state) {
   $tc_turf_pdf_name = '';
   if ($tc_pdf_tmp != '') {
     $tc_turf_pdf_name = "MCID".$tc_mcid."_".$tc_tname.'.pdf';
-    $tc_uri = voterdb_get_path('PDF',$tc_county).$tc_turf_pdf_name;
+    
+    $pathsObj = new NlpPaths();
+    $tc_uri = $pathsObj->getPath('PDF',$tc_county).$tc_turf_pdf_name;
+  
+    //$tc_uri = voterdb_get_path('PDF',$tc_county).$tc_turf_pdf_name;
     drupal_move_uploaded_file($tc_pdf_tmp, $tc_uri);
     $form_state['voterdb']['pdf_file'] = $tc_turf_pdf_name;
   } 
@@ -422,15 +422,13 @@ function voterdb_turf_checkin_form_submit($form,&$form_state) {
   
   $nlsObj = $form_state['voterdb']['nlsObj'];
   $tc_nls_status = $nlsObj->getNlsStatus($tc_mcid,$tc_county);
-  //$tc_nls_status = voterdb_nls_status('GET',$tc_mcid,$tc_county,'');
+
   $tc_nls_status['nlSignup'] = 'Y'; 
   $tc_nls_status['tufCut'] = 'Y'; 
 
   $tc_nls_status['asked'] = 'yes'; 
   //voterdb_debug_msg('nlstatus', $tc_nls_status);
   $nlsObj->setNlsStatus($tc_nls_status);
-  //voterdb_nls_status('PUT',$tc_mcid,$tc_county,$tc_nls_status);
-  //voterdb_nl_status_history($tc_county,$tc_mcid,NY_TURFCHECKEDIN);
   
   $statusHistory['mcid'] = $tc_mcid;
   $statusHistory['county'] = $tc_county;
