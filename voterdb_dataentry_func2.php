@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_dataentry_func2.php     V4.1  6/4/18
+ * Name: voterdb_dataentry_func2.php     V4.2  6/21/18
  *
  */
 
@@ -57,18 +57,18 @@ function voterdb_build_call_list(&$form_state) {
   $pathsObj = $form_state['voterdb']['pathsObj'];
   $cl_call_path = $pathsObj->getPath('CALL',$cl_county);
   
-  //$cl_call_path = voterdb_get_path('CALL',$cl_county);
+  
   $cl_fname = 'CALL-'.$cl_mcid.'-'.$cl_turfindex;
   $cl_call_uri = $cl_call_path . $cl_fname;
   file_save_data('', $cl_call_uri, FILE_EXISTS_REPLACE);
   $cl_call_file_fh = fopen($cl_call_uri,"w");
-  $cl_types = unserialize(DE_TYPE_ARRAY);
+  //$cl_types = unserialize(DE_TYPE_ARRAY);
   foreach ($cl_voters as $cl_voter_info) {
     // Write a record to the call sheet file.
     $cl_call_record[0] = $cl_voter_info[VN_FIRSTNAME]." ". $cl_voter_info[VN_LASTNAME];
     $cl_call_record[1] = "H:".$cl_voter_info[VN_HOMEPHONE];
     $cl_call_record[2] = "C:".$cl_voter_info[VN_CELLPHONE];
-    $cl_call_record[3] = $cl_voter_info['current'][$cl_types[RT_CONTACT]];
+    $cl_call_record[3] = $cl_voter_info['current']['contact'];
     $cl_call_record[4] = ($cl_voter_info['status']['voted']=='')?'call':'';
     $cl_call_string = implode("\t", $cl_call_record);
     $cl_call_string .= "\n";
@@ -183,7 +183,7 @@ function voterdb_build_voter_tbl(&$form_state) {
     $bv_moved = $bv_voter_info['status'][VM_MOVED]; 
     $bv_deceased = $bv_voter_info['status'][VM_DECEASED]; 
     $bv_party = $bv_voter_info[VN_PARTY];
-    $bv_types = unserialize(DE_TYPE_ARRAY);
+    //$bv_types = unserialize(DE_TYPE_ARRAY);
     // Save the VAN id for processing any entered data.
     $form_state['voterdb']['voter'][$bv_vcnt] = $bv_vanid;
     $bv_name_string = $bv_voter_info[VN_LASTNAME].", ".$bv_voter_info[VN_FIRSTNAME];
@@ -385,10 +385,10 @@ function voterdb_build_voter_tbl(&$form_state) {
     $bv_results_row = " \n".'<tr class="even">'
       ." \n ".'<td class="td-de"></td>'
       ." \n ". '<td class="td-de"></td>'
-      ." \n ". '<td class="td-de">'.$bv_rpt[$bv_types[RT_CONTACT]].'</td>'
-      ." \n ". '<td class="td-de">'.$bv_rpt[$bv_types[RT_SURVEY]].'</td>'
-      ." \n ". '<td class="td-de">'.$bv_rpt[$bv_types[RT_ID]].'</td>'
-      ." \n ". '<td class="td-de">'.$bv_rpt[$bv_types[RT_COMMENT]].'</td>'
+      ." \n ". '<td class="td-de">'.$bv_rpt['contact'].'</td>'
+      ." \n ". '<td class="td-de">'.$bv_rpt['survey'].'</td>'
+      ." \n ". '<td class="td-de">'.$bv_rpt['id'].'</td>'
+      ." \n ". '<td class="td-de">'.$bv_rpt['comment'].'</td>'
       ." \n ". '<td class="td-de">'.$bv_edisplay.'</td>'
       ." \n ".'</tr>';
     $form_element['vform']["row-results-$bv_vcnt"] = array(
