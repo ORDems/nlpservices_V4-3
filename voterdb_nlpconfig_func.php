@@ -1,11 +1,10 @@
 <?php
 /*
- * Name: voterdb_nlpconfig_func.php   V4.1 5/31/18
+ * Name: voterdb_nlpconfig_func.php   V4.2 5/31/18
  * Sets the global variables for an election cycle.
  */
 
 use Drupal\voterdb\NlpCounties;
-use Drupal\voterdb\NlpMagicWords;
 use Drupal\voterdb\ApiResponseCodes;
 use Drupal\voterdb\ApiAuthentication;
 use Drupal\voterdb\NlpResponseCodes;
@@ -80,52 +79,6 @@ function voterdb_build_form(&$form,&$form_state) {
   );
   $form['body'] = array(
     '#markup' => " \n ".'<tbody><tr><td  style="width:350px;  vertical-align: top;">',
-  );
-  
-  
-  //
-  // - - - NLP Configuration block. - - - - - - - - - - - - - -
-  //
-
-  $form['nlp'] = array(
-    '#title' => 'NLP Configuration',
-    '#prefix' => " \n".'<div  style="width:310px;">'." \n",
-    '#suffix' => " \n".'</div>'." \n",
-    '#type' => 'fieldset',
-  );
-  $fv_passwordObj = new NlpMagicWords();
-  //voterdb_debug_msg('password obj', $fv_passwordObj);
-  $fv_password_array = $fv_passwordObj->getMagicWords('default');
-  //voterdb_debug_msg('password array', $fv_password_array);
-
-  $form['nlp']['voterdb_password'] = array(
-    '#type' => 'textfield',
-    '#id' => 'password',
-    '#title' => t('Default NL password'),
-    '#default_value' => $fv_password_array['password'],
-    '#size' => 12,
-    '#maxlength' => 12,
-    '#description' => t("A password for NLs to get their lists"),
-    '#required' => TRUE,
-  );
-  $form['nlp']['voterdb_altpassword'] = array(
-    '#type' => 'textfield',
-    '#id' => 'altpassword',
-    '#title' => t('Default NL password (alternate)'),
-    '#default_value' => $fv_password_array['passwordAlt'],
-    '#size' => 12,
-    '#maxlength' => 12,
-    '#description' => t("An alternate password for NLs to get their lists"),
-    //'#required' => TRUE,
-  );
-  $form['nlp']['pw-hdr'] = array (
-    '#markup' => '<br><hr><b>Use the link below to create a unique password for one or more counties.</b>',
-  );
-  // Submit button
-  $form['nlp']['countypw'] = array(
-    '#type' => 'submit',
-    '#name' => 'countypw',
-    '#value' => 'Set unique password for counties >>'
   );
   
   

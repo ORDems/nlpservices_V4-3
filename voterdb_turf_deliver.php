@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Name:  voterdb_turf_deliver.php               V4.2 6/20/18
+ * Name:  voterdb_turf_deliver.php               V4.2 7/12/18
  */
 require_once "voterdb_constants_voter_tbl.php";
 require_once "voterdb_constants_nls_tbl.php";
@@ -12,15 +12,18 @@ require_once "voterdb_debug.php";
 require_once "voterdb_track.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_coordinators_get.php";
+require_once "voterdb_instructions_get.php";
 require_once "voterdb_class_button.php";
 require_once "voterdb_class_turfs.php";
 require_once "voterdb_class_paths.php";
 require_once "voterdb_class_nls.php";
+require_once "voterdb_class_drupal_users.php";
 
 use Drupal\voterdb\NlpButton;
 use Drupal\voterdb\NlpTurfs;
 use Drupal\voterdb\NlpPaths;
 use Drupal\voterdb\NlpNls;
+use Drupal\voterdb\NlpDrupalUser;
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_hd_selected_callback
@@ -105,7 +108,7 @@ function voterdb_turf_deliver_form($form, &$form_state) {
   // Get the list of HDs with existing turfs.
   
   $turfsObj = new NlpTurfs();
-  $form_state['voterdb']['turfsObj'] = $turfsObj;
+  //$form_state['voterdb']['turfsObj'] = $turfsObj;
   $fv_hd_options = $turfsObj->getTurfHD($fv_county);
   
   
@@ -158,7 +161,7 @@ function voterdb_turf_deliver_form($form, &$form_state) {
   $turfArray = $turfsObj->getTurfs($turfReq);
   
   
-  
+  $nlsObj = new NlpNls();
   
   // Display the turf choices.
   if (!empty($turfArray)) {
@@ -171,6 +174,12 @@ function voterdb_turf_deliver_form($form, &$form_state) {
     foreach ($turfArray as $fv_turf_index=>$fv_turf) {
       // Get the information about the NL for this turf.
       $fv_mcid = $fv_turf['MCID'];
+      
+      //voterdb_debug_msg('mcid', $fv_mcid);
+
+      $nl = $nlsObj->getNlById($fv_mcid);
+      $fv_email = $nl['email'];
+      /*
       db_set_active('nlp_voterdb');
       $fv_tselect = "SELECT * FROM {" . DB_NLS_TBL . "} WHERE  " .
               NH_MCID . " = :mcid";
@@ -180,6 +189,7 @@ function voterdb_turf_deliver_form($form, &$form_state) {
       $fv_nl = $fv_result->fetchAll(PDO::FETCH_ASSOC);
       $fv_email = $fv_nl[0][NH_EMAIL];
       db_set_active('default');
+       */
       // Create the display for this turf choice.
       $fv_turf_choices[$fv_turf_index] = '['.$fv_email.'] '.$turfDisplay[$fv_turf_index];
       $form_state['voterdb']['turfs'][$fv_turf_index]['email'] = $fv_email;
@@ -246,24 +256,36 @@ function voterdb_turf_deliver_form_submit($form, &$form_state) {
   $df_plain_note = check_plain($df_note);
   // Get the canvass instruction file name.
   $df_instuctions = voterdb_get_instructions($df_county);
+  //voterdb_debug_msg('instructions', $df_instuctions);
   if (empty($df_instuctions[NE_CANVASS][NI_FILENAME] )) {
     drupal_set_message('Opps, you need to upload the canvass instructions first.', 'error');
     return;
   }
   // Check if this NL is signed up to send a postcard.
-  $df_contact_array = unserialize(CT_CONTACT_ARRAY);
+  //$df_contact_array = unserialize(CT_CONTACT_ARRAY);
   $nlsObj = new NlpNls();
   $df_nls_status = $nlsObj->getNlsStatus($df_mcid,$df_county);
+  
+  $queryObj = new EntityFieldQuery();
+  $userObj = new NlpDrupalUser();
+  $user = $userObj->getUserByMcid($queryObj,$df_mcid);
+  //voterdb_debug_msg('user', $user);
+          
 
-  $df_mail = ($df_nls_status[NN_CONTACT] == $df_contact_array[CT_MAIL]);
+  $df_mail = ($df_nls_status['contact'] == 'mail');
   // Get the external URI for the instructions.
   $pathsObj = new NlpPaths();
   $df_path = $pathsObj->getPath('INST',$df_county);
-  
+  //voterdb_debug_msg('path', $df_path);
   
   $df_curl = file_create_url($df_path . $df_instuctions[NE_CANVASS][NI_FILENAME]);
   $df_purl = file_create_url($df_path . $df_instuctions[NE_POSTCARD][NI_FILENAME]);
   // Get the info about the NL for the email.
+  
+  
+  $df_nl = $nlsObj->getNlById($df_mcid);
+  //voterdb_debug_msg('nlnew', $df_nl);
+  /*
   db_set_active('nlp_voterdb');
   $df_tselect = "SELECT * FROM {" . DB_NLS_TBL . "} WHERE  " .
           NH_MCID . " = :mcid";
@@ -273,28 +295,31 @@ function voterdb_turf_deliver_form_submit($form, &$form_state) {
   $df_nls = $df_result->fetchAll(PDO::FETCH_ASSOC);
   $df_nl = $df_nls[0];
   db_set_active('default');
+  voterdb_debug_msg('nl', $df_nl);
+   */
+  
+  
   // Set up the function call to send the email.
-  $df_params = $df_nl;
+  //$df_params = $df_nl;
   $df_params['func'] = 'turf-deliver';
   $df_language = language_default();
-  $df_send = TRUE;
-  $df_module = 'voterdb';
-  $df_key = 'deliver turf';  // Let the hook know it is us.
+  //$df_send = TRUE;
+  //$df_module = 'voterdb';
+  //$df_key = 'deliver turf';  // Let the hook know it is us.
   // Sender's info.
   $df_params['s-fn'] = $df_user_fname;
   $df_params['s-ln'] = $df_user_lname;
   $df_params['s-email'] = $df_user_email;
   $df_params['county'] = $df_county;
   // Recipient's info, ie the NL.
-  $df_params['r-fn'] = $df_nl[NH_NICKNAME];
-  $df_params['r-ln'] = $df_nl[NH_LNAME];
-  $df_params['r-email'] = $df_nl[NH_EMAIL];
+  $df_params['r-fn'] = $df_nl['nickname'];
+  $df_params['r-ln'] = $df_nl['lastName'];
+  $df_params['r-email'] = $df_nl['email'];
   // Add the note if one provided.
   if (!empty($df_plain_note)) {
     $df_params['note'] = $df_plain_note;
   }
-  // remind NL of the magic word.
-  $df_pass = strtolower(variable_get('voterdb_password', 'Password'));
+
   // Get the name of the coordinator for this NL.  Use the sender's name
   // if the name of the coordinator is not yet known.
   //$df_hd = $df_nl[NH_HD];
@@ -303,10 +328,13 @@ function voterdb_turf_deliver_form_submit($form, &$form_state) {
   $df_colname = $df_user_lname;
   $df_semail = $df_user_email;
   $df_phone = $df_user_phone;
-  $df_region['hd'] = $df_nl[NH_HD];
-  $df_region['pct'] = $df_nl[NH_PCT];
+  $df_region['hd'] = $df_nl['hd'];
+  $df_region['pct'] = $df_nl['pct'];
   $df_region['county'] = $df_county;
+  
   $df_coordinator = voterdb_get_nl_coordinator($df_region);
+  //voterdb_debug_msg('coordinator', $df_coordinator);
+  
   //$df_coordinator = voterdb_get_nl_coordinator($df_county,$df_hd,$df_pct);
   if (!empty($df_coordinator)) {
     $df_cofname = $df_coordinator[CR_FIRSTNAME];
@@ -315,7 +343,7 @@ function voterdb_turf_deliver_form_submit($form, &$form_state) {
     $df_semail = $df_coordinator[CR_EMAIL];
   }
   // Construct the message.
-  $df_message = "<p>" . $df_nl[NH_NICKNAME] . ",</p>";
+  $df_message = "<p>" . $df_nl['nickname'] . ",</p>";
   $df_message .= t("<p>" . 'Thanks for helping establish the Neighborhood Leader Program in @grp County.&nbsp; ', array('@grp' => $df_county));
   $df_message .= t('The first link will take you to the instructions for your canvass of your neighbors.&nbsp;  ' .
           'Please click this link and read the instructions if your are not already familiar with the program.  ' . '</p>');
@@ -337,10 +365,11 @@ function voterdb_turf_deliver_form_submit($form, &$form_state) {
 
   $df_message .= t('Please click the link below to take you to the login for your list of voters.&nbsp;  ' .
           'It is important that you return to this login to report the results of your attempts to contact the voters.&nbsp;   ' .
-          'After login, you will see a link in the upper right corner.&nbsp;  That will take you to a printable copy of your list of voters.  ' .
+          'After login, you will see a link in the upper left corner.&nbsp;  That will take you to a printable copy of your list of voters.  ' .
           'Click that link and print the list.' . '</p>');
-  $df_message .= t('<p><a href="' . $base_url . '/nlpdataentry?County=@grp" target="_blank">Neighborhood Leader Login</a></p>', array('@grp' => $df_county));
-  $df_message .= t('<p>' . 'The password is @pass' . '</p>', array('@pass' => $df_pass));
+  $df_message .= t('<p><a href="' . $base_url . '" target="_blank">Neighborhood Leader Login</a></p>');
+  $df_message .= t('<p>' . 'Your login name is: @name ' . '</p>', array('@name' => $user['userName']));
+  $df_message .= t('<p>' . 'The password is: your password' . '</p>');
   // Add the optional note.
   if (!empty($df_plain_note)) {
     $df_message .= '<p>' . $df_plain_note . '</p>';
@@ -355,7 +384,7 @@ function voterdb_turf_deliver_form_submit($form, &$form_state) {
   $df_params['message'] = $df_message;
   //voterdb_debug_msg('Param', $df_params);
   // Specify 'to' and 'from' addresses.
-  $df_to = $df_nl[NH_EMAIL];
+  $df_to = $df_nl['email'];
   if (empty($df_to)) {
     drupal_set_message(t('The selected NL does not have and email address so nothing was sent.'), 'error');
     return 0;
@@ -363,27 +392,40 @@ function voterdb_turf_deliver_form_submit($form, &$form_state) {
   $df_from = 'NLP Admin<';
   $df_from .= variable_get('voterdb_email', 'notifications@nlpservices.org');
   $df_from .= '>';
+  //voterdb_debug_msg('params', $df_params);
   // Send the email.
-  $result = drupal_mail($df_module, $df_key, $df_to, $df_language, $df_params, $df_from, $df_send);
+  $result = drupal_mail('voterdb', 'deliver turf' , $df_to, $df_language, $df_params, $df_from, TRUE);
   //voterdb_debug_msg('Result', $result);
   // Report results, track the send, and update the "delivered" status.
-  $df_info = 'CO [' . $df_cofname . ' ' . $df_colname . '] NL [' . $df_nl[NH_NICKNAME] .
-          ' ' . $df_nl[NH_LNAME] . ' - ' . $df_nl[NH_EMAIL] . ']';
+  $df_info = 'CO [' . $df_cofname . ' ' . $df_colname . '] NL [' . $df_nl['nickname'] .
+          ' ' . $df_nl['lastName'] . ' - ' . $df_nl['email'] . ']';
   if ($result['result'] == TRUE) {
     // Update the NLs status to indicate the turf was delivered.
 
     $df_nls_status = $nlsObj->getNlsStatus($df_mcid,$df_county);
     $df_nls_status['turfDelivered'] = 'Y';
     $nlsObj->setNlsStatus($df_nls_status);
-
+    //voterdb_debug_msg('status', $df_nls_status);
     // Now update date the turf was delivered.
-    $turfsObj = $form_state['voterdb']['turfsObj'];
+    $turfsObj = new NlpTurfs();
     $turfsObj->setTurfDelivered($tc_turf_array['TurfIndex']);
-    voterdb_nl_status_history($df_county,$df_mcid,NY_DELIVEREDTURF);
+    
+    $statusHistory = array(
+      'mcid' => $df_mcid,
+      'county' => $df_county,
+      'status' => $nlsObj::HISTORYDELIVEREDTURF,
+      'nlFirstName' => $df_nl['nickname'],
+      'nlLastName' => $df_nl['lastName']
+    );
+
+    $nlsObj->setStatusHistory($statusHistory);
+    
+    //voterdb_nl_status_history($df_county,$df_mcid,NY_DELIVEREDTURF);
     drupal_set_message(t('Your message has been sent.'));
     voterdb_login_tracking('turf', $df_county, 'Email sent', $df_info);
   } else {
     drupal_set_message(t('There was a problem sending your message and it was not sent.'), 'error');
     voterdb_login_tracking('turf', $df_county, 'Email failed', $df_info);
   }
+  return;
 }

@@ -24,7 +24,7 @@ use Drupal\voterdb\NlpPaths;
  * @return string - form.
  */
 function voterdb_nlp_instructions_form($form,&$form_state) {
-  voterdb_debug_msg('form', '');
+  //voterdb_debug_msg('form', '');
   $ni_button_obj = new NlpButton();
   $ni_button_obj->setStyle();
   // Verify we know the group.
@@ -35,14 +35,14 @@ function voterdb_nlp_instructions_form($form,&$form_state) {
   } 
   // Get the instruction file names for this county, canvass and postcard.
   $ni_county = $form_state['voterdb']['county'];
-  voterdb_debug_msg('county', $ni_county);
+  //voterdb_debug_msg('county', $ni_county);
   db_set_active('nlp_voterdb');
   $ni_tselect = "SELECT * FROM {".DB_INSTRUCTIONS_TBL."} WHERE  ".NI_COUNTY. " = :county ";
   $ni_targs = array(':county' => $ni_county);
   $ni_result = db_query($ni_tselect,$ni_targs);
   $ni_instructs = $ni_result->fetchAll(PDO::FETCH_ASSOC);
   db_set_active('default');
-  voterdb_debug_msg('instructs', $ni_instructs);
+  //voterdb_debug_msg('instructs', $ni_instructs);
   // Display the current canvass and postcard file names (or not loaded yet")
   //  and remember the file names in the form_state incase it will be deleted.
   $ni_tlist = array(NE_CANVASS,NE_POSTCARD,NE_ABSENTEE);
@@ -56,7 +56,7 @@ function voterdb_nlp_instructions_form($form,&$form_state) {
     $ni_type = $ni_instruct[NI_TYPE];
     $ni_current[$ni_type] = $ni_instruct;
   } 
-  voterdb_debug_msg('current', $ni_current);
+  //voterdb_debug_msg('current', $ni_current);
   $form_state['voterdb']['current'] = $ni_current;
   // Create the form to display of all the NLs
   $hg_banner = voterdb_build_banner ($ni_county);

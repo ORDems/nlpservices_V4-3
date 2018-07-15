@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_turf_checkin_func4.php   V4.0  12/27/17
+ * Name: voterdb_turf_checkin_func4.php   V4.2  6/18/18
  * This include file contains the code to upload a turf exported from the
  * VAN and add it to the voter database.
  */
@@ -8,6 +8,8 @@
  * voterdb_mailing_list, voterdb_get_turf_index, voterdb_display_names, 
  * voterdb_set_moved, voterdb_moved_check, 
  */
+
+use Drupal\voterdb\NlpPaths;
 
 define('OT_ADDR',serialize(array(VN_STREETNO,VN_STREETPREFIX,VN_STREETNAME,
     VN_STREETTYPE,VN_APTTYPE,VN_APTNO,VN_CITY))); 
@@ -52,7 +54,10 @@ function voterdb_mailing_list($form_state) {
   db_set_active('default');
   // Create a postcard addr file.
   $ml_mail_file = "MAIL-".$ml_mcid."-".$ml_turf_index.".txt";
-  $ml_call_path = voterdb_get_path('MAIL',$ml_county);
+  
+  $pathsObj = new NlpPaths();
+  $ml_call_path = $pathsObj->getPath('MAIL',$ml_county);
+  //$ml_call_path = voterdb_get_path('MAIL',$ml_county);
   $ml_mail_file_name = $ml_call_path . $ml_mail_file;
   file_save_data('', $ml_mail_file_name, FILE_EXISTS_REPLACE);
   $ml_mail_fh = fopen($ml_mail_file_name,"w");

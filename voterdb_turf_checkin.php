@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_turf_checkin.php     V4.2  6/18/18
+ * Name: voterdb_turf_checkin.php     V4.2  7/13/18
  * This include file contains the code to upload a turf exported from the
  * VAN and add it to the voter database.
  */
@@ -17,6 +17,8 @@ require_once "voterdb_class_button.php";
 require_once "voterdb_class_turfs.php";
 require_once "voterdb_class_paths.php";
 require_once "voterdb_class_nls.php";
+require_once "voterdb_class_magic_word.php";
+require_once "voterdb_class_drupal_users.php";
 require_once "voterdb_turf_checkin_func.php";
 require_once "voterdb_turf_checkin_func2.php";
 require_once "voterdb_turf_checkin_func3.php";
@@ -27,6 +29,7 @@ use Drupal\voterdb\NlpButton;
 use Drupal\voterdb\NlpTurfs;
 use Drupal\voterdb\NlpPaths;
 use Drupal\voterdb\NlpNls;
+use Drupal\voterdb\NlpMagicWord;
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_turf_checkin_form
@@ -335,6 +338,7 @@ function voterdb_turf_checkin_form_submit($form,&$form_state) {
   $form_state['voterdb']['mcid'] = $tc_mcid;
   $form_state['voterdb']['fname'] = $tc_mcid_array[$tc_nls_selected]['nickname'];
   $form_state['voterdb']['lname'] = $tc_mcid_array[$tc_nls_selected]['lastName'];
+  //voterdb_debug_msg('nlsselected', $tc_mcid_array[$tc_nls_selected]);
   // Save the selected HD and Pct so they are used for another turf.
   // We are guessing the next turf will be in the same precinct.
   $form_state['voterdb']['hd-saved'] = $form_state['values']['HD'];
@@ -348,7 +352,7 @@ function voterdb_turf_checkin_form_submit($form,&$form_state) {
   // Now check if there is any overlap of voter assignment to NLs.
   $tc_turf_overlap = voterdb_turf_overlap($form_state);  // func2.
   if(isset($form_state['voterdb']['Debug'])) {
-    voterdb_debug_msg("Form state:",$form_state);
+    //voterdb_debug_msg("Form state:",$form_state);
     return FALSE;
   }
   if ($tc_turf_overlap == 'err') {
@@ -400,7 +404,7 @@ function voterdb_turf_checkin_form_submit($form,&$form_state) {
     
     $pathsObj = new NlpPaths();
     $tc_uri = $pathsObj->getPath('PDF',$tc_county).$tc_turf_pdf_name;
-  
+    //voterdb_debug_msg('uri', $tc_uri );
     //$tc_uri = voterdb_get_path('PDF',$tc_county).$tc_turf_pdf_name;
     drupal_move_uploaded_file($tc_pdf_tmp, $tc_uri);
     $form_state['voterdb']['pdf_file'] = $tc_turf_pdf_name;
@@ -409,10 +413,11 @@ function voterdb_turf_checkin_form_submit($form,&$form_state) {
   if(!voterdb_insert_turf($form_state)) { //func.
     return FALSE;
   } 
+  //voterdb_debug_msg('turfinserted', '' );
   // Build the mailing address file.
   $tc_mail_file = voterdb_mailing_list($form_state); //func4.
   $form_state['voterdb']['mail_file'] = $tc_mail_file;
-  
+  //voterdb_debug_msg('mailfile', $tc_mail_file);
   $tc_turf_index = $form_state['voterdb']['turf_index'];
   
   $turfsObj = $form_state['voterdb']['turfsObj'];
@@ -420,9 +425,13 @@ function voterdb_turf_checkin_form_submit($form,&$form_state) {
   //voterdb_update_turf_tbl($form_state);
   // Set the NL status to reflect the turf was cut (checked in).
   
+  $magicWordObj = new NlpMagicWord();
+  $magicWord = $magicWordObj->createMagicWord();
+  //voterdb_debug_msg('magicword', $magicWord );
+  
   $nlsObj = $form_state['voterdb']['nlsObj'];
   $tc_nls_status = $nlsObj->getNlsStatus($tc_mcid,$tc_county);
-
+  //voterdb_debug_msg('status', $tc_nls_status );
   $tc_nls_status['nlSignup'] = 'Y'; 
   $tc_nls_status['tufCut'] = 'Y'; 
 
@@ -439,6 +448,21 @@ function voterdb_turf_checkin_form_submit($form,&$form_state) {
   $lt_info = $form_state['voterdb']['fname']." ". 
           $form_state['voterdb']['lname']." ".$form_state['voterdb']['tname'];
   voterdb_login_tracking('turf',$tc_county,'Successful Turf Checkin',$lt_info);
+  //voterdb_debug_msg('info', $lt_info );
+  
+  $userInfo = array(
+      'firstName' => $tc_mcid_array[$tc_nls_selected]['nickname'],
+      'lastName' => $tc_mcid_array[$tc_nls_selected]['lastName'],
+      'county' => $tc_county,
+      'mcid' => $tc_mcid,
+      'email' => $tc_mcid_array[$tc_nls_selected]['email'],
+      'phone' => $tc_mcid_array[$tc_nls_selected]['phone'],
+      'magicWord' => $magicWord,
+  );
+  $newAccount = voterdb_create_drupal_account($userInfo);  // func2.
+  if($newAccount) {
+    $magicWordObj->setMagicWord($tc_mcid,$magicWord);
+  }
   $tc_success_msg = "$tc_tname has been successfully checked in.";
   drupal_set_message($tc_success_msg,'status');
 }

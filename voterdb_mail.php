@@ -1,8 +1,7 @@
 <?php
 /**
- * Name:  voteredb_mail.php     V3.1  9/8/17
+ * Name:  voteredb_mail.php     V4.2  7/11/18
  * @file
- * Implements the nlp voter database
  */
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -13,6 +12,7 @@
  * @param type $message
  */
 function voterdb_mail_alter(&$message) {
+  //drupal_set_message('alter '.'<pre>'.print_r($message, true).'</pre>','status');
   if($message['module'] == 'voterdb') {
     //drupal_set_message('<pre>'.print_r($message, true).'</pre>','status');
     $options = array(
@@ -28,23 +28,51 @@ function voterdb_mail_alter(&$message) {
       // Some modules use the body as a string, erroneously.
       $message['body'] .= $signature;
     }
-  if (isset($message['params']['func']) AND 
-          $message['params']['func'] == 'turf-deliver')  {
-      $params = $message['params'];
-      $ma_notify = array();
-      $ma_notify['sender']['county'] = $params['county'];
-      $ma_notify['sender']['s-fn'] = $params['s-fn'];
-      $ma_notify['sender']['s-ln'] = $params['s-ln'];
-      $ma_notify['sender']['s-email'] = $params['s-email'];
+  if (isset($message['params']['func'])) { 
+      if($message['params']['func'] == 'turf-deliver')  {
+        $params = $message['params'];
+        $ma_notify = array();
+        $ma_notify['sender']['county'] = $params['county'];
+        $ma_notify['sender']['s-fn'] = $params['s-fn'];
+        $ma_notify['sender']['s-ln'] = $params['s-ln'];
+        $ma_notify['sender']['s-email'] = $params['s-email'];
 
-      $ma_notify['recipient']['r-fn'] = $params['r-fn'];
-      $ma_notify['recipient']['r-ln'] = $params['r-ln'];
-      $ma_notify['recipient']['r-email'] = $params['r-email'];
+        $ma_notify['recipient']['r-fn'] = $params['r-fn'];
+        $ma_notify['recipient']['r-ln'] = $params['r-ln'];
+        $ma_notify['recipient']['r-email'] = $params['r-email'];
 
-      $ma_notify_str = json_encode($ma_notify).'<eor>';
+        $ma_notify_str = json_encode($ma_notify).'<eor>';
 
-      $message['headers']['x-voterdb-notify'] = $ma_notify_str;
+        $message['headers']['x-voterdb-notify'] = $ma_notify_str;
+      } 
     }
+  } elseif($message['module'] == 'user') {
+    $accountObj = $message['params']['account'];
+    if($message['key']=='register_admin_created' AND isset($accountObj->func)) {
+      //$from = variable_get('voterdb_email', 'notifications@nlpservices.org');
+      //$from = $message['from'];
+      //$message['from'] = 'NLP Admin <'.$from.'>';
+      
+      $firstName = $accountObj->firstName;
+      $func = $accountObj->func;
+      if($func=='shared') {
+        $message['to'] = $accountObj->sharedEmail;
+      }
+      $message['subject'] = 'Neighborhood Leader account login: access to your turf';
+      $body = $message['body'][0];
+      $content = strstr($body, ':');
+      //$message['body'][0] = $message['params']['account']['field_firstname']['und'][0]['value'].',';
+      $message['body'][0] = $firstName.',';
+      $message['body'][1] = 'Thanks for being a Neighborhood Leader.  '
+              . 'You will need the following information to login to get your turf.  '
+                . 'Use the following link to set your personal password:';
+      $ending = strpos($content,'--');
+      $link = substr($content, 5, $ending-6);
+      $link2 = str_replace('\n\n', '\n', $link);
+      $link3 = str_replace('/?q=user ', ' ', $link2);
+      $message['body'][2] = $link3;
+    }
+    
   }
 }
 
@@ -56,6 +84,10 @@ function voterdb_mail_alter(&$message) {
  * @param type $params
  */
 function voterdb_mail($key, &$message, $params) {
+
+  //drupal_set_message('hookmail key '.$key,'status');
+  //drupal_set_message('<pre>'.print_r($message, true).'</pre>','status');
+  //drupal_set_message('<pre>'.print_r($params, true).'</pre>','status');
 
   $options = array(
     'langcode' => $message['language']->language,
@@ -76,6 +108,12 @@ function voterdb_mail($key, &$message, $params) {
           '@fname' => $df_firstname,
           '@lname' => $df_lastname,
           '@semail' => $df_semail,),$options);
+      break;
+    
+    case 'account_notify':
+      $message['headers']['Content-Type'] = 'text/html; charset=UTF-8;';
+      $message['subject'] = $params['subject'];
+      $message['body'][] = $params['message'];
       break;
     
     case 'no login':

@@ -1,6 +1,6 @@
 <?php
 /**
- * Name: voterdb_nladmin.php    V4.2   6/20/18
+ * Name: voterdb_nladmin.php    V4.2   7/11/18
 */
 require_once "voterdb_group.php";
 require_once "voterdb_banner.php";
@@ -47,8 +47,8 @@ function voterbd_nlpadmin() {
   $output .= "\n".'<div style="width:400px;"> <fieldset><legend><span style="font-size:large; color:#af2108; font_weight:bold;">Admin NLs</span></legend>';
   $output .= "\n".'<p class="narrow"><a href="'.$dn_path.'nlpupload?'.$dn_grp_id.'">Import the list of active NLs</a></p>';
   $output .= "\n".'<p class="narrow"><a href="'.$dn_path.'nlpdisplay?'.$dn_grp_id.'">Display the Active NL Management Page</a></p>';
-  $output .= "\n".'<p class="narrow"><a href="'.$dn_path.'nlpdataentry?'.$dn_grp_id.'">NL Login</a></p>';
-  $output .= "\n".'<p class="narrow" id="hint1"><a href="'.$dn_path.'nlplegislativefixes?'.$dn_grp_id.'">Create substitute HD/Pct for NL <span>This function will repair the HD and Pct numbers when they are missing from the MyCampaign export.</span> </a></p>';
+  $output .= "\n".'<p class="narrow"><a href="'.$dn_path.'nlpcanvassresults?'.$dn_grp_id.'">NL Login</a></p>';
+  $output .= "\n".'<p class="narrow" id="hint1"><a href="'.$dn_path.'nlphdfix?'.$dn_grp_id.'">Create substitute HD/Pct for NL <span>This function will repair the HD and Pct numbers when they are missing from the MyCampaign export.</span> </a></p>';
   $output .= "\n".'<p class="narrow" ><a href="'.$dn_path.'nlpcoordinators?'.$dn_grp_id.'">Identify the district coordinators</a></p>';
   $output .= "\n".'<p class="narrow" ><a href="'.$dn_path.'nlpblocked?'.$dn_grp_id.'">List of NL emails that are undeliverable</a></p>';
   $output .= "\n".'<p class="narrow" id="hint1"><a href="'.$dn_path.'nlp-documents">NLP Documents <span>The latest documents for coordinators and admins can be found here.</span> </a></p>';

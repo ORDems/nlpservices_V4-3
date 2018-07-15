@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_turf_checkin_func2.php   V4.1  5/30/18
+ * Name: voterdb_turf_checkin_func2.php   V4.2  7/11/18
  * This include file contains the code to upload a turf exported from the
  * VAN and add it to the voter database.
  */
@@ -8,6 +8,8 @@
  * voterdb_get_duplicates,
  * voterdb_overlap_test, voterdb_turf_overlap
  */
+
+use Drupal\voterdb\NlpDrupalUser;
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_get_duplicates
@@ -195,3 +197,114 @@ function voterdb_turf_overlap(&$form_state) {
       return 'err';
   }
 }
+  
+   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+   * voterdb_create_drupal_account
+   * 
+   * @param type $form_state
+   */
+  function  voterdb_create_drupal_account($userInfo) {
+    //voterdb_debug_msg('userinfo', $userInfo, __FILE__, __LINE__);
+    $userObj = new NlpDrupalUser();
+    //voterdb_debug_msg('userobj', $userObj, __FILE__, __LINE__);
+    $query = new EntityFieldQuery();
+    //voterdb_debug_msg('query', $query, __FILE__, __LINE__);
+    $user = $userObj->getUserByMcid($query,$userInfo['mcid']);
+    //voterdb_debug_msg('user', $user, __FILE__, __LINE__);
+    if(empty($user)) {
+      drupal_set_message('This NL does not have an account to use to get the turf. '
+              . ' An account will be created and an email sent to the NL with instructions.','status');
+
+      $account = array(
+        'mail' => $userInfo['email'],
+        'firstName' => $userInfo['firstName'],
+        'lastName' => $userInfo['lastName'],
+        'phone' => $userInfo['phone'],
+        'county' => $userInfo['county'],
+        'mcid' => $userInfo['mcid'],
+        'magicWord' => $userInfo['magicWord'],
+      );
+      $newUser = $userObj->createUser($account);
+      switch ($newUser['status']) {
+        case 'error':
+          drupal_set_message('Something went wrong with creating an account.  '
+                  . 'Please contact NLP tech support','error');
+          break;
+        case 'exists':
+          drupal_set_message("The NL's name is already in use.  "
+                  . 'Please contact NLP tech support','error');
+          break;
+        case 'complete':
+          drupal_set_message('An account was created for this NL.'
+                  . '<br>Username: '.$newUser['userName']
+                  . '<br>Password: '.$userInfo['magicWord'],'status');
+          
+          if(empty($userInfo['email'])) {
+            drupal_set_message("The NL doesn't have an email so you will have to help with the login.",'warning'); 
+          }
+          break;
+      }
+      return TRUE;
+
+    } else {
+      $fieldCheck = array('mcid'=>$userInfo['mcid'],'email'=>$userInfo['email'],'phone'=>$userInfo['phone'],
+          'county'=>$userInfo['county'],'firstName'=>$userInfo['firstName'],'lastName'=>$userInfo['lastName']);
+      $updateUser = FALSE;
+      $nameChanged = $emailChanged = FALSE;
+      //voterdb_debug_msg('fields', $fieldCheck, __FILE__, __LINE__);
+      //voterdb_debug_msg('user', $user, __FILE__, __LINE__);
+      $update['uid'] = $user['uid'];
+      foreach ($fieldCheck as $nlpKey => $nlpValue) {
+        //voterdb_debug_msg('user: '.$user[$nlpKey].' value: '.$nlpValue, '', __FILE__, __LINE__);
+        if($user[$nlpKey] != $nlpValue){
+          $updateUser = TRUE;
+          //voterdb_debug_msg('nlpkey: '.$nlpKey, '', __FILE__, __LINE__);
+          switch ($nlpKey) {
+            case 'mcid':
+              $update['mcid'] = $nlpValue;
+            break;
+            case 'email':
+              $update['mail'] = $nlpValue;
+              $emailChanged = TRUE;
+            break;
+            case 'phone':
+              $update['phone'] = $nlpValue;
+            break;
+            case 'county':
+              $update['county'] = $nlpValue;
+              drupal_set_message("The county for this NL was changed.",'warning');
+            break;
+            case 'firstName':
+              $update['firstName'] = $nlpValue;
+              $nameChanged = FALSE;
+              drupal_set_message("The first name of this NL was changed.",'warning');
+            break;
+            case 'lastName':
+              $update['lastName'] = $nlpValue;
+              $nameChanged = FALSE;
+              drupal_set_message("The last name of this NL was changed.",'warning');
+            break;
+          }
+        }
+      }
+      if($nameChanged) {
+        drupal_set_message("A name change was made for this NL but the username "
+                . "for the login was not changed,  Contact the NLP tech support "
+                . "to change the login.",'warning');
+      }
+      if($emailChanged) {
+        if(empty($update['firstName'])) {
+          $update['firstName'] = $user['firstName'];
+        }
+        if(empty($update['lastName'])) {
+          $update['lastName'] = $user['lastName'];
+        }
+      }
+      //voterdb_debug_msg('update', $update, __FILE__, __LINE__);
+      if($updateUser) {
+        $userObj->updateUser($update);
+      }
+      return FALSE;
+    }
+  }
+

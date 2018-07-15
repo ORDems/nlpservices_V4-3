@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_nlpconfig.php   V4.1 5/29/18
+ * Name: voterdb_nlpconfig.php   V4.2 5/29/18
  * Sets the global variables for an election cycle.
  */
 require_once "voterdb_get_county_names.php";
@@ -9,7 +9,6 @@ require_once "voterdb_path.php";
 require_once "voterdb_nlpconfig_func.php";
 require_once "voterdb_nlpconfig_func2.php";
 require_once "voterdb_class_counties.php";
-require_once "voterdb_class_magic_words.php";
 require_once "voterdb_class_api_authentication.php";
 require_once "voterdb_class_response_codes_api.php";
 require_once "voterdb_class_response_codes.php";
@@ -20,7 +19,6 @@ require_once "voterdb_class_activist_codes_nlp.php";
 
 
 //use Drupal\voterdb\NlpCounties;
-use Drupal\voterdb\NlpMagicWords;
 use Drupal\voterdb\ApiAuthentication;
 
 define('SQ_TITLE_LEN','16');
@@ -113,10 +111,6 @@ function voterdb_config_form_validate($form, &$form_state) {
         return;
       }
 
-      if($form_state['values']['voterdb_altpassword']!='' AND $form_state['values']['voterdb_password']=='' ) {
-        form_set_error('voterdb_password', t('The password cannot be blank.'));
-        return;
-      }
       $ad_cycle = $form_state['values']['voterdb_ecycle'];
       if(!voterdb_cycle_validate($ad_cycle)) {return;} 
       $ad_rvr = $form_state['values']['voterdb_vrecord'];  // Required voting record.
@@ -195,20 +189,6 @@ function voterdb_config_form_validate($form, &$form_state) {
       
       
       
-    case 'countypw':
-      $fv_trigger = $form_state['triggering_element']['#name'];
-
-      //voterdb_debug_msg(' trigger', $fv_trigger);
-      if ($fv_trigger != 'pwback') { 
-        //voterdb_debug_msg(' not back', '');
-        if($form_state['values']['county_altpassword']!='' AND $form_state['values']['county_password']=='' ) {
-          form_set_error('county_password', t('The password cannot be blank.'));
-          //return;
-        }
-        //break;
-      }
-      break;
-      
       case 'verfifyvb':
       $fv_trigger = $form_state['triggering_element']['#name'];
 
@@ -246,11 +226,6 @@ function voterdb_config_form_submit($form, &$form_state) {
       if ($fv_trigger == 'countypw') {
         $form_state['voterdb']['reenter'] = TRUE;
         $form_state['rebuild'] = TRUE;  // form_state will persist.
-        $form_state['voterdb']['pass'] = 'countypw';
-        break;
-      } elseif ($fv_trigger == 'verifyvb') {
-        $form_state['voterdb']['reenter'] = TRUE;
-        $form_state['rebuild'] = TRUE;  // form_state will persist.
         $form_state['voterdb']['pass'] = 'verifyvb';
         break;
       }
@@ -262,10 +237,6 @@ function voterdb_config_form_submit($form, &$form_state) {
       if ($fv_trigger == 'configsubmit') {
         // Make sure all the folders are available.
         voterdb_create_folders();
-        $fv_passwordObj = new NlpMagicWords();
-        $fv_password_array['password'] = $form_state['values']['voterdb_password'];
-        $fv_password_array['passwordAlt'] = $form_state['values']['voterdb_altpassword'];
-        $fv_passwordObj->setMagicWords('default',$fv_password_array);
 
         // Set (or reset) all the application variables.
         variable_set('voterdb_ecycle',$form_state['values']['voterdb_ecycle']);
@@ -279,8 +250,6 @@ function voterdb_config_form_submit($form, &$form_state) {
         variable_set('voterdb_state',$form_state['values']['voterdb_state']);
         }
       
-      
-      
       $stateCommittee = $form_state['values']['voterdb_state_committee'];
       if(!empty($stateCommittee)) {
         variable_set('voterdb_state_committee',$form_state['values']['voterdb_state_committee']);
@@ -292,34 +261,12 @@ function voterdb_config_form_submit($form, &$form_state) {
         $apiAuthenticationObj->setApiAuthentication();
       }
       
-      
-      
-      
-      
-      
-
       $cs_reset = $form_state['values']['reset-confirm'];
       if($cs_reset) {
         variable_set('voterdb_br_date',NULL);
         drupal_set_message('The database was reset for a new election cycle.','status');
       }
       drupal_set_message('The election Cycle parameters are updated.','status');
-      break;
-      
-      
-    case 'countypw':
-      unset($form_state['voterdb']['reenter']);
-      $form_state['rebuild'] = FALSE; 
-      $form_state['voterdb']['pass'] = 'config';
-      if ($fv_trigger == 'pwback') {    
-        return;
-      }
-
-      $fv_county = $form_state['values']['countypw_selected'];
-      $fv_passwordObj = new NlpMagicWords();
-      $fv_password_array['password'] = $form_state['values']['county_password'];
-      $fv_password_array['passwordAlt'] = $form_state['values']['county_altpassword'];
-      $fv_passwordObj->setMagicWords($fv_county,$fv_password_array);
       break;
       
     case 'verifyvb':
@@ -331,14 +278,7 @@ function voterdb_config_form_submit($form, &$form_state) {
       }
 
       voterdb_process_vbverify($form_state);  // func2.
-      
-      break;  
-      
+      break;   
   }
-  
-  
-      
-  //voterdb_debug_msg('reset', $cs_reset);
-  
   return;
 }

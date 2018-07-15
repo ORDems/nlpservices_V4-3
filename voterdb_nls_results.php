@@ -1,12 +1,14 @@
 <?php
 /*
- * Name: voterdb_nls_results.php   V4.0  12/27/17
+ * Name: voterdb_nls_results.php   V4.2  6/19/18
  */
 require_once "voterdb_constants_rr_tbl.php";
 require_once "voterdb_constants_nls_tbl.php";
 require_once "voterdb_group.php";
 require_once "voterdb_banner.php";
-require_once "voterdb_path.php";
+require_once "voterdb_class_paths.php";
+
+use Drupal\voterdb\NlpPaths;
 
 define('NR_NLS_RESULTS','nls_results'); // Name of the result file.
 
@@ -34,7 +36,11 @@ function voterdb_nls_results() {
   $nr_all = isset($form_state['voterdb']['ALL']);
   $nr_banner = voterdb_build_banner ($nr_county);
   $output = $nr_banner;
-  $nr_path = voterdb_get_path('',$nr_county);
+  
+  $pathsObj = new NlpPaths();
+  $nr_path = $pathsObj->getPath('',$nr_county);
+  
+  //$nr_path = voterdb_get_path('',$nr_county);
   $nr_file_name = $nr_path.NR_NLS_RESULTS.'.txt';
   $nr_cycle = variable_get('voterdb_ecycle', 'xxxx-mm-G');
   $nr_file_fh = fopen($nr_file_name,"w");

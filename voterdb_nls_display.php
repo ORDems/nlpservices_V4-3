@@ -15,7 +15,6 @@ require_once "voterdb_class_get_browser.php";
 require_once "voterdb_class_turfs.php";
 require_once "voterdb_class_nls.php";
 require_once "voterdb_class_nlreports_nlp.php";
-require_once "voterdb_class_bigtest.php";
 require_once "voterdb_nls_display_func.php";
 require_once "voterdb_nls_display_func2.php";
 

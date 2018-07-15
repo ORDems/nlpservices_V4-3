@@ -1,11 +1,10 @@
 <?php
 /*
- * Name: voterdb_nlpconfig_func2.php   V4.1 5/12/18
+ * Name: voterdb_nlpconfig_func2.php   V4.2 7/11/18
  * Sets the global variables for an election cycle.
  */
 
 use Drupal\voterdb\NlpCounties;
-use Drupal\voterdb\NlpMagicWords;
 use Drupal\voterdb\ApiResponseCodes;
 use Drupal\voterdb\ApiAuthentication;
 use Drupal\voterdb\NlpResponseCodes;
