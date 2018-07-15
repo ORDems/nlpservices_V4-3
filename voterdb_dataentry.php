@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_dataentry.php      V4.2  6/18/18
+ * Name: voterdb_dataentry.php      V4.2  7/11/18
  */
 require_once "voterdb_constants_mb_tbl.php";
 require_once "voterdb_constants_voter_tbl.php";
@@ -13,30 +13,33 @@ require_once "voterdb_banner.php";
 require_once "voterdb_track.php";
 require_once "voterdb_dates.php";
 require_once "voterdb_coordinators_get.php"; 
+require_once "voterdb_instructions_get.php";
 require_once "voterdb_dataentry_func.php";
 require_once "voterdb_dataentry_func2.php";
 require_once "voterdb_dataentry_func3.php";
 require_once "voterdb_dataentry_func4.php";
 require_once "voterdb_dataentry_func5.php";
-require_once "voterdb_class_magic_words.php";
 require_once "voterdb_class_get_browser.php";
 require_once "voterdb_class_candidates_nlp.php";
 require_once "voterdb_class_survey_question_nlp.php";
+require_once "voterdb_class_survey_response_nlp.php";
 require_once "voterdb_class_response_codes.php";
 require_once "voterdb_class_nlreports_nlp.php";
 require_once "voterdb_class_activist_codes_nlp.php";
 require_once "voterdb_class_turfs.php";
 require_once "voterdb_class_paths.php";
 require_once "voterdb_class_nls.php";
+require_once "voterdb_class_drupal_users.php";
+require_once "voterdb_class_button.php";
 
-
-use Drupal\voterdb\NlpMagicWords;
 use Drupal\voterdb\GetBrowser;
 use Drupal\voterdb\NlpCandidates;
 use Drupal\voterdb\NlpSurveyQuestion;
 use Drupal\voterdb\NlpTurfs;
 use Drupal\voterdb\NlpPaths;
 use Drupal\voterdb\NlpNls;
+use Drupal\voterdb\NlpDrupalUser;
+use Drupal\voterdb\NlpButton;
 
 
 define('DE_BLUE','color:blue;');
@@ -53,15 +56,6 @@ define('DE_TBL_STYLE', '
         .goal-tx {text-align:center;width:65px;line-height:100%;}
         .goal-hdr {text-align:center;width:65px;line-height:100%; font-weight:bold;}
         textarea {width: 270px; min-width:270px; max-width:270px; height: 38px; min-height:38px; max-height:38px; resize:none;}
-        .button {
-          background-color: #4CAF50; /* Green */
-          border: none;
-          color: white;
-          padding: 15px 32px;
-          text-align: center;
-          text-decoration: none;
-          display: inline-block;
-          font-size: 16px;
         }
         div.rt {padding:0px; margin:0px; line-height:100%;} 
         section.rt {padding:0px; margin:0px; line-height:100%;}
@@ -102,44 +96,121 @@ define('DC_HINTS',
  * (when more than one turf exists for this NL), collect data from the NL
  * on voter contact, and record the information in a MySQL table.
  *
- * @param type $form_id
+ * @param type $form
  * @param type $form_state
  * @return array - $form.
  */
-function voterdb_dataentry_form($form_id, &$form_state) {
-  //voterdb_debug_msg('form', '');
-  // Verify we know the group
+function voterdb_dataentry_form($form, &$form_state) {
+
   if (!isset($form_state['voterdb']['reenter'])) {
-    if(!voterdb_get_group($form_state)) {return;}
-    $form_state['voterdb']['page'] = 'log-in';
     $form_state['voterdb']['reenter'] = TRUE;
     $form_state['voterdb']['history'] = FALSE;
   }
+  $dn_button_obj = new NlpButton();
+  $dn_button_obj->setStyle();
   // Styles used to build the data entry table.
   $dv_tbl_style = DE_TBL_STYLE.DC_HINTS;
   drupal_add_css($dv_tbl_style, array('type' => 'inline'));
   // Create the form to display of all the NLs.
-  $dv_county = $form_state['voterdb']['county'];
   
-  if(empty($form_state['voterdb']['turfObj'])) {
-    $turfObj = new NlpTurfs();
-    $form_state['voterdb']['turfObj'] = $turfObj;
-    $form_state['voterdb']['pathsObj'] = new NlpPaths();
+  $turfObj = new NlpTurfs();
+  $userObj = new NlpDrupalUser(NULL);
+  $nlsObj = new NlpNls();
+
+  //$form_state['voterdb']['turfObj'] = $turfObj;
+  //$form_state['voterdb']['userObj'] = $userObj;
+  //$form_state['voterdb']['pathsObj'] = new NlpPaths();
+  $nlpUser = $userObj->getCurrentUser();
+
+  $form_state['voterdb']['nlpUser'] = $nlpUser;
+  $form_state['voterdb']['county'] = $nlpUser['county'];
+  //voterdb_debug_msg('currentuser', $nlpUser);
+  $dv_fname = $nlpUser['firstName'];
+  $dv_ln = $nlpUser['lastName'];
+  $dv_lname = str_replace("'", "&#039;", $dv_ln); // fix the apostrophies.
+  $browserObj = new GetBrowser();
+  $dv_browser = $browserObj->getBrowser();
+  //voterdb_debug_msg('browser', $dv_browser);
+    
+  if(empty($form_state['voterdb']['nlsInfo'])) {
+    // Verify we know this NL.
+    // Note: resolve the case where there are two NLs with the same name.
+    //$dv_nls_info = voterdb_nls_validate($dv_fname, $dv_lname,$nlpUser['county']);  // nls_validate.
+    $dv_nls_info = array();
+    //$dv_nls_info = $nlsObj->getNl($dv_fname, $dv_ln, $nlpUser['county']);
+    if(!empty($nlpUser['mcid'])) {
+      $dv_nls_info = $nlsObj->getNlById($nlpUser['mcid']);
+    }
+    //voterdb_debug_msg('nlsinfo', $dv_nls_info);
+    // Stop if we don't have this person in the database.
+    if (empty($dv_nls_info)) {
+      $dv_info = $dv_fname.' '.$dv_lname.' : '.$dv_browser['platform'].' '.$dv_browser['browser'];
+      voterdb_login_tracking('login',$nlpUser['county'], 'Invalid User Name',$dv_info);  // func
+      drupal_set_message("You are not currently in our database of active Neighborhood Leaders.",'error');
+      global $base_url;
+      $form['done'] = array(
+      '#markup' => '<p><a href="'.$base_url.'" class="button ">Return to Admin page >></a></p>',);
+      // got to front page!!   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+      return $form;
+      
+    }
+    $form_state['voterdb']['nlsInfo'] = $dv_nls_info;
+    $dv_mcid = $nlpUser['mcid'];
+    $form_state['voterdb']['fname'] = $dv_fname;
+    $form_state['voterdb']['lname'] = $dv_lname;
+    $form_state['voterdb']['mcid'] = $dv_mcid;
+    $form_state['voterdb']['HD'] = $dv_nls_info['hd'];
+    $form_state['voterdb']['pct'] = $dv_nls_info['pct'];
   }
   
+  $dv_county = $form_state['voterdb']['county'] ;
   $dv_banner = voterdb_build_banner ($dv_county);
   $form['note'] = array (
     '#type' => 'markup',
     '#markup' => $dv_banner
   ); 
+  
+  $form['announcement'] = voterdb_build_announcement();
+
+  $dv_mcid = $form_state['voterdb']['mcid'];
+  
+  // Check if this NL has one or more turfs.
+
+  $turfArray = $turfObj->turfExists($dv_mcid,$dv_county);
+  $form_state['voterdb']['turfArray'] = $turfArray;
+  //voterdb_debug_msg('turfarray', $turfArray);
+  if (empty($turfArray)) {
+    drupal_set_message("You do not have a turf assigned",'error');
+    $dv_info = $dv_fname.' '.$dv_lname;
+    voterdb_login_tracking('login',$dv_county,'No turf',$dv_info);  // func.
+    global $base_url;
+    $form['done'] = array(
+      '#markup' => '<p><a href="'.$base_url.'" class="button ">Return to the front page >></a></p>',
+    );
+    return $form;
+  }
+  $form_state['voterdb']['turfIndex'] = $turfArray['turfIndex'];
+  $dv_info = $dv_fname.' '.$dv_lname.' : '.$dv_browser['platform'].' '.$dv_browser['browser'];
+  voterdb_login_tracking('login',$dv_county,'Successful Login',$dv_info);  // func
+  
+  $dv_date = date('Y-m-d');
+  db_set_active('nlp_voterdb');
+  db_merge(DB_NLSSTATUS_TBL)
+    ->key(array(
+      NN_COUNTY => $dv_county,
+      NN_MCID => $dv_mcid))
+    ->fields(array(
+      NN_LOGINDATE => $dv_date))
+    ->execute();
+  db_set_active('default');
+  // If more than one turf, ask the NL which one is wanted.
+  $dv_turf_cnt = $turfArray['turfCnt'];
+  $form_state['voterdb']['page'] = ($dv_turf_cnt==1)?'data-entry':'turf-select';
+  $form_state['voterdb']['turf-select'] = FALSE;
+  
   $page = $form_state['voterdb']['page'];
   switch ($page) {
-/* * * * * * * * * * * * *
- * Ask the NL for name and password
- */
-    case 'log-in':
-      $form['login'] = voterdb_build_login($form_state);  // func.
-      break;
+
 /* * * * * * * * * * * * *
  * This NL has more than one turf so one has to be chosen for dataentry.
  */
@@ -160,7 +231,7 @@ function voterdb_dataentry_form($form_id, &$form_state) {
         $form_state['voterdb']['call-file'] = voterdb_build_call_list($form_state);  // func2.
         //voterdb_debug_msg('callfile', $form_state['voterdb']['call-file']);
         
-        $candiatesObj = new NlpCandidates();
+        $candiatesObj = new NlpCandidates(NULL);
         //voterdb_debug_msg('candidatesobj', $candiatesObj);
         $district['hd'] = $form_state['voterdb']['turf-hd'];
         $district['pct'] = $form_state['voterdb']['turf-pct'];
@@ -168,13 +239,12 @@ function voterdb_dataentry_form($form_id, &$form_state) {
         $district['county'] = $form_state['voterdb']['county'];
         $candidates = $candiatesObj->getCandidateList($district);
         $form_state['voterdb']['candidates'] = $candidates; 
-        
+        //voterdb_debug_msg('candidates', $candidates);
         // Record the date of this access to the turf by the NL.
         $turfIndex = $form_state['voterdb']['turfIndex'];
-        $turfObj = $form_state['voterdb']['turfObj'];
-        //voterdb_debug_msg('turfobj', $turfObj);
-        $turfObj->setLastTurfAccess($turfIndex,NULL);
         
+        $turfObj->setLastTurfAccess($turfIndex,NULL);
+
       }
       //voterdb_debug_msg('voters', $form_state['voterdb']['voters']);
       $form['info-box-c0'] = array(
@@ -226,12 +296,7 @@ function voterdb_dataentry_form($form_id, &$form_state) {
       // Build the huge display of voters with options to enter canvass results.
       $form['voters'] =  voterdb_build_voter_tbl($form_state);  //func2.
       break;
-/* * * * * * * * * * * * *
- * Display the list of other NLs in this NLs HD
- */
-    case 'other_list':
-      $form['others'] = voterdb_build_others_list($form_state);  // func.
-      break;
+
   }
   return $form;
 }
@@ -255,76 +320,11 @@ function voterdb_dataentry_form($form_id, &$form_state) {
  * @return boolean
  */
 function voterdb_dataentry_form_validate($form, &$form_state) {
-  //voterdb_debug_msg('validate', $form_state['voterdb']);
-  //voterdb_debug_msg('validate', '');
+  $form_state['voterdb']['reenter'] = TRUE;
+  $form_state['rebuild'] = TRUE;  // form_state will persist
   $page = $form_state['voterdb']['page'];
   switch ($page) {
-/* * * * * * * * * * * * *
- * Pass Login Validate.
- * The first time through we are validating the user login.
- */
-    case 'log-in':
-      $dv_county = $form_state['voterdb']['county'];
-      $dv_fname = $form_state['values']['nlfname'];
-      $dv_ln = $form_state['values']['nllname'];
-      $dv_lname = str_replace("'", "&#039;", $dv_ln); // fix the apostrophies.
-      $browserObj = new GetBrowser();
-      $dv_browser = $browserObj->getBrowser();
-      // Verify we know this NL.
-      // Note: resolve the case where there are two NLs with the same name.
-      $nlsObj = new NlpNls();
-      //voterdb_debug_msg('nlsobj', $nlsObj);
-      $dv_nls_info = $nlsObj->getNl($dv_fname, $dv_lname, $dv_county);
-      //voterdb_debug_msg('nlsinfo', $dv_nls_info);
-      // Stop if we don't have this person in the database.
-      if (!$dv_nls_info) {
-        $dv_info = $dv_fname.' '.$dv_lname.' : '.$dv_browser['platform'].' '.$dv_browser['browser'];
-        voterdb_login_tracking('login',$dv_county, 'Invalid User Name',$dv_info);  // func
-        form_set_error('nllname','Your name is not on our list of active Neighborhood Leaders.  Please contact your coordinator.');
-        form_set_error('nlfname','');
-        return FALSE;
-      }
-      $dv_mcid = $dv_nls_info['mcid'];
-      // Check that the password is reasonably close.  This just stops the Russian bots.
 
-      $dv_passwordObj = new NlpMagicWords();
-      $dv_password_array = $dv_passwordObj->getMagicWords($dv_county);
-      $dv_password = strtolower($dv_password_array['password']);
-      $dv_altpassword = strtolower($dv_password_array['passwordAlt']);
-      $dv_pw_try = strtolower($form_state['values']['nl-block']);
-
-      if ($dv_password != $dv_pw_try AND $dv_altpassword != $dv_pw_try) {
-        $dv_info = $dv_fname.' '.$dv_lname.' ['.$dv_pw_try.']'.' : '.$dv_browser['platform'].' '.$dv_browser['browser'];
-        voterdb_login_tracking('login',$dv_county, 'Invalid Password',$dv_info);  // func.
-        form_set_error('nl-block','Incorrect Password');
-        return;
-      }
-      $form_state['voterdb']['fname'] = $dv_fname;
-      $form_state['voterdb']['lname'] = $dv_lname;
-      $form_state['voterdb']['mcid'] = $dv_mcid;
-      $form_state['voterdb']['HD'] = $dv_nls_info['hd'];
-      $form_state['voterdb']['pct'] = $dv_nls_info['pct'];
-      // Check if this NL has one or more turfs
-      
-      
-      $turfObj = $form_state['voterdb']['turfObj'];
-      //voterdb_debug_msg('turfobj', $turfObj);
-      $turfArray = $turfObj->turfExists($dv_mcid,$dv_county);
-      //voterdb_debug_msg('turf', $turfArray);
-      $form_state['voterdb']['turfArray'] = $turfArray;
-      
-      if (empty($turfArray)) {
-        drupal_set_message("You do not have a turf assigned",'error');
-        form_set_error('lname', 'Contact your NLP coordinator');
-        $dv_info = $dv_fname.' '.$dv_lname;
-        voterdb_login_tracking('login',$dv_county,'No turf',$dv_info);  // func.
-        return FALSE;
-      }
-      $form_state['voterdb']['turfIndex'] = $turfArray['turfIndex'];
-      $dv_info = $dv_fname.' '.$dv_lname.' : '.$dv_browser['platform'].' '.$dv_browser['browser'];
-      voterdb_login_tracking('login',$dv_county,'Successful Login',$dv_info);  // func
-      
-      break;
 /* * * * * * * * * * * * *
  * Process the triggering event during data entry.
  */
@@ -358,37 +358,11 @@ function voterdb_dataentry_form_validate($form, &$form_state) {
  * @param type $form_state
  */
 function voterdb_dataentry_form_submit($form, &$form_state) {
-  //voterdb_debug_msg('submit', $form_state['voterdb']);
-  //voterdb_debug_msg('submit', '');
+  $form_state['voterdb']['reenter'] = TRUE;
+  $form_state['rebuild'] = TRUE;  // form_state will persist
   $page = $form_state['voterdb']['page'];
   switch ($page) {
-/* * * * * * * * * * * * *
- * The NL has successfully logged in.  Now we either ask the NL for the turf
- * when there are more than one turfs for this NL or we jump to the voter
- * data entry form.   Also, the form_state variable is preserved for the
- * next pass.
- */
-    case 'log-in':
-      $form_state['voterdb']['reenter'] = TRUE;
-      $form_state['rebuild'] = TRUE;  // form_state will persist.
-      // Record the date of the last login.
-      $dv_mcid = $form_state['voterdb']['mcid'];
-      $dv_county = $form_state['voterdb']['county'];
-      $dv_date = date('Y-m-d');
-      db_set_active('nlp_voterdb');
-      db_merge(DB_NLSSTATUS_TBL)
-        ->key(array(
-          NN_COUNTY => $dv_county,
-          NN_MCID => $dv_mcid))
-        ->fields(array(
-          NN_LOGINDATE => $dv_date))
-        ->execute();
-      db_set_active('default');
-      // If more than one turf, ask the NL which one is wanted.
-      $dv_turf_cnt = $form_state['voterdb']['turfArray']['turfCnt'];
-      $form_state['voterdb']['page'] = ($dv_turf_cnt==1)?'data-entry':'turf-select';
-      $form_state['voterdb']['turf-select'] = FALSE;
-      break;
+
 /* * * * * * * * * * * * *
  * The NL selected one of their turfs for data entry.
  */
@@ -425,14 +399,7 @@ function voterdb_dataentry_form_submit($form, &$form_state) {
         return;  
       }
       break;
-/* * * * * * * * * * * * *
- * 
- * The NL wants to return to the data entry.
- */
-    case 'other_list':
-      $form_state['voterdb']['reenter'] = TRUE;
-      $form_state['voterdb']['page'] = 'data-entry';
-      $form_state['rebuild'] = TRUE;  // form_state will persist.
-      break;
+
   }
+  return;
 }

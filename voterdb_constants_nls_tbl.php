@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Name:  voterdb_constants_nls_tbl.php  V4.1 6/13/18
+ * Name:  voterdb_constants_nls_tbl.php  V4.2 7/11/18
  * This include file contains constants used in accessing the database for
  * information about an NLS.
  */
@@ -59,6 +59,7 @@ define('NN_TURFDELIVERED', 'TurfDelivered');
 define('NN_RESULTSREPORTED', 'ResultsReported');
 define('NN_ASKED', 'Asked');
 define('NN_NOTES', 'Notes');
+define('NN_USERNAME', 'UserName');
 
 define("NN_NOTES_SIZE",'81');  // Length of the notes field in database.
 define("NN_NOTES_LENGTH",'75');  // Notes max length for users.
@@ -67,7 +68,7 @@ define("NN_NOTES_WRAP",'25');  // Notes max length for single line.
 // Table column name list.
 define('NN_NLSSTATUS_LIST', serialize (array(NN_MCID,NN_COUNTY,
   NN_LOGINDATE,NN_CONTACT,NN_NLSIGNUP,NN_TURFCUT,NN_TURFDELIVERED,
-  NN_RESULTSREPORTED,NN_ASKED,NN_NOTES)));
+  NN_RESULTSREPORTED,NN_ASKED,NN_NOTES,NN_USERNAME)));
 
 // Data
 define('CT_CANVASS', '0');
@@ -85,6 +86,7 @@ define('CT_CONTACT_TYPE',"ENUM('".CV_CANVASS."','".CV_MINIVAN."','".CV_PHONE."',
 define('AT_DEFAULT', '-');  // Not yet asked.
 define('AT_ASKED', 'Asked');  // Asked and agreed.
 define('AT_YES', 'Yes');  // Asked and agreed.
+define('AT_NO', 'No');  // Asked and declined.
 define('NS_NO_V', 'No');  // Asked and refused for this cycle.
 define('NS_QUIT_V', 'Quit');  // Asked and quit as NL.
 define('AT_ASKED_ARRAY', serialize(array(AT_DEFAULT ,AT_ASKED, AT_YES, NS_NO_V, NS_QUIT_V)));

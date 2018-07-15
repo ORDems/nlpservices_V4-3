@@ -3,22 +3,21 @@
  * @file
  * Contains Drupal\voterdb\ApiSurveyQuestions.
  */
+/*
+ * Name:  voterdb_class_survey_questions_api.php  V4.2  6/20/18
+ */
 
 namespace Drupal\voterdb;
-
-//require_once "voterdb_constants_van_api_tbl.php";
 
 class ApiSurveyResponse { 
   
   public function __construct() {
-    //$this->surveyQuestionId = NULL;
-    //$this->surveyResponseId = NULL;
-    //$this->type = self::SURVEYRESPONSE;
     $this->type = NULL;
   }
 }
 
 class ApiSurveyContext {
+  
   const INPUTTYPEAPI = 11;
   
   public function __construct() {
@@ -27,7 +26,6 @@ class ApiSurveyContext {
     $this->dateCanvassed = NULL;
   }
 }
-
 
 class ApiSurveyQuestions {
   
@@ -38,19 +36,11 @@ class ApiSurveyQuestions {
   const CONTACTTYPEWALK = 2;
   const CONTACTTYPEPHONE = 1;
 
-  //public function __construct($contextObj) {
   public function __construct($contextObj) { 
     $this->canvassContext = empty($contextObj)?NULL:$contextObj;
     $this->resultCodeId = NULL;
-    //$responses[] = $responseObj;
-    //$this->responses = $responses;
   }
   
- /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * getApiSurveyQuestions
- * 
- * 
- */
   public function getApiSurveyQuestions($countyAuthenticationObj,$database,$questionType) {
     $apiKey = $countyAuthenticationObj->apiKey;
     $apiURL = $countyAuthenticationObj->URL;
@@ -86,18 +76,14 @@ class ApiSurveyQuestions {
     $this->result = $questionsArray;
   return $this;
   }
-  
-  //public function setApiSurveyResponse($countyAuthenticationObj,$database,ApiSurveyResponse $responseObj,$surveyResponse) {
+
   public function setApiSurveyResponse($countyAuthenticationObj,$database,$responseObj,$surveyResponse) {
     $apiKey = $countyAuthenticationObj->apiKey;
     $apiURL = $countyAuthenticationObj->URL;
     $user = $countyAuthenticationObj->User;
     $url = 'https://'.$user.':'.$apiKey.'|'.$database.'@'.$apiURL.'/people/'.$surveyResponse['vanid'].'/canvassResponses';
-    //drupal_set_message("url: ".'<pre>'.print_r($url, true).'</pre>','status');
-    //drupal_set_message("survey this: ".'<pre>'.print_r($this, true).'</pre>','status');
     $this->canvassContext->contactTypeId = $surveyResponse['contactType'];
     switch ($surveyResponse['type']) {
-      
       case 'Survey':
       case 'ID':
         $responses[] = $responseObj;
@@ -109,7 +95,6 @@ class ApiSurveyQuestions {
         $this->canvassContext->dateCanvassed = $surveyResponse['dateCanvassed'];
         $this->resultCodeId = NULL;
         break;
-      
       case 'Activist':
         $responses[] = $responseObj;
         $this->responses = $responses;
@@ -121,7 +106,6 @@ class ApiSurveyQuestions {
         $this->canvassContext->dateCanvassed = $surveyResponse['dateCanvassed'];
         //$this->responses = NULL;
         break;
-      
       case 'Contact':
         //$this->responses[0]->type = self::SURVEYRESPONSE;
         $this->resultCodeId = $surveyResponse['rid'];
@@ -129,8 +113,6 @@ class ApiSurveyQuestions {
         $this->responses = NULL;
         break;
     }
-    //drupal_set_message("this: ".'<pre>'.print_r($this, true).'</pre>','status');
-    //$data = http_build_query($surveyResponse);
     $data = json_encode($this);
     $options = array(
       'method' => 'POST',

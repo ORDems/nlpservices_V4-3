@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_dataentry_func3.php    V4.1  5/20/18
+ * Name: voterdb_dataentry_func3.php    V4.2  6/18/18
  */
 /** * * * * * functions supported * * * * * *
  * voterdb_canvass_date, voterdb_turf_select, voterdb_display_goals, 
@@ -9,6 +9,9 @@
  */
 
 use Drupal\voterdb\NlpPaths;
+
+define('VO_CALLLIST_PAGE', 'nlp_call_list');
+define('VO_MAILLIST_PAGE', 'nlp_mail_list');
 
 define('DE_MONTH_ARRAY', serialize(array(
     'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
@@ -230,7 +233,7 @@ function voterdb_lists($form_state) {
   // If we have a PDF, add the link to it in the aside box.
   if ($ra_turf_pdfname!='') {
     // add the path to the PDF file name.
-    //$ra_pdf_path = voterdb_get_path('PDF',$ra_county);
+    
     $ra_pdf_path = $pathsObj->getPath('PDF',$ra_county);
     $ra_turf_pdfname = $ra_pdf_path . $ra_turf_pdfname;
     $ra_url = file_create_url($ra_turf_pdfname);
@@ -247,7 +250,7 @@ function voterdb_lists($form_state) {
   $ra_mail_pathname = $GLOBALS['base_url'] .'/'.VO_MAILLIST_PAGE;
   
   $ra_mail_path = $pathsObj->getPath('MAIL',$ra_county);
-  //$ra_mail_path = voterdb_get_path('MAIL',$ra_county);
+  
   $ra_turf_mailname = $turf['TurfMail'];  // The txt file name.
   $ra_mail_uri = $ra_mail_path.$ra_turf_mailname;
   $ra_mail_url = file_create_url($ra_mail_uri);
@@ -303,7 +306,7 @@ function voterdb_lists($form_state) {
  * @return array - form elements for the display.
  */
 function voterdb_instruct_disp($form_state) {
-  global $base_url;
+  //global $base_url;
   $id_county = $form_state['voterdb']['county'];
   // Start of table.
   $form['inst-box-c1'] = array(
@@ -319,8 +322,9 @@ function voterdb_instruct_disp($form_state) {
   // Create the URL to the instructions for this canvass (or postcard).
   $id_instructions = voterdb_get_instructions($id_county);
   //voterdb_debug_msg('instructions', $id_instructions);
-  $id_path = voterdb_get_path('INST',$id_county);
   
+  $pathsObj = new NlpPaths();
+  $id_path = $pathsObj->getPath('INST',$id_county);
   
   $id_canvass = $id_instructions[NE_CANVASS][NI_FILENAME];
   if(!empty($id_canvass)) {

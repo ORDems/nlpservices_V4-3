@@ -3,6 +3,10 @@
  * @file
  * Contains Drupal\voterdb\NlpResponseCodes.
  */
+/*
+ * Name: voterdb_class_response_codes.php   V4.2 6/20/18
+ *
+ */
 
 namespace Drupal\voterdb;
 
@@ -10,6 +14,19 @@ class NlpResponseCodes {
   
   const RESPONSECODESTBL = "response_codes";
   
+  private $typeCodeList = array(
+    'walk'=>'Walk',
+    'phone'=>'Phone',
+    'postcard'=>'Postcard'
+  );
+  
+  
+  
+  private $responseCodesList = array(
+    'contactType'=>'ContactType',
+    'name'=>'Name',
+    'code'=>'Code'
+  );
   
   private function deleteResponseCodes() {
     db_set_active('nlp_voterdb');

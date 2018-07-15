@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_dataentry_func4.php    V3.2  11/24/17
+ * Name: voterdb_dataentry_func4.php    V4.2  7/11/18
  *
  */
 

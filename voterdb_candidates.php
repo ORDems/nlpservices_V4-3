@@ -1,6 +1,6 @@
 <?php
 /*
- * Name:  voterdb_candidates.php               V4.1 4/23/18
+ * Name:  voterdb_candidates.php               V4.2 6/21/18
  */
 
 require_once "voterdb_constants_candidates_tbl.php";
@@ -13,6 +13,7 @@ require_once "voterdb_class_survey_questions_api.php";
 require_once "voterdb_class_survey_question_nlp.php";
 require_once "voterdb_class_api_authentication.php";
 require_once "voterdb_class_candidates_nlp.php";
+require_once "voterdb_class_survey_response_nlp.php";
 
 require_once "voterdb_candidates_func.php";
 require_once "voterdb_candidates_func2.php";
@@ -21,6 +22,9 @@ use Drupal\voterdb\NlpButton;
 use Drupal\voterdb\NlpCandidates;
 use Drupal\voterdb\ApiSurveyQuestions;
 use Drupal\voterdb\ApiAuthentication;
+use Drupal\voterdb\ApiSurveyContext;
+use Drupal\voterdb\NlpSurveyResponse;
+
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_candidates_form
@@ -64,7 +68,8 @@ function voterdb_candidates_form($form, &$form_state) {
   $stateCommittee = variable_get('voterdb_state_committee', 'DPO');
   //voterdb_debug_msg('voterdb', $form_state['voterdb']);
   if($form_state['voterdb']['definedCandidates'] == 'unknown') {
-    $candidatesObj = new NlpCandidates();
+    $responsesObj = new NlpSurveyResponse();
+    $candidatesObj = new NlpCandidates($responsesObj);
     $form_state['voterdb']['candidatesObj'] = $candidatesObj;
     $candidatesArray = $candidatesObj->getCandidates();
     if(empty($candidatesArray)) {
@@ -76,27 +81,19 @@ function voterdb_candidates_form($form, &$form_state) {
     }
     $apiAuthenticationObj = new ApiAuthentication();
     $countyAuthenticationObj = $apiAuthenticationObj->getApiAuthentication($stateCommittee);
-    
-    $contextObj = new APISurveyContext();
+    $contextObj = new ApiSurveyContext();
     $surveyQuestionsObj = new ApiSurveyQuestions($contextObj);
     $questionsObj = $surveyQuestionsObj->getApiSurveyQuestions($countyAuthenticationObj,0,'Candidate');
     $questionsArray = $questionsObj->result;
-    
     $availableCandidates = array();
     foreach ($questionsArray as $qid => $candidateQuestion) {
       if(!isset($candidatesArray[$qid])) {
         $availableCandidates[$qid] = $candidateQuestion;
       }
     }
-    
-    
-    
     $form_state['voterdb']['availableCandidates'] = $availableCandidates;
     voterdb_debug_msg('voterdb', $form_state['voterdb']);
-    
   }
-  
-  
   switch ($fv_func) {
     case 'add':
       $form['note1'] = array (
@@ -111,14 +108,11 @@ function voterdb_candidates_form($form, &$form_state) {
       
       $candidatesArray = $form_state['voterdb']['candidatesArray'];
       $scopeArray = voterdb_build_candidate_list($candidatesArray);  // func.
-      
       voterdb_debug_msg('scope array', $scopeArray );
-      
       $all = $form_state['voterdb']['ALL'];
       foreach ($scopeArray as $cat => $candidateList) {
         $form['candidates'][$cat] = voterdb_display_candidates($cat,$candidateList,$all); // func.
       }
-
       break;
     case 'edit':
       voterdb_edit_candidate($form,$form_state);  // func2.

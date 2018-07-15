@@ -1,9 +1,11 @@
 <?php
 /*
- * Name:  voterdb_candidates_func2.php               V4.1 4/23/18
+ * Name:  voterdb_candidates_func2.php               V4.2 6/21/18
  */
 
 use Drupal\voterdb\NlpSurveyQuestion;
+use Drupal\voterdb\NlpCandidates;
+use Drupal\voterdb\NlpSurveyResponse;
 
 /** * * * * * functions supported * * * * * *
  * voterdb_edit_candidate, voterdb_confirm_cdelete,voterdb_save_candidate, 
@@ -137,7 +139,7 @@ function voterdb_confirm_cdelete(&$form,$form_state) {
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_save_candidate
  * 
- * Update the database with the new coordinator's information.
+ * Update the database with the new candidate's information.
  * 
  * @param type $form_state
  */
@@ -195,22 +197,22 @@ function voterdb_save_candidate($form_state) {
   
 
   $candidateArray = array(
-      'Qid' => $fv_qid,
-      'Name' => $availableCandidates[$fv_qid]['name'],
-      'Weight' => $fv_weight,
-      'Scope' => $fv_scope_value,
-      'County' => $fv_county,
-      'CD' => $fv_cd,
-      'HD' => $fv_hd,
-      'Pcts' => $fv_pct_list,
+      'qid' => $fv_qid,
+      'name' => $availableCandidates[$fv_qid]['name'],
+      'weight' => $fv_weight,
+      'scope' => $fv_scope_value,
+      'county' => $fv_county,
+      'cd' => $fv_cd,
+      'hd' => $fv_hd,
+      'pcts' => $fv_pct_list,
       );
   $candidatesObj = $form_state['voterdb']['candidatesObj'];
   $candidatesObj->setCandidate($candidateArray);
   
-  $stateCommittee = variable_get('voterdb_state_committee', 'DPO');
+  //$stateCommittee = variable_get('voterdb_state_committee', 'DPO');
   
-  $apiAuthenticationObj = new ApiAuthentication();
-  $countyAuthenticationObj = $apiAuthenticationObj->getApiAuthentication($stateCommittee);
+  //$apiAuthenticationObj = new ApiAuthentication();
+  //$countyAuthenticationObj = $apiAuthenticationObj->getApiAuthentication($stateCommittee);
   
  
   $questionObj = new NlpSurveyQuestion();
@@ -230,16 +232,12 @@ function voterdb_save_candidate($form_state) {
  * @return 
  */
 function voterdb_save_edited_candidate($form_state) {
-  $se_cindex = $form_state['voterdb']['cindex'];
-  db_set_active('nlp_voterdb');
-  db_merge(DB_CANDIDATES_TBL)
-      ->key(array(CD_CINDEX=> $se_cindex))
-      ->fields(array(
-        CD_WEIGHT => $form_state['values']['e-weight'],
-        CD_CNAME => $form_state['values']['e-cname'],
-      ))
-      ->execute();
-  db_set_active('default');
+  $qid = $form_state['voterdb']['qid'];
+  $candidateObj = new NlpCandidates();
+  $candidate['qid'] = $qid;
+  $candidate['weight'] = $form_state['values']['e-weight'];
+  $candidate['name'] = $form_state['values']['e-cname'];
+  $candidateObj->updateCandidate($candidate);
   return;
 }
 
@@ -257,13 +255,11 @@ function voterdb_delete_candidate($form_state) {
   if ($dc_type != 'submit') {return;}  // Should not happen.
   $dc_name = $form_state['triggering_element']['#name'];
   if($dc_name == 'd-yes') {
-    $se_cindex = $form_state['voterdb']['cindex'];
-    // Delete the coordinator.
-    db_set_active('nlp_voterdb');
-    db_delete(DB_CANDIDATES_TBL)
-    ->condition(CD_CINDEX, $se_cindex)
-    ->execute();
-    db_set_active('default');
+    $qid = $form_state['voterdb']['cindex'];
+    // Delete the candidate.
+  $responsesObj = new NlpSurveyResponse();
+  $candiateObj = new NlpCandidates($responsesObj);
+  $candiateObj->deleteCandidate($qid);
   }
   return;
 }

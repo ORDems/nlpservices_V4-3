@@ -203,6 +203,30 @@ class NlpNls {
       voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
+    db_set_active('default');
+    $nl = $result->fetchAssoc();
+    if(empty($nl)) {return FALSE;}  // NL not known.
+    $nlListFlip = array_flip($this->nlList);
+    foreach ($nl as $dbKey => $nlValue) {
+      $nlRecord[$nlListFlip[$dbKey]] = $nlValue;
+    }
+    return $nlRecord;  //return the MCID and HD.
+  }
+  
+  public function getNlById($mcid) {
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::NLSTBL, 'n');
+      $query->fields('n');
+      $query->condition('MCID',$mcid);
+      $result = $query->execute();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return FALSE;
+    }
+    db_set_active('default');
     $nl = $result->fetchAssoc();
     if(empty($nl)) {return FALSE;}  // NL not known.
     $nlListFlip = array_flip($this->nlList);
@@ -462,6 +486,7 @@ class NlpNls {
       $query->addField('n', 'Nickname');
       $query->addField('n', 'LastName');
       $query->addField('n', 'Email');
+      $query->addField('n', 'Phone');
       $query->addField('n', 'MCID');
       $query->condition('Pct',$pct);
       $query->condition('g.County',$county);

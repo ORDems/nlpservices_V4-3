@@ -4,50 +4,61 @@
  * Contains Drupal\voterdb\NlpCandidates.
  */
 /*
- * Name: voterdb_class_candidates_nlp.php   V4.1 4/21/18
+ * Name: voterdb_class_candidates_nlp.php   V4.2 6/20/18
  *
  */
 namespace Drupal\voterdb;
 
 class NlpCandidates {
   
-  const DB_CANDIDATE_TBL = "candidates";
+  const CANDIDATETBL = "candidates";
+  const RESPONSETBL = "survey_responses";
   
-  function __construct() {
+  public $candidateList = array(
+    'qid' => 'Qid',
+    'name' => 'Name',
+    'weight' => 'Weight',
+    'scope' => 'Scope',
+    'cd' => 'CD',
+    'county' => 'County',
+    'hd' => 'HD',
+    'pcts' => 'Pcts',
+  );
+  
+  function __construct($responsesObj) {
+    $this->responsesObj = empty($responsesObj)?NULL:$responsesObj;
     $this->result = NULL;
   }
   
   private function removeCandidate($qid) {
-    if(empty($candidateIndex)) {return;}
+    if(empty($qid)) {return;}
     db_set_active('nlp_voterdb');
-    db_delete('candidates')
+    db_delete(self::CANDIDATETBL)
     ->condition('Qid', $qid)
     ->execute();
     db_set_active('default');
   }
 
-  private function insertCandidate($candidateArray) {
-    voterdb_debug_msg('candidate array', $candidateArray );
+  private function insertCandidate($candidate) {
+    //voterdb_debug_msg('candidate array', $candidate);
     db_set_active('nlp_voterdb');
     try {
-      db_insert('candidates')
-        ->fields($candidateArray)
+      db_insert(self::CANDIDATETBL)
+        ->fields($candidate)
         ->execute();
       }
     catch (Exception $e) {
       db_set_active('default');
-      $error = $e->getMessage();
-      drupal_set_message('Opps: '.$error,'error');
+      drupal_set_message('Opps: '.$e->getMessage(),'error');
       return;
     }
     db_set_active('default');
   }
   
-  
   private function fetchCandidates() {
     try{
       db_set_active('nlp_voterdb');
-      $selectCandidates = "SELECT * FROM {".'candidates'."} WHERE 1";
+      $selectCandidates = "SELECT * FROM {".self::CANDIDATETBL."} WHERE 1";
       $resultCandidates = db_query($selectCandidates);    
     }
     catch (Exception $e) {
@@ -58,17 +69,17 @@ class NlpCandidates {
     }
     db_set_active('default');
     if(!$resultCandidates) {return NULL;}
-    $candidatesArray = array();
-    while ($row = $resultCandidates->fetchAssoc()) {
-      $candidatesArray[] = $row;
+    $candidates = array();
+    while ($candidate = $resultCandidates->fetchAssoc()) {
+      $candidates[] = $candidate;
     }
-    return $candidatesArray;
+    return $candidates;
   }
   
   private function fetchResponses($qid) {
     try{
       db_set_active('nlp_voterdb');
-      $select = "SELECT * FROM {".'survey_responses'."} WHERE Qid=:qid";
+      $select = "SELECT * FROM {".self::RESPONSETBL."} WHERE Qid=:qid";
       $args = array(':qid'=>$qid);
       $result = db_query($select,$args);    
     }
@@ -89,13 +100,6 @@ class NlpCandidates {
     return $responses;
   }
 
-  
-
- /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * getCandidates
- * 
- * 
- */
   public function getCandidates() {
     $candidatesArray = $this->fetchCandidates();
     if(empty($candidatesArray)) {return NULL;}
@@ -104,24 +108,30 @@ class NlpCandidates {
     }
     return $candidateIndexArray;
   }
-  
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-  * setCandidate
-  * 
-  * 
-  */
-  public function setCandidate($candidateArray) {
-    if(isset($candidateArray['Qid'])){
-      $candidateIndex = $candidateArray['Qid'];
-      $this->removeCandidate($candidateIndex);
+
+  public function setCandidate($candidate) {
+    if(isset($candidate['Qid'])){
+      $qid = $candidate['Qid'];
+      $this->removeCandidate($qid);
     }
-    
-    $this->insertCandidate($candidateArray);
-    
+    $this->insertCandidate($candidate);
+  }
+  
+  public function updateCandidate($candidate) {
+    db_set_active('nlp_voterdb');
+    db_merge(self::CANDIDATETBL)
+      ->key(array('Qid'=> $candidate['qid']))
+      ->fields(array(
+        'Weight' => $candidate['weight'],
+        'Name' => $candidate['name'],
+      ))
+      ->execute();
+    db_set_active('default');
   }
   
   public function deleteCandidate($qid) {
     $this->removeCandidate($qid);
+    $this->deleteResponses($qid);
   }
   
   public function getCandidateList($district) {
@@ -135,7 +145,7 @@ class NlpCandidates {
     foreach ($cats as $cat) {
       db_set_active('nlp_voterdb');
       try {
-        $query = db_select('candidates', 'c');
+        $query = db_select(self::CANDIDATETBL, 'c');
         $query->fields('c');
         $query->condition('Scope',$cat);
         switch ($cat) {
@@ -177,7 +187,6 @@ class NlpCandidates {
   public function getResponsesList($qid) {
     $responses = array();
     $responses[0] = 'Select Response';
-    
     $responsesArray = $this->fetchResponses($qid);
     foreach ($responsesArray as $responseArray) {
       $responses[$responseArray['Rid']] = $responseArray['ResponseName'];

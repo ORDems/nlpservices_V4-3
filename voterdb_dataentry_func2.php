@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_dataentry_func2.php     V4.2  6/21/18
+ * Name: voterdb_dataentry_func2.php     V4.2  7/11/18
  *
  */
 
@@ -11,9 +11,11 @@
 
 
 use Drupal\voterdb\NlpSurveyQuestion;
+use Drupal\voterdb\NlpSurveyResponse;
 use Drupal\voterdb\NlpCandidates;
 use Drupal\voterdb\NlpResponseCodes;
 use Drupal\voterdb\NlpActivistCodes;
+use Drupal\voterdb\NlpTurfs;
 use Drupal\voterdb\NlpPaths;
 
 
@@ -54,7 +56,8 @@ function voterdb_build_call_list(&$form_state) {
   $cl_turfindex = $form_state['voterdb']['turfIndex'];       
   // Open a call sheet file.
   
-  $pathsObj = $form_state['voterdb']['pathsObj'];
+  //$pathsObj = $form_state['voterdb']['pathsObj'];
+  $pathsObj = new NlpPaths();
   $cl_call_path = $pathsObj->getPath('CALL',$cl_county);
   
   
@@ -68,7 +71,7 @@ function voterdb_build_call_list(&$form_state) {
     $cl_call_record[0] = $cl_voter_info[VN_FIRSTNAME]." ". $cl_voter_info[VN_LASTNAME];
     $cl_call_record[1] = "H:".$cl_voter_info[VN_HOMEPHONE];
     $cl_call_record[2] = "C:".$cl_voter_info[VN_CELLPHONE];
-    $cl_call_record[3] = $cl_voter_info['current']['contact'];
+    $cl_call_record[3] = $cl_voter_info['current']['Contact'];
     $cl_call_record[4] = ($cl_voter_info['status']['voted']=='')?'call':'';
     $cl_call_string = implode("\t", $cl_call_record);
     $cl_call_string .= "\n";
@@ -77,7 +80,7 @@ function voterdb_build_call_list(&$form_state) {
   fclose($cl_call_file_fh);
   // Save the turf call list file name.
   
-  $turfObj = $form_state['voterdb']['turfObj'];
+  $turfObj = new NlpTurfs();
   $turfObj->updateTurfFiles('call',$cl_fname,$cl_turfindex);
 
   return $cl_call_uri;
@@ -107,7 +110,8 @@ function voterdb_build_voter_tbl(&$form_state) {
   $bv_voters = $form_state['voterdb']['voters'];
   $bv_history = $form_state['voterdb']['history'];
   //voterdb_debug_msg('history', $bv_history);
-  $surveyQuestionObj = new NlpSurveyQuestion();
+  $surveyResponseObj = new NlpSurveyResponse();
+  $surveyQuestionObj = new NlpSurveyQuestion($surveyResponseObj);
   $questionArray = $surveyQuestionObj->getSurveyQuestion();
   if(!empty($questionArray)) {
     $bv_title = $questionArray['questionName'];
@@ -373,9 +377,11 @@ function voterdb_build_voter_tbl(&$form_state) {
     $form_element['vform']["row-end-$bv_vcnt"] = array(
       '#markup' => " \n".'</tr>',
       );
+    //voterdb_debug_msg('voterinforcurrent ', $bv_voter_info['current']);
     foreach ($bv_voter_info['current'] as $bv_type => $bv_val) {
+      if($bv_type=='Activist') {continue;}
       $bv_rpt[$bv_type] = $bv_val;
-      if ($bv_history) {  // If historical contacts requested, then add.
+      if ($bv_history) {  // If hi//storical contacts requested, then add.
         if($bv_val != '') {  // New line if report for current cycle.
         }
         $bv_rpt[$bv_type] .= $bv_voter_info['historic'][$bv_type];
@@ -385,10 +391,10 @@ function voterdb_build_voter_tbl(&$form_state) {
     $bv_results_row = " \n".'<tr class="even">'
       ." \n ".'<td class="td-de"></td>'
       ." \n ". '<td class="td-de"></td>'
-      ." \n ". '<td class="td-de">'.$bv_rpt['contact'].'</td>'
-      ." \n ". '<td class="td-de">'.$bv_rpt['survey'].'</td>'
-      ." \n ". '<td class="td-de">'.$bv_rpt['id'].'</td>'
-      ." \n ". '<td class="td-de">'.$bv_rpt['comment'].'</td>'
+      ." \n ". '<td class="td-de">'.$bv_rpt['Contact'].'</td>'
+      ." \n ". '<td class="td-de">'.$bv_rpt['Survey'].'</td>'
+      ." \n ". '<td class="td-de">'.$bv_rpt['ID'].'</td>'
+      ." \n ". '<td class="td-de">'.$bv_rpt['Comment'].'</td>'
       ." \n ". '<td class="td-de">'.$bv_edisplay.'</td>'
       ." \n ".'</tr>';
     $form_element['vform']["row-results-$bv_vcnt"] = array(

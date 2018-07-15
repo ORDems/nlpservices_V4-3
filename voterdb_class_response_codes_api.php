@@ -3,18 +3,16 @@
  * @file
  * Contains Drupal\voterdb\ApiResponseCodes.
  */
+/*
+ * Name: voterdb_class_resonse_codes_api.php   V4.2 6/20/18
+ */
 
 namespace Drupal\voterdb;
 
-//require_once "voterdb_constants_van_api_tbl.php";
-//require_once "voterdb_class_response_codes_api.php";
-
 class ApiResponseCodes {
   
-
   private $expectedContactTypes = array(
     'Walk' => array(
-      array('text'=>'Not a Dem','weight'=>12),
       array('text'=>'Left Message/Lit','weight'=>1),
       array('text'=>'Refused','weight'=>2),
       array('text'=>'Inaccessible','weight'=>3),
@@ -33,20 +31,10 @@ class ApiResponseCodes {
     ),
   );
   
-
-
-  
   function __construct() {
     $this->result = NULL;
-
   }
   
-  /**
-   * 
-   * @param type $countyAuthenticationObj
-   * @param type $database
-   * @return boolean
-   */
   public function getApiContactTypes($countyAuthenticationObj,$database) {
     $apiKey = $countyAuthenticationObj->apiKey;
     $apiURL = $countyAuthenticationObj->URL;
@@ -70,12 +58,6 @@ class ApiResponseCodes {
     return $contactTypes;
   }
   
-    /**
-   * 
-   * @param type $countyAuthenticationObj
-   * @param type $database
-   * @return boolean
-   */
   public function getApiResultCodes($countyAuthenticationObj,$database,$contactTypeId) {
     $apiKey = $countyAuthenticationObj->apiKey;
     $apiURL = $countyAuthenticationObj->URL;
@@ -100,9 +82,7 @@ class ApiResponseCodes {
     return $resultCodes;
   }
   
-  
   public function getApiKnownResultCodes($countyAuthenticationObj,$database) {
-
     $contactTypes = $this->getApiContactTypes($countyAuthenticationObj,$database);
     //voterdb_debug_msg('contact types', $contactTypes);
     $knownResultCodes = array();
@@ -111,8 +91,6 @@ class ApiResponseCodes {
         $contactTypeId = $contactTypes[$contactName];
         $knownResultCodes[$contactName]['code'] = $contactTypeId;
         $resultCodes = $this->getApiResultCodes($countyAuthenticationObj,$database,$contactTypeId);
-        //voterdb_debug_msg('response codes', $resultCodes);
-
         foreach ($eResultArray as $expectedResultArray) {
           $expectedResultText = $expectedResultArray['text'];
           if(!empty($resultCodes[$expectedResultText])) {
@@ -150,26 +128,17 @@ class ApiResponseCodes {
   }
   
   public function setApiResponseCode($countyAuthenticationObj,$database,$vanid,$response) {
-    
     $apiKey = $countyAuthenticationObj->apiKey;
     $apiURL = $countyAuthenticationObj->URL;
     $user = $countyAuthenticationObj->User;
     $url = 'https://'.$user.':'.$apiKey.'|'.$database.'@'.$apiURL.'/people/'.$vanid.'/canvassResponses';
     drupal_set_message("url: ".'<pre>'.print_r($url, true).'</pre>','status');
-
     $data = http_build_query($response);
-
-
     $options = array(
       'method' => 'POST',
       'data' => $data,
       'headers' => array('Content-Type' => 'application/json'),
     );
     drupal_set_message("options: ".'<pre>'.print_r($options, true).'</pre>','status');
-    //$result = drupal_http_request($url, $options);
-    //drupal_set_message("Response: ".'<pre>'.print_r($result, true).'</pre>','status');
-    
-}
-  
-  
+  }
 }

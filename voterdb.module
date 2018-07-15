@@ -14,6 +14,9 @@ require_once "voterdb_cron_login.php";
 require_once "voterdb_cron_bounce.php";
 require_once "voterdb_cron_report.php";
 require_once "voterdb_class_turfs.php";
+require_once "voterdb_class_magic_word.php";
+
+use Drupal\voterdb\NlpMagicWord;
 
 class voterdbMailSystem extends DefaultMailSystem {
   public function format(array $message) {
@@ -172,10 +175,24 @@ function voterdb_menu() {
     'file' => 'voterdb_restore_nlsreports.php',
     'type' => MENU_CALLBACK,
   );
+  /*
   $items ['nlpdataentry'] = array (
     'title' => 'NLP data entry',
     'description' => 'Allow the NL to enter canvass results',
+    'access arguments' => array('administer voterdb'),
     'access callback' => TRUE,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_dataentry_form'),
+    'file' => 'voterdb_dataentry.php',
+    'type' => MENU_CALLBACK,
+  );
+   * 
+   */
+  $items ['nlpcanvassresults'] = array (
+    'title' => 'Report Canvass Results',
+    'description' => 'NL report canvass results.',
+    //'access arguments' => array('administer voterdb'),
+    'access arguments' => array('voterdb data entry'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('voterdb_dataentry_form'),
     'file' => 'voterdb_dataentry.php',
@@ -279,8 +296,8 @@ function voterdb_menu() {
       'title' => 'History of NL participation',
       'description' => 'Create history file for NL participation',
       'access arguments' => array('access voterdb tools'),
-      'page callback' => 'voterdb_export_nls_status_history',
-      'file' => 'voterdb_export_nls_status_history.php',
+      'page callback' => 'voterdb_nls_status_history',
+      'file' => 'voterdb_nls_status_history.php',
       'type' => MENU_CALLBACK,
   );
 return $items;
@@ -302,9 +319,13 @@ function voterdb_permission() {
             'description' => t('Allow user to change VoterDB settings.')
         );
     $arr['access voterdb tools'] = array(
-            'title' => t('Access VoterDB tools'),
-            'description' => t('Allow NLs to access VoterDB tools.')
-        );
+    'title' => t('Access VoterDB tools'),
+    'description' => t('Allow coodinators to access VoterDB tools.')
+    );
+    $arr['voterdb data entry'] = array(
+      'title' => t('Neighborhood Leader access to report results'),
+      'description' => t('Allow NLs to access data entry page.')
+    );
     return $arr;
 }
 
@@ -352,4 +373,29 @@ function _voterdb_create_node($arg) {
     // Error if no args were passed
     return services_error(t('No data submitted!'), 406, t('No data submitted!'));
   }
+}
+/*
+function voterdb_user_update(&$edit, $account, $category) {
+  //drupal_set_message('updateedit: <pre>'.print_r($edit, true).'</pre>','status');
+  drupal_set_message('updateaccount: <pre>'.print_r($account, true).'</pre>','status');
+  //drupal_set_message('updatecatagory: <pre>'.print_r($category, true).'</pre>','status');
+}
+ * 
+ */
+
+function voterdb_user_presave(&$edit, $account, $category){
+  //drupal_set_message('presaveedit: <pre>'.print_r($edit, true).'</pre>','status');
+  //drupal_set_message('presaveaccount: <pre>'.print_r($account, true).'</pre>','status');
+  //drupal_set_message('presavecatagory: <pre>'.print_r($category, true).'</pre>','status');
+  
+  if(!empty($_REQUEST['field_mcid']['und'][0]['value'])) {
+    if($_REQUEST['current_pass'] != $_REQUEST['pass']['pass1']) {
+      $magicWordObj = new NlpMagicWord();
+      $magicWordObj->setMagicWord($_REQUEST['field_mcid']['und'][0]['value'], $_REQUEST['pass']['pass1']);
+    }
+  }
+  
+  
+  
+  //drupal_set_message('presaverequest: <pre>'.print_r($_REQUEST, true).'</pre>','status');
 }

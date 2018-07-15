@@ -1,6 +1,6 @@
 <?php
 /*
- * Name:  voterdb_candidates_func.php               V4.1 4/23/18
+ * Name:  voterdb_candidates_func.php               V4.2 6/21/18
  */
 
 /** * * * * * functions supported * * * * * *
@@ -343,14 +343,14 @@ function voterdb_display_candidates($cat,$candidateList,$all) {
   );
   $odd = TRUE;
   foreach ($candidateList as $candidate) {
-    $qid = $candidate['Qid'];
-    $weight = $candidate['Weight'];
-    $name = $candidate['Name'];
-    $scope = $candidate['Scope'];
-    $county = $candidate['County'];
-    $cd = $candidate['CD'];
-    $hd = $candidate['HD'];
-    $pctList = $candidate['Pcts'];
+    $qid = $candidate['qid'];
+    $weight = $candidate['weight'];
+    $name = $candidate['name'];
+    $scope = $candidate['scope'];
+    $county = $candidate['county'];
+    $cd = $candidate['cd'];
+    $hd = $candidate['hd'];
+    $pctList = $candidate['pcts'];
     $class = ($odd)?'<tr class="odd">':'<tr class="even">';
     $odd = !$odd;
     // Use the Drupal class for odd/even table rows and start the row.
