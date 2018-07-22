@@ -19,6 +19,25 @@ class NlpTurfs {
   
   private $fileTypes = array('PDF'=>'TurfPDF','MAIL'=>'TurfMail','CALL'=>'TurfCall');
   
+  private $turfList = array(
+    'turfIndex' => 'TurfIndex',
+    'county' => 'County',
+    'mcid' => 'MCID',
+    'firstName' => 'NLfname',
+    'lastName' => 'NLlname' ,
+    'turfName' => 'TurfName',
+    'pdf' => 'TurfPDF' ,
+    'hd' =>  'TurfHD',
+    'pct' =>  'TurfPCT',
+    'reminderNeeded' => 'ReminderNeeded',
+    'delivered' => 'Delivered',
+    'commitDate' => 'CommitDate',
+    'electionName' => 'ElectionName',
+    'lastAccess' => 'LastAccess',
+    'turfMail' => 'TurfMail',
+    'turfCall' => 'TurfCall',
+  );
+  
   private function unlinkFile($fileName,$path) {
     if($fileName != '') {
       $fullName = $path . $fileName;
@@ -28,31 +47,27 @@ class NlpTurfs {
   }
 
   public function createTurf($turf) {
-    $date = date('Y-m-d',time()); 
-  try {
-    $turfIndex = db_insert(self::TURFTBL)
-      ->fields(array(
-        'County' => $turf['county'],
-        'MCID' => $turf['mcid'],
-        'NLfname' => $turf['firstName'],
-        'NLlname' => $turf['lastName'],
-        'TurfName' => $turf['turfName'],
-        'TurfPDF' => $turf['pdf'],
-        'TurfHD' => $turf['hd'] ,
-        'TurfPCT' => $turf['pct'] ,
-        'ReminderNeeded' => 'Y',
-        'CommitDate' => $date,
-        'ElectionName' => variable_get('voterdb_cycle_name', 'November 6, 2018'),
-      ))
-      ->execute();
+    $fields = array(
+      'ReminderNeeded' => 'Y',
+      'CommitDate' => date('Y-m-d',time()),
+      'ElectionName' => variable_get('voterdb_cycle_name', 'November 6, 2018'),
+    );
+    foreach ($turf as $nlpKey => $nlpValue) {
+      $fields[$this->turfList[$nlpKey]] = $nlpValue;
     }
-    catch (Exception $e) {
-      db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage()  );
-      return FALSE;
-    }
-  db_set_active('default');
-  return $turfIndex;
+    db_set_active('nlp_voterdb');
+    try {
+      $turfIndex = db_insert(self::TURFTBL)
+        ->fields($fields)
+        ->execute();
+      }
+      catch (Exception $e) {
+        db_set_active('default');
+        voterdb_debug_msg('e', $e->getMessage()  );
+        return FALSE;
+      }
+    db_set_active('default');
+    return $turfIndex;
   }
   
   public function getTurf($turfIndex) {
@@ -170,6 +185,60 @@ class NlpTurfs {
         $turfArray[$turfIndex] = $turf;
     } while (TRUE);
     return $turfArray;
+  }
+  
+  public function getCountyTurfs($county) {
+    db_set_active('nlp_voterdb');
+    try {
+      $select = "SELECT * FROM {".self::TURFTBL."} WHERE  ".
+        "County = :cnty ";
+      $args = array(
+        ':cnty' => $county,);
+      $result = db_query($select,$args);
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return NULL;
+    }
+    db_set_active('default');
+    $turfListFlip = array_flip($this->turfList);
+    $turfArray = array();
+    do {
+      $turf = $result->fetchAssoc();
+      if (empty($turf)) {break;}
+        $turfIndex = $turf['TurfIndex'];
+        foreach ($turf as $dbKey => $turfValue) {
+          $turfRecord[$turfListFlip[$dbKey]] = $turfValue;
+        }
+        $turfArray[$turfIndex] = $turfRecord;
+    } while (TRUE);
+
+    return $turfArray;
+  }
+  
+  public function getCountyNlsWithTurfs($county) {
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::TURFTBL, 't'); 
+      $query->addField('t', 'MCID');
+      $query->distinct();
+      $query->condition('County',$county);
+      $result = $query->execute();
+    }
+    catch (Exception $e) {
+        db_set_active('default');
+        voterdb_debug_msg('e', $e->getMessage() );
+        return NULL;
+    }
+    db_set_active('default');
+    $nlList = array();
+    do {
+      $turf = $result->fetchAssoc();
+      if (!$turf) {break;}
+      $nlList[] = $turf['MCID'];
+    } while (TRUE);
+    return $nlList;
   }
   
   public function createTurfDisplay($turfArray){

@@ -71,6 +71,7 @@ class NlpSurveyQuestion {
     db_set_active('default');
     if(!$result) {return NULL;}
     $question = $result->fetchAssoc();
+    //voterdb_debug_msg('quetion', $question);
     return $question;
   }
   
@@ -116,5 +117,6 @@ class NlpSurveyQuestion {
     $this->deleteQuestion($qid);
     $this->deleteResponses($qid);
   }
+  
   
 }

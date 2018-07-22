@@ -3,6 +3,9 @@
  * @file
  * Contains Drupal\voterdb\NlpReports.
  */
+/*
+ * Name: voterdb_class_nlreports.php   V4.2  7/16/18
+ */
 
 namespace Drupal\voterdb;
 
@@ -12,6 +15,7 @@ require_once "voterdb_debug.php";
 class NlpReports {
   
   const NLPRESULTSTBL = 'results'; 
+  const BATCHLIMIT = 1000;
   
   const CONTACT = 'Contact';
   const SURVEY = 'Survey';
@@ -297,5 +301,330 @@ class NlpReports {
     }
     $this->setNlReport($canvassResult);
   }
+  
+  function voterContacted($vanid) {
+    $cycle = variable_get('voterdb_ecycle', 'xxxx-mm-G');
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::NLPRESULTSTBL, 'r');
+      $query->addField('r','VANID');
+      $query->condition('VANID',$vanid);
+      $query->condition('Cycle',$cycle);
+      $query->condition('Value',self::F2F);
+      $query->condition('Type',self::CONTACT);
+      $cnt = $query->countQuery()->execute()->fetchField();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return FALSE;
+    }
+    db_set_active('default');
+    $f2f = $cnt>0;
+    return $f2f;
+  }
+  
+  function countyContacted($county) {
+    $cycle = variable_get('voterdb_ecycle', 'xxxx-mm-G');
+    db_set_active('nlp_voterdb');
+    try {
+      $co_query = db_select(self::NLPRESULTSTBL, 'r');
+      $co_query->addField('r','VANID');
+      $co_query->distinct();
+      $co_query->condition('Cycle',$cycle);
+      $co_query->condition('County',$county);
+      $co_query->condition('Type',self::CONTACT);
+      $co_query->condition('Value',self::F2F);
+      $co_rr = $co_query->countQuery()->execute()->fetchField();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return 0;
+    }
+    db_set_active('default');
+    return $co_rr;
+  }
+  
+  public function getCountyReportCounts($county) {
+    $cycle = variable_get('voterdb_ecycle', 'xxxx-mm-G');
+    db_set_active('nlp_voterdb');
+    try {
+      $rquery = db_select(self::NLPRESULTSTBL, 'r');
+      $rquery->fields('r');
+      $rquery->condition('Active',TRUE);
+      $rquery->condition('County',$county);
+      $rquery->condition('Cycle',$cycle);
+      $result = $rquery->execute();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return FALSE;
+    }
+    db_set_active('default');
+    
+    $vstatus = array();
+    do {
+      $report = $result->fetchAssoc();
+      if(!$report) {break;}
+      $vanid = $report['VANID'];
+      $vstatus[$vanid]['mcid'] = $report['MCID'];
+      $vstatus[$vanid]['attempt'] = TRUE;
+      if($report['Type']==self::SURVEY) {
+        $vstatus[$vanid]['survey'] = TRUE;
+      }
+    } while (TRUE);
+    
+    $counts = array();
+    foreach ($vstatus as $status) {
+      $mcid = $status['mcid'];
+      if(empty($counts[$mcid]['attempts'])) {
+        $counts[$mcid]['attempts'] = 1;
+        $counts[$mcid]['contacts'] = 0;
+      } else {
+        $counts[$mcid]['attempts']++;
+      }
+      if(!empty($status['survey'])) {
+        if (empty($counts[$mcid][$status['survey']])) {
+          $counts[$mcid][$status['survey']] = 1;
+        } else {
+          $counts[$mcid][$status['survey']]++;
+        }
+      }
+    }
+    return $counts;
+  }
+  
+  public function getTotalContactAttempts() { 
+    $cycle = variable_get('voterdb_ecycle', 'xxxx-mm-G');
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::NLPRESULTSTBL, 'r');
+      $query->addField('r','VANID');
+      $query->distinct();
+      $query->condition('Cycle',$cycle);
+    $br = $query->countQuery()->execute()->fetchField();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return 0;
+    }
+    db_set_active('default');
+    return $br;
+  }
+  
+  public function getNlVoterContactAttempts($mcid) {
+    $cycle = variable_get('voterdb_ecycle', 'xxxx-mm-G');
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::NLPRESULTSTBL, 'r');
+      $query->addField('r','VANID');
+      $query->condition('MCID',$mcid);
+      $query->condition('Cycle',$cycle);
+      $query->distinct();
+    $br = $query->countQuery()->execute()->fetchField();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return 0;
+    }
+    db_set_active('default');
+    return $br;
+  }
+  
+  public function getSurveyResponseCounts($qid) {
+    $counts = array();
+    $cycle = variable_get('voterdb_ecycle', 'yyyy-mm-t');
+    
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::NLPRESULTSTBL, 'r');
+      $query->addField('r','VANID');
+      $query->condition('Active',TRUE);
+      $query->condition('Cycle',$cycle);
+      $query->condition('Type',self::SURVEY);
+      $query->condition('Qid',$qid);
+      $query->distinct();
+      $result = $query->execute();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return NULL;
+    }
+    db_set_active('default');
+    
+    do {
+    $voter = $result->fetchAssoc();
+    if(empty($voter)) {break;}
+      $vanid = $voter['VANID'];
+      
+      db_set_active('nlp_voterdb');
+      try {
+        $vtrQuery = db_select(self::NLPRESULTSTBL, 'r');
+        $vtrQuery->addField('r','Rid');
+        $vtrQuery->addField('r','Cdate');
+        $vtrQuery->condition('Active',TRUE);
+        $vtrQuery->condition('VANID',$vanid);
+        $vtrQuery->condition('Cycle',$cycle);
+        $vtrQuery->condition('Type',self::SURVEY);
+        $vtrQuery->condition('Qid',$qid);
+        $vtrResult = $vtrQuery->execute();
+      }
+      catch (Exception $e) {
+        db_set_active('default');
+        voterdb_debug_msg('e', $e->getMessage() );
+        return 0;
+      }
+      db_set_active('default');
+      
+      $newest = '';
+      $newestRid = 0;
+      do {
+      $responses = $vtrResult->fetchAssoc();
+      if(empty($responses)) {break;}
+        $rid = $responses['Rid'];
+        $cdate = $responses['Cdate'];
+        if($cdate>$newest) {
+          $newestRid = $rid;
+        }
+      } while (TRUE);
+      
+      if($newestRid!=0 AND !isset($counts[$newestRid])) {
+        $counts[$newestRid] = 1;
+      } else {
+        $counts[$newestRid]++;
+      }
+    } while (TRUE);
+    
+
+    return $counts;
+  }
+  
+  public function getSurveyResponsesCountsById ($mcid,$qid) {
+    $counts = array();
+    $cycle = variable_get('voterdb_ecycle', 'yyyy-mm-t');
+    
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::NLPRESULTSTBL, 'r');
+      $query->addField('r','VANID');
+      $query->condition('Active',TRUE);
+      $query->condition('Cycle',$cycle);
+      $query->condition('Type',self::SURVEY);
+      $query->condition('Qid',$qid);
+      $query->condition('MCID',$mcid);
+      $query->distinct();
+      $result = $query->execute();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return NULL;
+    }
+    db_set_active('default');
+    
+    do {
+    $voter = $result->fetchAssoc();
+    if(empty($voter)) {break;}
+      $vanid = $voter['VANID'];
+      
+      db_set_active('nlp_voterdb');
+      try {
+        $vtrQuery = db_select(self::NLPRESULTSTBL, 'r');
+        $vtrQuery->addField('r','Rid');
+        $vtrQuery->addField('r','Cdate');
+        $vtrQuery->condition('Active',TRUE);
+        $vtrQuery->condition('VANID',$vanid);
+        $vtrQuery->condition('Cycle',$cycle);
+        $vtrQuery->condition('Type',self::SURVEY);
+        $vtrQuery->condition('Qid',$qid);
+        $vtrResult = $vtrQuery->execute();
+      }
+      catch (Exception $e) {
+        db_set_active('default');
+        voterdb_debug_msg('e', $e->getMessage() );
+        return 0;
+      }
+      db_set_active('default');
+      
+      $newest = '';
+      $newestRid = 0;
+      do {
+      $responses = $vtrResult->fetchAssoc();
+      if(empty($responses)) {break;}
+        $rid = $responses['Rid'];
+        $cdate = $responses['Cdate'];
+        if($cdate>$newest) {
+          $newestRid = $rid;
+        }
+      } while (TRUE);
+      
+      if($newestRid!=0 AND !isset($counts[$newestRid])) {
+        $counts[$newestRid] = 1;
+      } else {
+        $counts[$newestRid]++;
+      }
+    } while (TRUE);
+    return $counts;
+  }
+  
+  public function getColumnNames() {
+    db_set_active('nlp_voterdb');
+    try {
+      $tselect = "SHOW COLUMNS FROM  {".self::NLPRESULTSTBL.'}';
+      $result = db_query($tselect);
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return NULL;
+    }
+    db_set_active('default');
+    $colnames = array();
+    do {
+      $name = $result->fetchAssoc();
+      if(empty($name)) {break;}
+      $colnames[] = $name['Field'];
+    } while (TRUE);
+    return $colnames;
+  }
+  
+  public function getReportCount() {
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::NLPRESULTSTBL, 'r');
+      $numRows = $query->countQuery()->execute()->fetchField();
+      }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return;
+      }
+    db_set_active('default');
+    return $numRows;
+  }
+  
+  public function selectAllReports ($nextRecord) {
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::NLPRESULTSTBL, 'r');
+      $query->fields('r');
+      $query->range($nextRecord, self::BATCHLIMIT);
+      $result = $query->execute();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      watchdog('voterdb_export_restore_batch', 'select error record: @rec', 
+            array('@rec' =>  print_r($e->getMessage(), true)),WATCHDOG_DEBUG);
+      $context['finished'] = TRUE;
+      return NULL;
+    }
+    db_set_active('default');
+    return $result;
+    }
 
 }

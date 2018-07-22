@@ -8,12 +8,16 @@ require_once "voterdb_constants_voter_tbl.php";
 require_once "voterdb_constants_mb_tbl.php";
 require_once "voterdb_constants_bc_tbl.php";
 require_once "voterdb_constants_nls_tbl.php";
-require_once "voterdb_get_county_names.php";
+//require_once "voterdb_get_county_names.php";
 require_once "voterdb_group.php";
-require_once "voterdb_path.php";
+//require_once "voterdb_path.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_class_button.php";
+require_once "voterdb_class_nlreports_nlp.php";
+
+use Drupal\voterdb\NlpButton;
+use Drupal\voterdb\NlpReports;
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_get_nlscount
@@ -294,7 +298,7 @@ function voterdb_build_count_display ($cd_county,$cd_cnts) {
  * @return string - HTML for display.
  */
 function voterdb_display_results() {
-  $gc_button_obj = new NlpButton;
+  $gc_button_obj = new NlpButton();
   $gc_button_obj->setStyle(); 
   $form_state = array();
   if(!voterdb_get_group($form_state)) {return;}
@@ -314,6 +318,7 @@ function voterdb_display_results() {
   } else {
     $gc_grp_array = array($gc_county);  // Just one group.
   }
+  $reportsObj = new NlpReports();
   $gc_cnts = array();
   voterdb_get_ballot_counts($gc_cnts,$gc_grp_array);
   foreach ($gc_grp_array as $gc_county) {
@@ -330,7 +335,9 @@ function voterdb_display_results() {
         $gc_vtr_percent = round($gc_br2/$gc_vtr*100,1).'%';}
     $gc_cnts[$gc_county]['vtr-pc'] = $gc_vtr_percent;
     // Count the number of voters who were contacted by NLs, either Face-to-face or by phone.
-    $gc_rr = voterdb_contacted($gc_county);
+    
+    $gc_rr = $reportsObj->countyContacted($gc_county);
+    //$gc_rr = voterdb_contacted($gc_county);
     $gc_cnts[$gc_county]['ctd'] = $gc_rr;
     // Count the number of the voters who had a personal contact and who voted.
     $gc_br = voterdb_voting_contact($gc_county);

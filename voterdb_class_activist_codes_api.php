@@ -46,4 +46,31 @@ class ApiActivistCodes {
     return $activistCodeList;
   }
           
+    public function setApiActivistCodes($countyAuthenticationObj,$database,$activistCode) {
+    $apiKey = $countyAuthenticationObj->apiKey;
+    $apiURL = $countyAuthenticationObj->URL;
+    $user = $countyAuthenticationObj->User;
+    $url = 'https://'.$user.':'.$apiKey.'|'.$database.'@'.$apiURL.'/activistCodes?$top=200';
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_HEADER, "Content-type: application/json");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $result = curl_exec($ch);
+    if($result === FALSE) {
+      voterdb_debug_msg('curl error', curl_error($ch));
+      return FALSE;
+    }
+    curl_close($ch);
+    $activistObj = json_decode($result);
+    $activistArray = $activistObj->items;
+    $activistCodes = array();
+    foreach ($activistArray as $activistCodeObj) {
+      $activistCode['activistCodeId'] = $activistCodeObj->activistCodeId;
+      $activistCode['type'] = $activistCodeObj->type;
+      $activistCode['description'] = $activistCodeObj->description;
+      $activistCode['name'] = $activistCodeObj->name;
+      $activistCodes[$activistCodeObj->activistCodeId] = $activistCode;
+    }
+    return $activistCodes;
+  }
+  
 }

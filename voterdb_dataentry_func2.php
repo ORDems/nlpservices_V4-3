@@ -117,7 +117,7 @@ function voterdb_build_voter_tbl(&$form_state) {
     $bv_title = $questionArray['questionName'];
     $qid = $questionArray['qid'];
     $form_state['voterdb']['surveyQid'] = $qid;
-    $surveyResponseList = $surveyQuestionObj->getSurveyResponseList($qid);
+    $surveyResponseList = $surveyResponseObj->getSurveyResponseList($qid);
   } else {
     $surveyResponseList = NULL;
     $bv_title = NULL;
@@ -130,7 +130,7 @@ function voterdb_build_voter_tbl(&$form_state) {
   $nlpActivistCodesObj = new NlpActivistCodes();
   $notADemAC = $nlpActivistCodesObj->getActivistCode('NotADem');
   $form_state['voterdb']['notADemAC'] = $notADemAC;
-  
+  //voterdb_debug_msg('notadem ', $notADemAC['current']);
   
   $form_element['vform'] = array(
     '#prefix' => " \n".'<div id="vform-div">'." \n",
