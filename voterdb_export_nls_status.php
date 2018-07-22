@@ -1,18 +1,26 @@
   <?php
 /*
- * Name: voterdb_export_nls_status.php   V4.0 2/19/18
+ * Name: voterdb_export_nls_status.php   V4.2 7/16/18
  *
  */
-require_once "voterdb_constants_rr_tbl.php";
-require_once "voterdb_constants_log_tbl.php";
-require_once "voterdb_constants_nls_tbl.php";
+//require_once "voterdb_constants_rr_tbl.php";
+//require_once "voterdb_constants_log_tbl.php";
+//require_once "voterdb_constants_nls_tbl.php";
 require_once "voterdb_constants_voter_tbl.php";
-require_once "voterdb_constants_mb_tbl.php";
+//require_once "voterdb_constants_mb_tbl.php";
 require_once "voterdb_group.php";
-require_once "voterdb_path.php";
+//require_once "voterdb_path.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_class_button.php";
+require_once "voterdb_class_get_browser.php";
+require_once "voterdb_class_nls.php";
+require_once "voterdb_class_nlreports_nlp.php";
+
+use Drupal\voterdb\NlpButton;
+use Drupal\voterdb\GetBrowser;
+use Drupal\voterdb\NlpNls;
+use Drupal\voterdb\NlpReports;
 
 define('DD_NLS_STATUS_FILE','nls-status');
 
@@ -48,106 +56,6 @@ function voterdb_get_participating_counties() {
   return $pc_names;
 }
 
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_get_county_nls
- * 
- * Get the array of NLs in the count with turfs assigned.  Including the 
- * current status of the NL.
- * 
- * @param type $cn_county
- * @return type
- */
-function voterdb_get_county_nls($cn_county) {
-  db_set_active('nlp_voterdb');
-  try {
-    $cn_query = db_select(DB_NLS_GRP_TBL, 'g');
-    $cn_query->join(DB_NLS_TBL, 'n', 'g.'.NG_MCID.' = n.'.NH_MCID );
-    $cn_query->join(DB_NLSSTATUS_TBL, 's', 'g.'.NG_MCID.' = s.'.NN_MCID );
-    $cn_query->addField('g', NG_MCID);
-    $cn_query->addField('g', NG_COUNTY);
-    $cn_query->addField('s', NN_RESULTSREPORTED);
-    $cn_query->addField('s', NN_NLSIGNUP);
-    $cn_query->addField('s', NN_LOGINDATE);
-    $cn_query->addField('n', NH_HD);
-    $cn_query->addField('n', NH_PCT);
-    $cn_query->addField('n', NH_NICKNAME);
-    $cn_query->addField('n', NH_LNAME);
-    $cn_query->addField('n', NH_EMAIL);
-    $cn_query->addField('n', NH_PHONE);
-    $cn_query->condition('g.'.NN_COUNTY,$cn_county);
-    $cn_query->orderBy(NH_HD);
-    $cn_result = $cn_query->execute();
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return NULL;
-  }
-  $cn_nl_list = $cn_result->fetchAll(PDO::FETCH_ASSOC);
-  db_set_active('default');
-  return $cn_nl_list;
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_get_report_counts
- * 
- * For each NL that has reported results for this cycle, count the number
- * of voters with attempted contact and also count the face-to-face contacts.
- * 
- * @param type $gr_county
- * @return boolean|int
- */
-function voterdb_get_report_counts($gr_county) {
-  //  Get the reports from NLs for voter contact for this cycle.
-  $gr_cycle = variable_get('voterdb_ecycle', 'xxxx-mm-G');
-  db_set_active('nlp_voterdb');
-  try {
-    $gr_rquery = db_select(DB_NLPRESULTS_TBL, 'r');
-    $gr_rquery->fields('r');
-    $gr_rquery->condition(NC_COUNTY,$gr_county);
-    $gr_rquery->condition(NC_CYCLE,$gr_cycle);
-    $gr_result = $gr_rquery->execute();
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return FALSE;
-  }
-  db_set_active('default');
-  // Count each report for a voter as an attempt and each face-to-face as a contact.
-  $gr_result_array = unserialize(DE_RESULT_ARRAY);
-  $gr_f2f = $gr_result_array[RE_F2F];
-  $gr_type_array = unserialize(DE_TYPE_ARRAY);
-  $gr_contact = $gr_type_array[RT_CONTACT];
-  // For each report, identify which voter was contacted.
-  $gr_vstatus = array();
-  do {
-    $gr_report = $gr_result->fetchAssoc();
-    if(!$gr_report) {break;}
-    $gr_vanid = $gr_report[NC_VANID];
-    $gr_vstatus[$gr_vanid]['mcid'] = $gr_report[NC_MCID];
-    $gr_vstatus[$gr_vanid]['attempt'] = TRUE;
-    if($gr_report[NC_TYPE]==$gr_contact AND $gr_report[NC_VALUE]==$gr_f2f) {
-      $gr_vstatus[$gr_vanid]['contact'] = TRUE;
-    }
-  } while (TRUE);
-  // For each NL, count the attempts and f2f contacts with voters.
-  $gr_counts = array();
-  foreach ($gr_vstatus as $gr_status) {
-    $gr_mcid = $gr_status['mcid'];
-    if(empty($gr_counts[$gr_mcid]['attempts'])) {
-      $gr_counts[$gr_mcid]['attempts'] = 1;
-      $gr_counts[$gr_mcid]['contacts'] = 0;
-    } else {
-      $gr_counts[$gr_mcid]['attempts']++;
-    }
-    if(!empty($gr_status['contact']) AND $gr_status['contact']) {
-      $gr_counts[$gr_mcid]['contacts']++;
-    }
-  }
-  return $gr_counts;
- }
- 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_voter_count
  * 
@@ -228,40 +136,47 @@ function voterdb_create_status($an_all,$an_county,$dd_list_uri) {
   fwrite($an_list_fh,$an_hdrs);
   // All participating counties or just one.
   if ($an_all) {
-    $an_grp_array = voterdb_get_participating_counties();
+    $an_counties = voterdb_get_participating_counties();
   } else {
-    $an_grp_array = array($an_county);
+    $an_counties = array($an_county);
   }
+  $nlObj = new NlpNls();
+  $nlReportsObj = new NlpReports();
+  
   $an_starttime = voterdb_timer('start',0);
   set_time_limit(60);
-  foreach ($an_grp_array as $an_county) {
+  foreach ($an_counties as $an_county) {
     // Get the list of all the NLs in a county.
-    $an_nl_list = voterdb_get_county_nls($an_county);
+    
+    $an_nl_list = $nlObj->getCountyNls($an_county);
+    //$an_nl_list = voterdb_get_county_nls($an_county);
     if(!$an_nl_list) {return NULL;}
-    $an_counts = voterdb_get_report_counts($an_county);
+    
+    $an_counts = $nlReportsObj->getCountyReportCounts($an_county);
+    //$an_counts = voterdb_get_report_counts($an_county);
     foreach ($an_nl_list as $an_nl) {
-      $an_progress = voterdb_get_progress($an_nl[NG_MCID],$an_counts);
+      $an_progress = voterdb_get_progress($an_nl['mcid'],$an_counts);
       // restore the apostrophies.
-      $an_nickname =  str_replace("&#039;", "'", $an_nl[NH_NICKNAME]); 
-      $an_lname =  str_replace("&#039;", "'", $an_nl[NH_LNAME]);
-      $an_email = $an_nl[NH_EMAIL];
+      $an_nickname =  str_replace("&#039;", "'", $an_nl['nickname']); 
+      $an_lname =  str_replace("&#039;", "'", $an_nl['lastName']);
+      $an_email = $an_nl['email'];
       if(empty($an_email)) {
         $an_formatted_email = '';
       } else {
         $an_formatted_email = $an_nickname.' '.$an_lname. '<'.$an_email.'>';
       }
       $an_nl_row = array();
-      $an_nl_row[] = $an_nl[NG_MCID];
-      $an_nl_row[] = $an_nl[NG_COUNTY];
-      $an_nl_row[] = $an_nl[NH_HD];
-      $an_nl_row[] = $an_nl[NH_PCT];
+      $an_nl_row[] = $an_nl['mcid'];
+      $an_nl_row[] = $an_nl['county'];
+      $an_nl_row[] = $an_nl['hd'];
+      $an_nl_row[] = $an_nl['pct'];
       $an_nl_row[] = $an_nickname;
       $an_nl_row[] = $an_lname;
       $an_nl_row[] = $an_email;
-      $an_nl_row[] = $an_nl[NH_PHONE];
-      $an_nl_row[] = $an_nl[NN_NLSIGNUP];
-      $an_nl_row[] = $an_nl[NN_LOGINDATE];
-      $an_nl_row[] = $an_nl[NN_RESULTSREPORTED];
+      $an_nl_row[] = $an_nl['phone'];
+      $an_nl_row[] = $an_nl['nlSignup'];
+      $an_nl_row[] = $an_nl['loginDate'];
+      $an_nl_row[] = $an_nl['resultsReported'];
       $an_nl_row[] = $an_progress['attempts'];
       $an_nl_row[] = $an_progress['contacts'];
       $an_nl_row[] = $an_formatted_email;
@@ -287,7 +202,7 @@ function voterdb_create_status($an_all,$an_county,$dd_list_uri) {
  * @return string - HTML for display with the links to the files.
  */
 function voterdb_export_nls_status() {
-  $dd_button_obj = new NlpButton;
+  $dd_button_obj = new NlpButton();
   $dd_button_obj->setStyle();
   $form_state = array();
   if(!voterdb_get_group($form_state)) {return "";}

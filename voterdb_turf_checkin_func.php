@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_turf_checkin_func.php     V4.2  6/18/18
+ * Name: voterdb_turf_checkin_func.php     V4.2  7/20/18
  * This include file contains the code to upload a turf exported from the
  * VAN and add it to the voter database.
  */
@@ -9,6 +9,13 @@
  * voterdb_hd_selected_callback, voterdb_pct_selected_callback
  */
 
+use Drupal\voterdb\NlpVoters;
+use Drupal\voterdb\NlpTurfs;
+use Drupal\voterdb\NlpActivistCodes;
+use Drupal\voterdb\ApiSurveyResponse;
+use Drupal\voterdb\ApiSurveyContext;
+use Drupal\voterdb\ApiSurveyQuestions;
+use Drupal\voterdb\ApiAuthentication;
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_get_base
@@ -43,8 +50,21 @@ function voterdb_insert_turf(&$form_state) {
   $it_county = $form_state['voterdb']['county'];
   $it_voters = $form_state['voterdb']['voters'];
   // replace voters.
-  db_set_active('nlp_voterdb');
+  $stateCommittee = variable_get('voterdb_state_committee', '');
+  $apiAuthenticationObj = new ApiAuthentication();
+  $stateAuthenticationObj = $apiAuthenticationObj->getApiAuthentication($stateCommittee);
+  
+  $responseObj = new ApiSurveyResponse();
+  $contextObj = new ApiSurveyContext();
+  $apiSurveyQuestionObj = new ApiSurveyQuestions($contextObj);
+  
+  $nlpActivistCodeObj = new NlpActivistCodes();
+  $nlpVoterAC = $nlpActivistCodeObj->getActivistCode('NLPVoter');
+  //voterdb_debug_msg('voterac', $nlpVoterAC);
+  
+  $voterObj = new NlpVoters();
   foreach ($it_voters as $it_vanid => $it_voter) {
+    db_set_active('nlp_voterdb');
     try {
       db_merge(DB_NLPVOTER_TBL)
         ->key(array(VN_VANID => $it_vanid))
@@ -56,7 +76,26 @@ function voterdb_insert_turf(&$form_state) {
       voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
+    db_set_active('default');
+    $voterStatus = $voterObj->getVoterStatus($it_vanid);
+    if(empty($voterStatus['nlpVoter'])) {
+      $voterStatus['nlpVoter'] = TRUE;
+      
+      $surveyResponse['type'] = 'Activist';
+      $surveyResponse['contactType'] = $apiSurveyQuestionObj::CONTACTTYPEWALK;
+      $surveyResponse['dateCanvassed'] = NULL;
+      $surveyResponse['vanid'] = $it_vanid;
+      $surveyResponse['action'] = 1;
+      $surveyResponse['rid'] = $nlpVoterAC['activistCodeId'];
+      //voterdb_debug_msg('surveyresponse', $surveyResponse);
+      $apiSurveyQuestionObj->setApiSurveyResponse($stateAuthenticationObj,0,$responseObj,$surveyResponse);
+      
+    }
+    $voterObj->setVoterStatus($it_vanid, $voterStatus);
   } 
+  
+
+  
   // Create a turf table for this new turf. 
   $turf['county'] = $it_county;
   $turf['mcid'] = $it_mcid;
@@ -66,7 +105,8 @@ function voterdb_insert_turf(&$form_state) {
   $turf['pdf'] = $form_state['voterdb']['pdf_file'];
   $turf['hd'] = $form_state['voterdb']['turf_hd'];
   $turf['pct'] = $form_state['voterdb']['turf_pct'];
-  $turfsObj = $form_state['voterdb']['turfsObj'];
+  //$turfsObj = $form_state['voterdb']['turfsObj'];
+  $turfsObj = new NlpTurfs();
   $it_turf_index = $turfsObj->createTurf($turf);
   $form_state['voterdb']['turf_index'] = $it_turf_index;
   // Now insert a grp entry.

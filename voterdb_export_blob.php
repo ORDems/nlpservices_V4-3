@@ -1,18 +1,23 @@
   <?php
 /*
- * Name: voterdb_export_blob.php   V4.0 12/27/17
+ * Name: voterdb_export_blob.php   V4.2 7/16/18
  *
  */
-require_once "voterdb_constants_rr_tbl.php";
-require_once "voterdb_constants_log_tbl.php";
-require_once "voterdb_constants_nls_tbl.php";
+//require_once "voterdb_constants_rr_tbl.php";
+//require_once "voterdb_constants_log_tbl.php";
+//require_once "voterdb_constants_nls_tbl.php";
 require_once "voterdb_constants_voter_tbl.php";
-require_once "voterdb_constants_mb_tbl.php";
+//require_once "voterdb_constants_mb_tbl.php";
 require_once "voterdb_group.php";
-require_once "voterdb_path.php";
+//require_once "voterdb_path.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_class_button.php";
+require_once "voterdb_class_nls.php";
+
+use Drupal\voterdb\NlpButton;
+use Drupal\voterdb\GetBrowser;
+use Drupal\voterdb\NlpNls;
 
 define('DD_BLOB_FILE','email-blob');
 
@@ -69,6 +74,7 @@ function voterdb_create_blob($an_all,$an_county,$dd_blob_uri) {
   } else {
     $an_grp_array = array($an_county);  // Just one group.
   }
+  $nlObj = new NlpNls();
   // Create a report for each requested county.
   $an_hd = '';
   $an_current_hd = '';
@@ -79,33 +85,16 @@ function voterdb_create_blob($an_all,$an_county,$dd_blob_uri) {
     $an_email_c = 'County: '.$an_county."\n";  // start blob with county name.
     fwrite($an_blob_fh,$an_email_c);
     // Get the needed info about each NL.
-    db_set_active('nlp_voterdb');
-    try {
-      $an_query = db_select(DB_NLS_GRP_TBL, 'g');
-      $an_query->join(DB_NLS_TBL, 'n', 'g.'.NG_MCID.' = n.'.NH_MCID );
-      $an_query->addField('g', NG_MCID);
-      $an_query->addField('g', NG_COUNTY);
-      $an_query->addField('n', NH_HD);
-      $an_query->addField('n', NH_NICKNAME);
-      $an_query->addField('n', NH_LNAME);
-      $an_query->addField('n', NH_EMAIL);
-      $an_query->condition('g.'.NN_COUNTY,$an_county);
-      $an_query->orderBy(NH_HD);
-      $an_query->orderBy(NH_LNAME);
-      $an_result = $an_query->execute();
-    }
-    catch (Exception $e) {
-      db_set_active('default');
-      voterdb_debug_msg('e', $e->getMessage() );
-      return NULL;
-    }
-    $an_nl_list = $an_result->fetchAll(PDO::FETCH_ASSOC);
-    db_set_active('default');
-    // For each NL, add the email to 
+    
+    $an_nl_list = $nlObj->getCountyNls($an_county);
+    
+    
+
+    // For each NL, add the email to.
     $an_delimit = FALSE;
     foreach ($an_nl_list as $an_nl) {
       //voterdb_debug_msg('NL', $an_nl);
-      $an_hd = $an_nl[NH_HD];
+      $an_hd = $an_nl['hd'];
       if($an_hd != $an_current_hd) {
         $an_current_hd = $an_hd;
         if($an_email_blob != '') {
@@ -117,10 +106,10 @@ function voterdb_create_blob($an_all,$an_county,$dd_blob_uri) {
         // State a new house district.
         fwrite($an_blob_fh,"HD: ".$an_hd."\n");
       }
-      $an_email = $an_nl[NH_EMAIL];
+      $an_email = $an_nl['email'];
       // restore the apostrophies.
-      $an_nickname =  str_replace("&#039;", "'", $an_nl[NH_NICKNAME]); 
-      $an_lname =  str_replace("&#039;", "'", $an_nl[NH_LNAME]);
+      $an_nickname =  str_replace("&#039;", "'", $an_nl['nickname']); 
+      $an_lname =  str_replace("&#039;", "'", $an_nl['lastName']);
       // If there is an email for this NL, add an entry to the blob.
       if($an_email != '') {
         if($an_delimit) {
@@ -155,7 +144,7 @@ function voterdb_create_blob($an_all,$an_county,$dd_blob_uri) {
  * @return string - HTML for display with the links to the files.
  */
 function voterdb_export_blob() {
-  $dd_button_obj = new NlpButton;
+  $dd_button_obj = new NlpButton();
   $dd_button_obj->setStyle();
   //$dn_style = HINTS;
   //drupal_add_css($dn_style, array('type' => 'inline')); 
@@ -177,7 +166,7 @@ function voterdb_export_blob() {
   $dd_blob_object->status = 0;
   file_save($dd_blob_object);
   // Now fill the file with information.
-  $msg = 'huh2.';
+  //$msg = 'huh2.';
   voterdb_create_blob($dd_all,$dd_county,$dd_blob_uri);
   // Provide the external link to the user so the file can be downloaded.
   $dd_browser_obj = new GetBrowser();

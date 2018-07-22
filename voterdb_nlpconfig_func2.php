@@ -9,6 +9,8 @@ use Drupal\voterdb\ApiResponseCodes;
 use Drupal\voterdb\ApiAuthentication;
 use Drupal\voterdb\NlpResponseCodes;
 use Drupal\voterdb\ApiSurveyQuestions;
+use Drupal\voterdb\NlpSurveyResponse;
+
 use Drupal\voterdb\NlpSurveyQuestion;
 use Drupal\voterdb\ApiActivistCodes;
 use Drupal\voterdb\NlpActivistCodes;
@@ -59,6 +61,24 @@ function voterdb_process_vbverify(&$form_state) {
   }
   
   
+  if(isset($form_state['values']['removeVoterAC']) AND $form_state['values']['removeAC']) {
+    drupal_set_message('The current activist code is deselected','status');
+    //$functionName = $form_state['voterdb']['functionName'];
+    $questionObj->deleteActivistCode('NLPVoter');
+  }
+  
+  //$form_state['voterdb']['activistCodeId'] = $currentActivistCode['activistCodeId'];
+  
+  if($form_state['values']['voterActivistCode'] > 1) {
+    $activistCodes = $form_state['voterdb']['activistCodes'];
+    voterdb_debug_msg('activist codes',$activistCodes);
+    $nlpActivistCodeObj = new NlpActivistCodes();
+    $activistCode = $activistCodes[$form_state['values']['voterActivistCode']];
+    $activistCode['functionName'] = 'NLPVoter';
+    voterdb_debug_msg('activist code',$activistCode);
+    $nlpActivistCodeObj->setActivistCode($activistCode);
+  }
+  
 }
 
 
@@ -85,6 +105,8 @@ function voterdb_build_verify_votebuilder(&$form, &$form_state) {
   $apiExpectedResultCodes = $apiResultCodesObj->getApiExpectedResultCodes();
   //voterdb_debug_msg('expected', $apiExpectedResultCodes);
   
+  //$apiContactTtpes = $apiResultCodesObj->getApiContactTypes($countyAuthenticationObj,$database);
+  //voterdb_debug_msg('contact types', $apiContactTtpes);
    
     
   //
@@ -101,9 +123,14 @@ function voterdb_build_verify_votebuilder(&$form, &$form_state) {
   $responseCodesObj = new NlpResponseCodes();
   $responseCodesObj->setNlpResponseCodes($apiKnownResultCodes);
   
-  $questionObj = new NlpSurveyQuestion();
+  
+  $surveyResponseObj = new NlpSurveyResponse();
+  
+  $questionObj = new NlpSurveyQuestion($surveyResponseObj);
+  //voterdb_debug_msg('questionobj', $questionObj);
   $form_state['voterdb']['questionObj'] = $questionObj;
   $surveyQuestionArray = $questionObj->getSurveyQuestion();
+  //voterdb_debug_msg('questions', $surveyQuestionArray );
   if(empty($surveyQuestionArray)) {
     $form['surveyq']['noQuestion'] = array(
       '#markup' => "<p>There is no survey question chosen. </p>",
@@ -128,7 +155,7 @@ function voterdb_build_verify_votebuilder(&$form, &$form_state) {
 
   
   $apiQuestionsObj = new ApiSurveyQuestions(NULL);
-  //voterdb_debug_msg('Folders object', $questionsObj);
+  //voterdb_debug_msg('apiquestions', $apiquestionsObj);
   $form_state['voterdb']['apiQuestionObj'] = $apiQuestionsObj;
   
   $questionsInfoObj = $apiQuestionsObj->getApiSurveyQuestions($countyAuthenticationObj,$database,'All');
@@ -219,6 +246,62 @@ function voterdb_build_verify_votebuilder(&$form, &$form_state) {
   );
   
   $form['activist']['saveAC'] = array(
+    '#type' => 'submit',
+    '#name' => 'saveAC',
+    '#value' => 'Save >>'
+  ); 
+  
+  
+  
+  //
+  // - - - "NLP Voter" activist code choice. - - - - - - - - - - - - - -
+  //
+  
+  //$nlpActivistCodeObj = new NlpActivistCodes();
+  $voterActivistCode = $nlpActivistCodeObj->getActivistCode('NLPVoter');
+  if(empty($voterActivistCode)) {
+    $currentVoterActivistCode = 'Not chosen yet';
+  } else {
+    $currentVoterActivistCode = $nlpActivistCodeObj->getNlpActivistCodeDisplay($voterActivistCode);
+    //$form_state['voterdb']['functionName'] = $currentActivistCode['functionName'];
+  }
+  
+  //$activistCodeObj = new ApiActivistCodes();
+  //$activistCodes = $activistCodeObj->getApiActivistCodes($countyAuthenticationObj,$database);
+  //$form_state['voterdb']['activistCodes'] = $activistCodes;
+  //voterdb_debug_msg('Activist Codes', $activistCodes);
+  
+  //$activistCodeList = $activistCodeObj->getActivistCodeList($activistCodes);
+  
+  $form['nlpvoter'] = array(
+    '#title' => '"NLP Voter" AC Select',
+    '#prefix' => " \n".'<div style="width:750px;">'." \n",
+    '#suffix' => " \n".'</div>'." \n",
+    '#type' => 'fieldset',
+  );
+  
+  $form['nlpvoter']['currentVoterAC'] = array(
+      '#markup' => '<p><b>The currently chosen Activist code for identifing an NLP voter is:</b><br>'.$currentVoterActivistCode."</p>",
+    );
+  if(!empty($nlpActivistCode)) {
+    $form['nlpvoter']['removeVoterAC'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Remove the currently chosen activist code'),
+        //'#default_value' => isset($node->active) ? $node->active : 1,
+        //'#options' => $candidateList,
+        //'#description' => t('Remove the currently chosen survey question.'),
+      );
+  }
+  
+  $form['nlpvoter']['voterActivistCode'] = array(
+     '#type' => 'select',
+     '#title' => '"NLP Voter" activist code selection',
+     '#options' => $activistCodeList,
+     '#size' =>2,
+     '#description' => t('Select the activist code to be set when a voter is assigned to an NL.'),
+  );
+  
+  $form['nlpvoter']['saveVoterAC'] = array(
     '#type' => 'submit',
     '#name' => 'saveAC',
     '#value' => 'Save >>'

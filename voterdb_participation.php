@@ -1,200 +1,30 @@
 <?php
 /*
- * Name: voterdb_participation.php   V4.0 12/27/17
+ * Name: voterdb_participation.php   V4.2 7/14/18
  */
-require_once "voterdb_constants_rr_tbl.php";
-require_once "voterdb_constants_log_tbl.php";
+//require_once "voterdb_constants_rr_tbl.php";
+//require_once "voterdb_constants_log_tbl.php";
 require_once "voterdb_constants_voter_tbl.php";
 require_once "voterdb_constants_mb_tbl.php";
 require_once "voterdb_constants_bc_tbl.php";
-require_once "voterdb_constants_nls_tbl.php";
-require_once "voterdb_constants_turf_tbl.php";
+//require_once "voterdb_constants_nls_tbl.php";
+//require_once "voterdb_constants_turf_tbl.php";
 require_once "voterdb_group.php";
-require_once "voterdb_path.php";
+//require_once "voterdb_path.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_debug.php";
+require_once "voterdb_class_nls.php";
+require_once "voterdb_class_nlreports_nlp.php";
+require_once "voterdb_class_survey_question_nlp.php";
+require_once "voterdb_class_survey_response_nlp.php";
+require_once "voterdb_class_turfs.php";
 
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_get_survey_response_counts
- * 
- * Query the database for all the responses to the current survey question and
- * count occurrences of each response.
- * 
- * @return associative array of counts for responses.
- */
-function voterdb_get_survey_response_counts() {
-  $sq_response_list = variable_get('voterdb_survey_responses', '');
-  $sq_responses = explode(',',$sq_response_list);
-  $sq_counts = array();
-  foreach ($sq_responses as $sq_response) {
-    $sq_counts[$sq_response] = 0;
-  }
-  $sq_cycle = variable_get('voterdb_ecycle', 'yyyy-mm-t');
-  $sq_title = variable_get('voterdb_survey_title', '');
-  db_set_active('nlp_voterdb');
-  try {
-    $sq_query = db_select(DB_NLPRESULTS_TBL, 'r');
-    $sq_query->addField('r',NC_VALUE);
-    $sq_query->condition(NC_ACTIVE,TRUE);
-    $sq_query->condition(NC_CYCLE,$sq_cycle);
-    $sq_query->condition(NC_TYPE,TA_SURVEY);
-    $sq_query->condition(NC_TEXT,$sq_title);
+use Drupal\voterdb\NlpNls;
+use Drupal\voterdb\NlpReports;
+use Drupal\voterdb\NlpSurveyQuestion;
+use Drupal\voterdb\NlpSurveyResponse;
+use Drupal\voterdb\NlpTurfs;
 
-    $sq_result = $sq_query->execute();
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return 0;
-  }
-  db_set_active('default');
-  do {
-  $sq_report = $sq_result->fetchAssoc();
-  if(empty($sq_report)) {break;}
-    $sq_response = $sq_report[NC_VALUE];
-    if(!isset($sq_counts[$sq_response])) {
-      $sq_counts[$sq_response] = 1;
-    } else {
-      $sq_counts[$sq_response]++;
-    }
-  } while (TRUE);
-  return $sq_counts;
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_get_survey_title
- * 
- * Get the survey question title if it exists.
- * 
- * @return type
- */
-function voterdb_get_survey_title() {
-  $sq_title = variable_get('voterdb_survey_title', '');
-  $ad_response_options = variable_get('voterdb_survey_responses', '');
-  if(!empty($sq_title) AND !empty($ad_response_options)) {
-    return $sq_title;
-  }
-  return NULL;
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_get_signedup_nl
- * 
- * GEt an associative array of NLs that have signed up to  participate.
- * 
- * @return int
- */
-function voterdb_get_signedup_nl() {
-  db_set_active('nlp_voterdb');
-  try {
-    $gc_query = db_select(DB_NLSSTATUS_TBL, 'r');
-    $gc_query->join(DB_NLS_TBL, 'n', 'r.'.NN_MCID.' = n.'.NH_MCID );
-    $gc_query->addField('n',NH_MCID);
-    $gc_query->addField('n',NH_NICKNAME);
-    $gc_query->addField('n',NH_LNAME);
-    $gc_query->addField('r',NN_NLSIGNUP);
-    $gc_query->addField('r',NN_RESULTSREPORTED);
-    $gc_query->addField('r',NN_LOGINDATE);
-    $gc_query->condition(NN_NLSIGNUP,'Y');
-    $gc_nls = $gc_query->execute();
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return 0;
-  }
-  db_set_active('default');
-  return $gc_nls;
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_counts
- * 
- * Loop through the list of NLs and coint the number who have logged in to
- * get their turf and the number that have reported results.
- * 
- * @param type $cn_nls
- * @return int
- */
-function voterdb_counts($cn_nls) {
-  $cn_signedup = $cn_loggedin = $cn_reported = 0;
-  foreach ($cn_nls as $cn_nl) {
-    if($cn_nl[NN_NLSIGNUP] == 'Y') {
-      $cn_signedup++;
-      if($cn_nl[NN_LOGINDATE] != NULL) {$cn_loggedin++;}
-      if($cn_nl[NN_RESULTSREPORTED] != NULL) {$cn_reported++;}
-    }
-  }
-  $cn_cnts['signedup'] = $cn_signedup;
-  $cn_cnts['loggedin'] = $cn_loggedin;
-  $cn_cnts['reported'] = $cn_reported;
-  return $cn_cnts;
-}
-
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_get_logincnt
- *
- * Counts NLs that either have signed up or who have reported results.  Type
- * selects which type to count.  The count is either for a single HD or for
- * the entire county.   The HD parameter selects which kind of count.
- *
- * The type parameter is the field name to count.  It is either the
- * NN_RESULTSREPORTED or the NN_NLSIGNUP column in the DB_NLSSTATUS_TBL.
- * These fields are either Y for yes or null for no.  We count the numbe
- * with Y set.
- *
- * @return type - goal count or zero if error.
- */
-function voterdb_get_logincnt() {
-  db_set_active('nlp_voterdb');
-  try {
-    $gc_query = db_select(DB_NLSSTATUS_TBL, 'r');
-    $gc_query->join(DB_NLS_TBL, 'n', 'r.'.NN_MCID.' = n.'.NH_MCID );
-    $gc_query->condition(NN_NLSIGNUP,'Y');
-    $gc_query->isNotNull(NN_LOGINDATE);
-    $gc_cnt = $gc_query->countQuery()->execute()->fetchField();
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return 0;
-  }
-  db_set_active('default');
-  return $gc_cnt;
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_get_nlcnt
- *
- * Counts NLs that either have signed up or who have reported results.  Type
- * selects which type to count.  The count is either for a single HD or for
- * the entire county.   The HD parameter selects which kind of count.
- *
- * The type parameter is the field name to count.  It is either the
- * NN_RESULTSREPORTED or the NN_NLSIGNUP column in the DB_NLSSTATUS_TBL.
- * These fields are either Y for yes or null for no.  We count the number
- * with Y set.
- *
- * @return type - count of NLs that have logged in or zero if error.
- */
-function voterdb_get_nlcnt($gc_type) {
-  db_set_active('nlp_voterdb');
-  try {
-    $gc_query = db_select(DB_NLSSTATUS_TBL, 'r');
-    $gc_query->join(DB_NLS_TBL, 'n', 'r.'.NN_MCID.' = n.'.NH_MCID );
-    $gc_query->condition(NN_NLSIGNUP,'Y');
-    $gc_query->condition($gc_type,'Y');
-    $gc_cnt = $gc_query->countQuery()->execute()->fetchField();
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return 0;
-  }
-  db_set_active('default');
-  return $gc_cnt;
-}
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_get_voter_count
@@ -218,32 +48,6 @@ function voterdb_get_voter_count() {
   }
   db_set_active('default');
   return $vc_vtr;
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_contact_attempts
- * 
- * Count the number of voters that have at least one contact attempt of
- * any kind.
- * 
- * @return boolean
- */
-function voterdb_voterdb_contact_attempts($vc_cycle) { 
-  db_set_active('nlp_voterdb');
-  try {
-    $vc_query = db_select(DB_NLPRESULTS_TBL, 'r');
-    $vc_query->addField('r',NC_VANID);
-    $vc_query->distinct();
-    $vc_query->condition(NC_CYCLE,$vc_cycle);
-  $vc_br = $vc_query->countQuery()->execute()->fetchField();
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return 0;
-  }
-  db_set_active('default');
-  return $vc_br;
 }
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -323,37 +127,6 @@ function voterdb_percent($pe_base,$pe_cnt) {
   return $pe_percent;
 }
 
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_nl_info
- * 
- * Get information from the database that is needed to report the progress
- * of the NL to contact voters.
- * 
- * @param type $ns_mcid
- * @return type
- */
-function voterdb_nl_info($ns_mcid) {
-  db_set_active('nlp_voterdb');
-  try {
-    $ns_query = db_select(DB_NLS_TBL, 'n'); 
-    $ns_query->join(DB_NLSSTATUS_TBL, 's', 's.'.NN_MCID.' = n.'.NH_MCID );
-    $ns_query->addField('n',NH_COUNTY);
-    $ns_query->addField('n',NH_FNAME);
-    $ns_query->addField('n',NH_LNAME);
-    $ns_query->addField('s',NN_RESULTSREPORTED);
-    $ns_query->condition('n.'.NH_MCID,$ns_mcid);
-    $ns_result = $ns_query->execute();
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return NULL;
-  }
-  $ns_nl = $ns_result->fetchAssoc();
-  db_set_active('default');
- 
-  return $ns_nl;
-}
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_get_participating_counties  
@@ -396,69 +169,103 @@ function voterdb_get_participating_counties() {
  * @param type $pc_file_uri - a temp file for the report.
  * @return boolean
  */
-function voterdb_participation_cnts($pc_file_uri) {
+function voterdb_participation_cnts($pc_file_uri,&$pc_count_array) {
   $pc_file_fh = fopen($pc_file_uri,"w");
   if(!$pc_file_fh) {return FALSE;}
+  
+
   // Write the header as the first record in this tab delimited file.
   $pc_record = array("County", "MCID", "FName", "LName","Rpt", "Attempts");
   // If we have a survey question, add the colmns for title and responses.
-  $sq_response_list = variable_get('voterdb_survey_responses', '');
-  $sq_title = variable_get('voterdb_survey_title', '');
+  
+  $surveyResponseObj = new NlpSurveyResponse();
+  $surveyQuestionObj = new NlpSurveyQuestion($surveyResponseObj);
+  $surveyQuestion = $surveyQuestionObj->getSurveyQuestion();
+  
+  $nlObj = new NlpNls();
+  $reportsObj = new NlpReports();
+  
+  //$sq_title = $surveyQuestion['questionName'];
+  
+  //$sq_response_list = variable_get('voterdb_survey_responses', '');
+  //$sq_title = variable_get('voterdb_survey_title', '');
   $pc_record[] = "Survey Title";
-  if(!empty($sq_response_list)) {
-    $sq_responses = explode(',',$sq_response_list);
-    foreach ($sq_responses as $sq_response) {
+  if(!empty($surveyQuestion)) {
+    //$sq_title = $surveyQuestion['questionName'];
+    //$sq_responses = explode(',',$sq_response_list);
+    $pc_count_array['surveyQuestion'] = $surveyQuestion['questionName'];
+    foreach ($surveyQuestion['responses'] as $rid => $sq_response) {
       $pc_record[] = $sq_response;
+      $pc_count_array['surveyResponses'][$rid] = $sq_response;
     }
   }
   $pc_string = implode("\t", $pc_record)."\tEOR\n";
   fwrite($pc_file_fh,$pc_string);
   // Now fill the file.
   $pc_counties = voterdb_get_participating_counties();
+  //voterdb_debug_msg('counties', $pc_counties);
+  $turfObj = new NlpTurfs();
   foreach ($pc_counties as $pc_county) {
-    $pc_counts = voterdb_get_report_counts($pc_county);
+    //$pc_counts = voterdb_get_report_counts($pc_county);
     //voterdb_debug_msg('county counts', $pc_counts);
     // List of NLs with turfs.
-    db_set_active('nlp_voterdb');
-    try {
-      $pc_query = db_select(DB_NLSTURF_TBL, 't'); 
-      $pc_query->addField('t', TT_MCID);
-      $pc_query->distinct();
-      $pc_query->condition(TT_COUNTY,$pc_county);
-      $pc_result = $pc_query->execute();
+    $pc_count_array['county'][$pc_county]['attempts'] = 0;
+    $pc_count_array['county'][$pc_county]['resultsReported'] = 0;
+    $pc_count_array['county'][$pc_county]['loggedIn'] = 0;
+    
+    $pc_nls = $turfObj->getCountyNlsWithTurfs($pc_county);
+    $pc_count_array['county'][$pc_county]['nls'] = count($pc_nls);
+    //voterdb_debug_msg('nls', $pc_nls);
+    foreach ($surveyQuestion['responses'] as $rid => $sq_response) {
+      $pc_count_array['county'][$pc_county]['surveyResponses'][$rid] = 0;
     }
-    catch (Exception $e) {
-        db_set_active('default');
-        voterdb_debug_msg('e', $e->getMessage() );
-        return NULL;
-    }
-    db_set_active('default');  
+    
+     
     // Copy the results to a tab delimited file.
-    do {
-      $pc_nl_record = $pc_result->fetchAssoc();
-      if (!$pc_nl_record) {break;}
-      $pc_mcid = $pc_nl_record[TT_MCID];
+    foreach ($pc_nls as $pc_mcid) {
+
       // Get the name and other information for the display.
-      $pc_nl = voterdb_nl_info($pc_mcid);
+      
+      $pc_nl = $nlObj->getNlById($pc_mcid);
+      
+      $pc_nl_status = $nlObj->getNlsStatus($pc_mcid,$pc_county);
+      
+      if (!empty($pc_nl_status['resultsReported'])) {
+        $pc_count_array['county'][$pc_county]['resultsReported']++;
+      }
+      
+      if (!empty($pc_nl_status['loginDate'])) {
+        $pc_count_array['county'][$pc_county]['loggedIn']++;
+      }
+      
+      //$pc_nl = voterdb_nl_info($pc_mcid);
+      
       // Construct the status record for the NL.
-      $pc_nl_stat[NH_COUNTY] = $pc_nl[NH_COUNTY];
-      $pc_nl_stat[TT_MCID] = $pc_mcid;
-      $pc_nl_stat[NH_FNAME] = $pc_nl[NH_FNAME];
-      $pc_nl_stat[NH_LNAME] = $pc_nl[NH_LNAME];
-      $pc_nl_stat[NN_RESULTSREPORTED] = $pc_nl[NN_RESULTSREPORTED];
-      $pc_atmps = (!empty($pc_counts[$pc_mcid]['attempts']))?$pc_counts[$pc_mcid]['attempts']:0;
-      $pc_nl_stat['attempts'] = $pc_atmps;
+      $pc_nl_stat['County'] = $pc_nl['county'];
+      $pc_nl_stat['MCID'] = $pc_mcid;
+      $pc_nl_stat['fname'] = $pc_nl['firstName'];
+      $pc_nl_stat['lname'] = $pc_nl['lastName'];
+      $pc_nl_stat['resultsReported'] = $pc_nl_status['resultsReported'];
+      
+      //$reportsObj->getNlVoterContactAttempts($mcid);
+      //$pc_atmps = (!empty($pc_counts[$pc_mcid]['attempts']))?$pc_counts[$pc_mcid]['attempts']:0;
+      $pc_nl_stat['attempts'] = $reportsObj->getNlVoterContactAttempts($pc_mcid);
+      $pc_count_array['county'][$pc_county]['attempts'] += $pc_nl_stat['attempts'];
+      
       // If there is a survey question, include the title and the response columns.
-      if(!empty($sq_response_list)) {
-        $pc_nl_stat['title'] = $sq_title;
-        foreach ($sq_responses as $sq_response) {
-          $pc_nl_stat[$sq_response] = (empty($pc_counts[$pc_mcid][$sq_response]))?0:$pc_counts[$pc_mcid][$sq_response];
+      $pc_counts = NULL;
+      if(!empty($surveyQuestion)) {
+        $pc_nl_stat['title'] = $surveyQuestion['questionName'];
+        $surveyCounts = $reportsObj->getSurveyResponsesCountsById($pc_mcid,$surveyQuestion['qid']);
+        foreach ($surveyQuestion['responses'] as $rid => $sq_response) {
+          $pc_nl_stat[$sq_response] = (empty($surveyCounts[$rid]))?0:$surveyCounts[$rid];
+          $pc_count_array['county'][$pc_county]['surveyResponses'][$rid] += $pc_nl_stat[$sq_response];
         }
       }
       $pc_string = implode("\t", $pc_nl_stat);
       $pc_string .= "\tEOR\n";
       fwrite($pc_file_fh,$pc_string);
-    } while (TRUE);
+    }
   }
   fclose($pc_file_fh);
   return TRUE;
@@ -484,13 +291,56 @@ function voterdb_participation() {
     th{text-align: right;}', array('type' => 'inline'));
   // Count the NLs who have signed up, the voters assigned to NLs, and the
   // progress on contacting voters.
-  $gc_nlcnt = voterdb_get_nlcnt(NN_NLSIGNUP);
-  $gc_nlreporting = voterdb_get_nlcnt(NN_RESULTSREPORTED);
-  $gc_nllogincnt = voterdb_get_logincnt();
+  
+ 
+  // Export the progress report for each participating NL.
+  $gc_temp_dir = 'public://temp';
+  $gc_cdate = date('Y-m-d-H-i-s',time());
+  $gc_participation_uri = $gc_temp_dir.'/participation_report_'.$gc_county.'_'.$gc_cdate.'.txt';
+  $gc_participation_object = file_save_data('', $gc_participation_uri, FILE_EXISTS_REPLACE);
+  $gc_participation_object->status = 0;
+  file_save($gc_participation_object);
+  //if(!voterdb_participation_cnts($gc_participation_uri)) {return $output;}
+  
+  $gc_count_array = array();
+  if(!voterdb_participation_cnts($gc_participation_uri,$gc_count_array)) {return $output;}
+  
+  //voterdb_debug_msg('countarray', $gc_count_array);
+  
+  
+  
+  $nlObj = new NlpNls();
+  
+  //$gc_contactattempts = $gc_nlcnt = $gc_nlreporting = $gc_nllogincnt = $gc_voter_count = 0;
+  $gc_contactattempts = $gc_nlcnt = $gc_nlreporting = $gc_nllogincnt = 0;
+  
+  foreach (array_keys($gc_count_array['surveyResponses']) as $rid) {
+    $gc_responseCounts[$rid] = 0;
+  }
+  
+  foreach ($gc_count_array['county'] as $countyCounts) {
+    $gc_nlcnt += $countyCounts['nls'];
+    $gc_nlreporting += $countyCounts['resultsReported'];
+    $gc_nllogincnt += $countyCounts['loggedIn'];
+    //$gc_voter_count += $countyCounts['voters'];
+    $gc_contactattempts += $countyCounts['attempts'];
+    foreach ($countyCounts['surveyResponses'] as $rid => $responseCount) {
+      $gc_responseCounts[$rid] += $responseCount;
+    }
+  }
+  
+  //$gc_nlcnt = $nlObj->getTotalNlCnt('signedup');
+  //$gc_nlcnt = voterdb_get_nlcnt('signedup');
+  //$gc_nlreporting = $nlObj->getTotalNlCnt('resultsReported');
+  //$gc_nlreporting = voterdb_get_nlcnt(NN_RESULTSREPORTED);
+  //$gc_nllogincnt = voterdb_get_logincnt();
+  //$gc_nllogincnt = $nlObj->getTotalNlCnt('loggedIn');
   $gc_voter_count = voterdb_get_voter_count();
   // Count the progress on collecting responses for the survey question.
-  $gc_cycle = variable_get('voterdb_ecycle', 'Gxxxx');
-  $gc_contactattempts = voterdb_voterdb_contact_attempts($gc_cycle);
+  
+  //$reportsObj = new NlpReports();
+  //$gc_contactattempts = $reportsObj->getTotalContactAttempts();
+
   // Display the participation counts in a nice table.
   $output .= '<table style="white-space: nowrap; width:453px;">';
   $output .= '<thead><tr><th style="text-align: left; width:150px;">Count Type</th>
@@ -503,24 +353,36 @@ function voterdb_participation() {
   $output .= '<tr><td style="text-align: left;">Voters assigned to NLs</td><td>'.$gc_voter_count.'</td></tr>';
   $output .= '<tr><td style="text-align: left;">Reported voter contact attempts</td><td>'.$gc_contactattempts.'</td></tr>';
   // If we have a survey question for this cycle, report it else don't include the columns.
-  $gc_title = voterdb_get_survey_title();
-  if (!empty($gc_title)) {
-    $output .= '<tr><td style="text-align: left;">Survey: '.$gc_title.'</td><td></td></tr>';
-    $gc_response_counts = voterdb_get_survey_response_counts();
-    foreach ($gc_response_counts as $gc_response=>$gc_count) {
-       $output .= '<tr><td style="text-align: left; font-style: italic;">&nbsp;&nbsp;'.$gc_response.'</td><td>'.$gc_count.'</td></tr>';
+  
+  //$surveyResponseObj = new NlpSurveyResponse();
+  //$surveyQuestionObj = new NlpSurveyQuestion($surveyResponseObj);
+  //$surveyQuestion = $surveyQuestionObj->getSurveyQuestion();
+  
+  
+  //$gc_title = voterdb_get_survey_title();
+  if (!empty($gc_count_array['surveyQuestion'])) {
+    $output .= '<tr><td style="text-align: left;">Survey: '.$gc_count_array['surveyQuestion'].'</td><td></td></tr>';
+    
+    $responses = $gc_count_array['surveyResponses'];
+    //voterdb_debug_msg('responses', $responses);
+    
+    //$responseCounts = $reportsObj->getSurveyResponseCounts($surveyQuestion['qid']);
+    //$gc_response_counts = voterdb_get_survey_response_counts();
+    
+    foreach ($responses as $rid=>$responseName) {
+      $count = 0;
+      if(!empty($gc_responseCounts[$rid])) {
+        $count = $gc_responseCounts[$rid];
+      }
+      $output .= '<tr><td style="text-align: left; font-style: italic;">&nbsp;&nbsp;'.$responseName.'</td><td>'.$count.'</td></tr>';
     }
   }
   $output .= '</tbody></table>';
   $output .= "<p>&nbsp;</p>";
-  // Export the pregress report for each participating NL.
-  $gc_temp_dir = 'public://temp';
-  $gc_cdate = date('Y-m-d-H-i-s',time());
-  $gc_participation_uri = $gc_temp_dir.'/participation_report-'.$gc_county.'-'.$gc_cdate.'.txt';
-  $gc_participation_object = file_save_data('', $gc_participation_uri, FILE_EXISTS_REPLACE);
-  $gc_participation_object->status = 0;
-  file_save($gc_participation_object);
-  if(!voterdb_participation_cnts($gc_participation_uri)) {return $output;}
+  
+  
+  
+  
   $gc_participation_url = file_create_url($gc_participation_uri);
   $output .= "<p><a href=".$gc_participation_url.">Right click here to download the participation report.</a> "
     . "<i>(Use the Save link as... option)</i></p>";

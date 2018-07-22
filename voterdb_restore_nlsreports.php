@@ -1,17 +1,19 @@
 <?php
 /*
- * Name: voterdb_restore_nlsreports.php   V4.0   2/19/18
+ * Name: voterdb_restore_nlsreports.php   V4.2   7/16/18
  * This include file contains the code to restore voter contact reports by
  * NLs in previous elections.  It creates the database for historical results
  * that might be of value for this election.
  */
-require_once "voterdb_constants_rr_tbl.php"; 
-require_once "voterdb_constants_nls_tbl.php"; 
+//require_once "voterdb_constants_rr_tbl.php"; 
+//require_once "voterdb_constants_nls_tbl.php"; 
 require_once "voterdb_group.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_debug.php";
-require_once "voterdb_van_hdr.php";
+//require_once "voterdb_van_hdr.php";
 require_once "voterdb_class_button.php";
+
+use Drupal\voterdb\NlpButton;
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_validate_nlreports
@@ -99,7 +101,7 @@ function voterdb_validate_file(&$form_state) {
  * @return associative array - the form.
  */
 function voterdb_restore_nlsreports_form($form_id, &$form_state) {
-  $rr_button_obj = new NlpButton;
+  $rr_button_obj = new NlpButton();
   $rr_button_obj->setStyle();
   if (!isset($form_state['voterdb']['reenter'])) {
     $form_state['voterdb']['reenter'] = TRUE;

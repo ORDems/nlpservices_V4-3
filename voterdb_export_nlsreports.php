@@ -1,47 +1,27 @@
 <?php
 /*
- * Name: voterdb_export_nlsreports.php   V4.0  2/18/18
- * Export NL reports.
+ * Name: voterdb_export_nlsreports.php   V4.2  7/16/18
  */
-require_once "voterdb_constants_rr_tbl.php";
-require_once "voterdb_constants_nls_tbl.php";
-require_once "voterdb_path.php";
+
+//require_once "voterdb_constants_rr_tbl.php";
+//require_once "voterdb_constants_nls_tbl.php";
+//require_once "voterdb_path.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_group.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_class_get_browser.php";
 require_once "voterdb_class_button.php";
+require_once "voterdb_class_nls.php";
+require_once "voterdb_class_nlreports_nlp.php";
+//require_once "voterdb_class_paths.php";
+
+use Drupal\voterdb\NlpButton;
+use Drupal\voterdb\GetBrowser;
+use Drupal\voterdb\NlpNls;
+use Drupal\voterdb\NlpReports;
+//use Drupal\voterdb\NlpPaths;
 
 define('NR_NLS_REPORTS','nlsreports'); // Name of the result file.
-
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_col_names
- * 
- * Get the names of the columns for the selected table.  Used to export the
- * table to a TAB delimited file with a header record.
- * 
- * @param type $cn_tbl  -  results table or log table.
- * @return array of column names.
- */
-function voterdb_col_names($cn_tbl) {
-  db_set_active('nlp_voterdb');
-  try {
-    $cn_tselect = "SHOW COLUMNS FROM  {".$cn_tbl.'}';
-    $cn_result = db_query($cn_tselect);
-    $cn_names = $cn_result->fetchAll(PDO::FETCH_ASSOC);
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return NULL;
-  }
-  db_set_active('default');
-  foreach ($cn_names as $cn_colname) {
-    $cn_colnames[] = $cn_colname['Field'];
-  }
-  return $cn_colnames;
-}
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_export_nlsreports
@@ -79,30 +59,22 @@ function voterdb_export_nlsreports() {
   $nr_file_fh = fopen($nr_temp_uri,"w");
   //voterdb_debug_msg('fh', $nr_file_fh);
   // Get the column names for the export and add the NL name to ease editting.
-  $nr_col_names = voterdb_col_names(DB_NLPRESULTS_TBL);
-  $nr_col_names[] = NH_NICKNAME;
-  $nr_col_names[] = NH_LNAME;  
+  
+  $nlpReportsObj = new NlpReports();
+  $nr_col_names = $nlpReportsObj->getColumnNames();
+  //voterdb_debug_msg('columns', $nr_col_names);
+  //$nr_col_names = voterdb_col_names(DB_NLPRESULTS_TBL);
+  $nr_col_names[] = 'Nickname';
+  $nr_col_names[] = 'LastName';  
   // Write the header as the first record in this tab delimited file.
   $nr_string = implode("\t", $nr_col_names)."\tEOR\n";
   fwrite($nr_file_fh,$nr_string);
   fclose($nr_file_fh);
   
+  $bn_num_rows = $nlpReportsObj->getReportCount();
+  //voterdb_debug_msg('rows', $bn_num_rows);
   
-  
-  db_set_active('nlp_voterdb');
-  try {
-    $bn_query = db_select(DB_NLPRESULTS_TBL, 'r');
-    $bn_num_rows = $bn_query->countQuery()->execute()->fetchField();
-    }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return;
-    }
-  db_set_active('default');
-
-  
-
+ 
   $nr_mpath = drupal_get_path('module','voterdb');
   $nr_args = array (
     'uri' => $nr_temp_uri,
@@ -122,7 +94,7 @@ function voterdb_export_nlsreports() {
   );
   batch_set($nr_batch);
   
-  //drupal_set_message('Batch started','status');
+  drupal_set_message('Batch started','status');
 
   return $nr_args;
 }
@@ -139,7 +111,7 @@ function voterdb_export_nlsreports() {
  * @return associative array - the form.
  */
 function voterdb_export_nlsreports_form($form_id, &$form_state) {
-  $hg_button_obj = new NlpButton;
+  $hg_button_obj = new NlpButton();
   $hg_button_obj->setStyle();
   if(!isset($form_state['voterdb']['county'])) {
     if(!voterdb_get_group($form_state)) {return;}
@@ -193,6 +165,7 @@ function voterdb_export_nlsreports_form($form_id, &$form_state) {
  * @param type $form_state
  */
 function voterdb_export_nlsreports_form_submit($form,&$form_state) {
+	
   if(($form_state['triggering_element']['#id'] == 'done') ) {
     $form_state['voterdb']['reenter'] = FALSE;
     $form_state['rebuild'] = FALSE;
