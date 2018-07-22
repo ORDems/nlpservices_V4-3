@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_turf_checkin.php     V4.2  7/13/18
+ * Name: voterdb_turf_checkin.php     V4.2  7/20/18
  * This include file contains the code to upload a turf exported from the
  * VAN and add it to the voter database.
  */
@@ -19,6 +19,12 @@ require_once "voterdb_class_paths.php";
 require_once "voterdb_class_nls.php";
 require_once "voterdb_class_magic_word.php";
 require_once "voterdb_class_drupal_users.php";
+require_once "voterdb_class_voters.php";
+require_once "voterdb_class_activist_codes_api.php";
+require_once "voterdb_class_activist_codes_nlp.php";
+require_once "voterdb_class_survey_response_nlp.php";
+require_once "voterdb_class_survey_questions_api.php";
+require_once "voterdb_class_api_authentication.php";
 require_once "voterdb_turf_checkin_func.php";
 require_once "voterdb_turf_checkin_func2.php";
 require_once "voterdb_turf_checkin_func3.php";

@@ -1,6 +1,6 @@
 <?php
 /**
- * Name:  voteredb_mail.php     V4.2  7/11/18
+ * Name:  voteredb_mail.php     V4.2  7/17/18
  * @file
  */
 
@@ -12,7 +12,8 @@
  * @param type $message
  */
 function voterdb_mail_alter(&$message) {
-  //drupal_set_message('alter '.'<pre>'.print_r($message, true).'</pre>','status');
+  global $base_url;
+  drupal_set_message('alter '.'<pre>'.print_r($message, true).'</pre>','status');
   if($message['module'] == 'voterdb') {
     //drupal_set_message('<pre>'.print_r($message, true).'</pre>','status');
     $options = array(
@@ -59,18 +60,16 @@ function voterdb_mail_alter(&$message) {
         $message['to'] = $accountObj->sharedEmail;
       }
       $message['subject'] = 'Neighborhood Leader account login: access to your turf';
-      $body = $message['body'][0];
-      $content = strstr($body, ':');
+      //$body = $message['body'][0];
+      //$content = strstr($body, ':');
       //$message['body'][0] = $message['params']['account']['field_firstname']['und'][0]['value'].',';
       $message['body'][0] = $firstName.',';
-      $message['body'][1] = 'Thanks for being a Neighborhood Leader.  '
-              . 'You will need the following information to login to get your turf.  '
-                . 'Use the following link to set your personal password:';
-      $ending = strpos($content,'--');
-      $link = substr($content, 5, $ending-6);
-      $link2 = str_replace('\n\n', '\n', $link);
-      $link3 = str_replace('/?q=user ', ' ', $link2);
-      $message['body'][2] = $link3;
+      $message['body'][1] = 'Thanks for being a Neighborhood Leader in '.$accountObj->County.' County.';
+      $message['body'][2] = 'The administrator at [site:name] has created an account for you. 
+        You may now log in to get your turf by clicking this link or copying and pasting it to your browser: ';
+      $message['body'][3] = 'http//:'.$base_url;
+      $message['body'][4] = 'Username: '.$accountObj->Name;
+      $message['body'][5] = 'Password: '.$accountObj->Pass;
     }
     
   }

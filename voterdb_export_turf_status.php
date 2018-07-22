@@ -1,19 +1,28 @@
   <?php
 /*
- * Name: voterdb_export_turf_status.php   V4.0 2/16/18
+ * Name: voterdb_export_turf_status.php   V4.2 7/14/18
  *
  */
-require_once "voterdb_constants_rr_tbl.php";
+//require_once "voterdb_constants_rr_tbl.php";
 require_once "voterdb_constants_log_tbl.php";
-require_once "voterdb_constants_nls_tbl.php";
+//require_once "voterdb_constants_nls_tbl.php";
 require_once "voterdb_constants_voter_tbl.php";
-require_once "voterdb_constants_turf_tbl.php";
+
 require_once "voterdb_constants_mb_tbl.php";
 require_once "voterdb_group.php";
-require_once "voterdb_path.php";
+//require_once "voterdb_path.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_class_button.php";
+require_once "voterdb_class_get_browser.php";
+require_once "voterdb_class_turfs.php";
+require_once "voterdb_class_nlreports_nlp.php";
+
+use Drupal\voterdb\NlpButton;
+use Drupal\voterdb\GetBrowser;
+use Drupal\voterdb\NlpTurfs;
+use Drupal\voterdb\NlpReports;
+
 
 define('DD_TURF_RESULTS_FILE','nl_turf_results');
 
@@ -30,33 +39,6 @@ define('DD_TURF_RESULTS_FILE','nl_turf_results');
 function voterdb_percent($pe_base,$pe_cnt) {
   $pe_percent = ($pe_base > 0)?round($pe_cnt/$pe_base*100,1).'%':'0%';
   return $pe_percent;
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_get_turf_list
- * 
- * Get an array of turfs assigned in the county.
- * 
- * @param type $gt_county
- * @return type
- */
-function voterdb_get_turf_list($gt_county) {
-  db_set_active('nlp_voterdb');
-  try {
-    $gt_tselect = "SELECT * FROM {".DB_NLSTURF_TBL."} WHERE  ".
-      TT_COUNTY. " = :cnty ";
-    $gt_targs = array(
-      ':cnty' => $gt_county,);
-    $gt_result = db_query($gt_tselect,$gt_targs);
-    $gt_turfs = $gt_result->fetchAll(PDO::FETCH_ASSOC);
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return NULL;
-  }
-  db_set_active('default');
-  return $gt_turfs;
 }
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -117,37 +99,6 @@ function voterdb_who_voted($wv_vanid) {
 }
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_voter_contacted
- * 
- * Check the database for a record of at least one face-to-face contact with 
- * this voter in this election cycle.
- * 
- * @param type $vc_vanid - ID of the voter.
- * @return boolean - TRUE if face-to0face contact.
- */
-function voterdb_voter_contacted($vc_vanid) {
-  $vc_cycle = variable_get('voterdb_ecycle', 'xxxx-mm-G');
-  db_set_active('nlp_voterdb');
-  try {
-    $vc_query = db_select(DB_NLPRESULTS_TBL, 'r');
-    $vc_query->addField('r',NC_VANID);
-    $vc_query->condition(NC_VANID,$vc_vanid);
-    $vc_query->condition(NC_CYCLE,$vc_cycle);
-    $vc_query->condition(NC_VALUE,RA_F2F);
-    $vc_query->condition(NC_TYPE,TA_Contact);
-    $vc_cnt = $vc_query->countQuery()->execute()->fetchField();
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return FALSE;
-  }
-  db_set_active('default');
-  $vc_f2f = $vc_cnt>0;
-  return $vc_f2f;
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_turf_results
  * 
  * @param type $tr_county
@@ -161,7 +112,12 @@ function voterdb_turf_results($tr_temp_name,$tr_county) {
   $tr_hdrs = implode("\t", $tr_hdr);
   $tr_hdrs .= "\n";  // End for string.
   fwrite($tr_results_fh,$tr_hdrs);
-  $tr_turfs = voterdb_get_turf_list($tr_county);
+  
+  $reportsObj =  new NlpReports();
+  
+  $turfObj = new NlpTurfs();
+  $tr_turfs = $turfObj->getCountyTurfs($tr_county);
+  //$tr_turfs = oterdb_get_turf_list($tr_county);
   if (empty($tr_turfs)) {
     drupal_set_message('No turfs','error');
     return FALSE;
@@ -174,7 +130,7 @@ function voterdb_turf_results($tr_temp_name,$tr_county) {
   // For each turf, calculate the counts and create a row for display.
   foreach ($tr_turfs as $tr_turf) {
     // Get the voters in the turf.
-    $tr_turf_index = $tr_turf[TT_INDEX];
+    $tr_turf_index = $tr_turf['turfIndex'];
     $tr_voters = voterdb_get_voters_in_turf($tr_turf_index);
     if (empty($tr_voters)) {continue;}
     // For each voter determine if a vote was recorded and if there was a 
@@ -192,7 +148,10 @@ function voterdb_turf_results($tr_temp_name,$tr_county) {
       if ($tr_voted) {$tr_voted_cnt++;}
       // Now check if this voter was contaced face-to-face.
       $tr_contactstart = voterdb_timer('start',0);
-      $tr_f2f_contact = voterdb_voter_contacted($tr_vanid);
+      
+      $tr_f2f_contact = $reportsObj->voterContacted($tr_vanid);
+      
+      //$tr_f2f_contact = voterdb_voter_contacted($tr_vanid);
       $tr_contacttime = voterdb_timer('end',$tr_contactstart);
       $tr_contact_acc += $tr_contacttime;
       // Add to the count of contacted voters.
@@ -202,12 +161,12 @@ function voterdb_turf_results($tr_temp_name,$tr_county) {
       }
     }
     // Create the display of counts for this turf.
-    $tr_fname =  str_replace("&#039;", "'", $tr_turf[TT_NLFNAME]); // fix the apostrophies.
-    $tr_lname =  str_replace("&#039;", "'", $tr_turf[TT_NLLNAME]);
+    $tr_fname =  str_replace("&#039;", "'", $tr_turf['firstName']); // fix the apostrophies.
+    $tr_lname =  str_replace("&#039;", "'", $tr_turf['lastName']);
     $tr_voted_pc = voterdb_percent($tr_voter_cnt,$tr_voted_cnt);
     $tr_ftf_pc = voterdb_percent($tr_ftf,$tr_ftfvoted);
-    $tr_turf_rec = $tr_turf[TT_HD]."\t";
-    $tr_turf_rec .= $tr_turf[TT_PCT]."\t";
+    $tr_turf_rec = $tr_turf['hd']."\t";
+    $tr_turf_rec .= $tr_turf['pct']."\t";
     $tr_turf_rec .= $tr_fname."\t";
     $tr_turf_rec .= $tr_lname."\t";
     $tr_turf_rec .= $tr_voter_cnt."\t";
@@ -216,7 +175,7 @@ function voterdb_turf_results($tr_temp_name,$tr_county) {
     $tr_turf_rec .= $tr_ftf."\t";
     $tr_turf_rec .= $tr_ftfvoted."\t";
     $tr_turf_rec .= $tr_ftf_pc."\t";
-    $tr_turf_rec .= $tr_turf[TT_NAME]."\t\n";
+    $tr_turf_rec .= $tr_turf['turfName']."\t\n";
     fwrite($tr_results_fh,$tr_turf_rec);
   }
   fclose($tr_results_fh);
@@ -244,7 +203,7 @@ function voterdb_turf_results($tr_temp_name,$tr_county) {
  * @return string - displayable HTML with a link to the file for download by the user.
  */
 function voterdb_export_turf_status() {
-  $dd_button_obj = new NlpButton;
+  $dd_button_obj = new NlpButton();
   $dd_button_obj->setStyle();
   $form_state = array();
   if(!voterdb_get_group($form_state)) {return "";}

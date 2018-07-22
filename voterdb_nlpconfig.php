@@ -14,6 +14,7 @@ require_once "voterdb_class_response_codes_api.php";
 require_once "voterdb_class_response_codes.php";
 require_once "voterdb_class_survey_questions_api.php";
 require_once "voterdb_class_survey_question_nlp.php";
+require_once "voterdb_class_survey_response_nlp.php";
 require_once "voterdb_class_activist_codes_api.php";
 require_once "voterdb_class_activist_codes_nlp.php";
 
@@ -223,7 +224,7 @@ function voterdb_config_form_submit($form, &$form_state) {
   switch ($form_state['voterdb']['pass']) {
     
     case 'config':
-      if ($fv_trigger == 'countypw') {
+      if ($fv_trigger == 'verifyvb') {
         $form_state['voterdb']['reenter'] = TRUE;
         $form_state['rebuild'] = TRUE;  // form_state will persist.
         $form_state['voterdb']['pass'] = 'verifyvb';

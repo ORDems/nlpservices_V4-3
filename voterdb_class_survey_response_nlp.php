@@ -15,7 +15,7 @@ class NlpSurveyResponse {
   private $responseList = array(
     'rid'=>'Rid',
     'responseName'=>'ResponseName',
-    'Qid'=>'qid',
+    'qid'=>'Qid',
     'questionName'=>'QuestionName'
   );
   
@@ -61,15 +61,18 @@ class NlpSurveyResponse {
     db_set_active('default');
     if(empty($result)) {return NULL;}
     $responseFlip = array_flip($this->responseList);
+    $responses = array();
     do {
       $response = $result->fetchAssoc();
-      $responses = array();
+      //voterdb_debug_msg('response', $response);
+      
       if(empty($response)) {break;}
       foreach ($response as $dbKey => $value) {
         $nlpResponse[$responseFlip[$dbKey]] = $value;
       }
       $responses[] = $nlpResponse;
     } while (TRUE);
+    
     return $responses;
   }
 

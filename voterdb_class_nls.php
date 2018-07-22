@@ -54,7 +54,9 @@ class NlpNls {
   );
 
 
-  
+  private $grpList = array(
+      
+  );
   private $statusList = array(
     'mcid'=>'MCID',
     'county'=>'County',
@@ -276,6 +278,55 @@ class NlpNls {
     } while (TRUE);
     return $nlRecords;
   }
+  
+  public function getCountyNls($county) {
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::NLSGRPTBL, 'g');
+      $query->join(self::NLSTBL, 'n', 'g.MCID = n.MCID');
+      $query->join(self::NLSSTATUSTBL, 's', 'g.MCID = s.MCID');
+      $query->addField('g', 'MCID');
+      $query->addField('g', 'County');
+      $query->addField('s', 'ResultsReported');
+      $query->addField('s', 'NLSignup');
+      $query->addField('s', 'Login_Date');
+      $query->addField('n', 'HD');
+      $query->addField('n', 'Pct');
+      $query->addField('n', 'Nickname');
+      $query->addField('n', 'LastName');
+      $query->addField('n', 'FirstName');
+      $query->addField('n', 'Phone');
+      $query->addField('n', 'Email');
+      $query->condition('g.'.'County',$county);
+      $query->orderBy('HD');
+      $query->orderBy('LastName');
+      $result = $query->execute();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return NULL;
+    }
+    
+    $mergedList = array_merge($this->nlList,$this->statusList,$this->grpList);
+    $mergeListFlip = array_flip($mergedList);
+    
+    do {
+      $fields = $result->fetchAssoc();
+      if(empty($fields)) {break;}
+      $nlRecord = array();
+      foreach ($fields  as $dbKey => $field) {
+        $nlRecord[$mergeListFlip[$dbKey]] = $field;
+      }
+      $nlRecords[$fields['MCID']] = $nlRecord;
+    } while (TRUE);
+    return $nlRecords;
+
+  }
+  
+  
+  
+  
 
   
   public function countNls($county) {
@@ -295,7 +346,51 @@ class NlpNls {
     db_set_active('default');
     return $cnt;
   }
- 
+  
+  public function getTotalNlCnt($type) {
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::NLSSTATUSTBL, 'r');
+      $query->join(self::NLSTBL, 'n', 'r.MCID = n.MCID');
+      $query->condition('NLSignup','Y');
+      if($type == 'resultsReported') {
+        $query->condition('ResultsReported','Y');
+      }
+      if($type == 'loggedIn') {
+        $query->isNotNull('Login_Date');
+      }
+      $cnt = $query->countQuery()->execute()->fetchField();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return 0;
+    }
+    db_set_active('default');
+    return $cnt;
+  }
+
+  function getTotalContactAttempts() { 
+    $cycle = variable_get('voterdb_ecycle', '');
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::NLSSTATUSTBL, 'r');
+      $query->addField('r','VANID');
+      $query->distinct();
+      $query->condition('Cycle',$cycle);
+    $br = $query->countQuery()->execute()->fetchField();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return 0;
+    }
+    db_set_active('default');
+    return $br;
+  }
+  
+  
+  
   public function getNlsStatus($mcid,$county) {
     db_set_active('nlp_voterdb');
     try {
