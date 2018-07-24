@@ -13,7 +13,7 @@
  */
 function voterdb_mail_alter(&$message) {
   global $base_url;
-  drupal_set_message('alter '.'<pre>'.print_r($message, true).'</pre>','status');
+  //drupal_set_message('alter '.'<pre>'.print_r($message, true).'</pre>','status');
   if($message['module'] == 'voterdb') {
     //drupal_set_message('<pre>'.print_r($message, true).'</pre>','status');
     $options = array(
