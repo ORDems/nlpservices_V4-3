@@ -230,8 +230,11 @@ function voterdb_build_nls_table(&$form,&$form_state) {
       );
     
     
-
-    $nf_cell = " \n ".'<td class="cell-lin nowhite">'.$nlRecord['status']['loginDate'].'</td>';
+    if($nf_default_tc) {
+      $nf_cell = " \n ".'<td class="cell-lin nowhite">'.$nlRecord['status']['loginDate'].'</td>';
+    } else {
+      $nf_cell = " \n ".'<td class="cell-lin nowhite"></td>';
+    }
     $form['nlform']['TX-'.$nf_mcid.'-login'] = array(
       '#markup' => $nf_cell,
     );

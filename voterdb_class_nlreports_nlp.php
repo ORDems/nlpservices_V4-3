@@ -115,6 +115,43 @@ class NlpReports {
 
     return $voterReports;
   }
+  
+  public function getNlReportsForVoters($voterArray,$cycle){
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::NLPRESULTSTBL, 'v');
+      $query->fields('v');
+      $query->condition('VANID', $voterArray, 'IN');
+      //$query->condition('MCID',$mcid);
+      $query->condition('Active',TRUE);
+      $query->condition('Type','Activist','<>');
+      $query->orderBy('Cdate', 'DESC');
+      $result = $query->execute();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return '';
+    }
+    db_set_active('default');
+
+    $voterReports = $voterReport = array();
+    do {
+      $report = $result->fetchAssoc();
+      if(!$report) {break;}
+      foreach ($this->resultsList as $nlpKey=>$dbKey) {
+        $voterReport[$nlpKey] = $report[$dbKey];
+      }
+      $voterReports[$report['MCID']][] = $voterReport;
+    } while (TRUE);
+
+    return $voterReports;
+  }
+  
+  
+  
+  
+  
 
   public function getNlpUnrecorded() {
     $cycle = variable_get('voterdb_ecycle', 'yyyy-mm-t');

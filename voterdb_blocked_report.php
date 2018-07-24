@@ -1,12 +1,14 @@
 <?php
 /*
- * Name: voterdb_blocked_report.php   V4.0  2/19/18
+ * Name: voterdb_blocked_report.php   V4.2  7/24/18
  */
 require_once "voterdb_constants_bounce_tbl.php";
 require_once "voterdb_group.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_class_button.php";
+
+use Drupal\voterdb\NlpButton;
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_delete_notification
@@ -80,7 +82,7 @@ function voterdb_blocked_status($bs_remail) {
  * @return $output - display.
  */
 function voterdb_blocked_report() {
-  $dd_button_obj = new NlpButton;
+  $dd_button_obj = new NlpButton();
   $dd_button_obj->setStyle();
   $form_state = array();
   if(!voterdb_get_group($form_state)) {return;}

@@ -8,7 +8,7 @@
  * voterdb_build_announcement, voterdb_build_turf_select
  */
 
-
+use Drupal\voterdb\NlpTurfs;
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_build_announcement

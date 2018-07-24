@@ -252,7 +252,7 @@ class NlpTurfs {
   
   public function createTurfNames($turfArray){
     $turfDisplay = array();
-    foreach ($turfArray as $turfIndex=> $turf) {
+    foreach ($turfArray['turfs'] as $turfIndex=> $turf) {
       $turfDisplay[$turfIndex] = $turf['TurfName'];
     }
   return $turfDisplay;

@@ -439,7 +439,7 @@ function voterdb_turf_checkin_form_submit($form,&$form_state) {
   $tc_nls_status = $nlsObj->getNlsStatus($tc_mcid,$tc_county);
   //voterdb_debug_msg('status', $tc_nls_status );
   $tc_nls_status['nlSignup'] = 'Y'; 
-  $tc_nls_status['tufCut'] = 'Y'; 
+  $tc_nls_status['turfCut'] = 'Y'; 
 
   $tc_nls_status['asked'] = 'yes'; 
   //voterdb_debug_msg('nlstatus', $tc_nls_status);

@@ -88,16 +88,23 @@ function voterdb_get_progress($nlRecord,$reportsObj) {
   }
   db_set_active('default');
   if(empty($gp_tvoters)) {return $gp_progress;}
+  $gp_voter_array = array();
+  foreach ($gp_tvoters as $gp_tvoter) {
+    $gp_voters[$gp_tvoter[NV_VANID]] = $gp_tvoter;
+    $gp_voter_array[] = $gp_tvoter[NV_VANID];
+  }
+  //voterdb_debug_msg('voters', $gp_voters);
+  
+  
   $gp_voter_cnt = count($gp_tvoters);
   // Initialize array.
   $gp_voter['attempt'] = 0;
   $gp_voter['contact'] = 0;
-  foreach ($gp_tvoters as $gp_tvoter) {
-    $gp_voters[$gp_tvoter[NV_VANID]] = $gp_tvoter;
-  }
+  
   // Now get all the reports from this NL for this cycle.
   $gp_cycle = variable_get('voterdb_ecycle', 'xxxx-mm-G');
-  $gp_reports = $reportsObj->getNlpVoterReports($gp_mcid,$gp_cycle);
+  //$gp_reports = $reportsObj->getNlpVoterReports($gp_mcid,$gp_cycle);
+  $gp_reports = $reportsObj->getNlReportsForVoters($gp_voter_array,$gp_cycle);
   //voterdb_debug_msg('reports', $gp_reports);
   // Flag the voters with whom the NL had a face-to-face contact.  (There 
   // could have been more than one.)
@@ -106,12 +113,13 @@ function voterdb_get_progress($nlRecord,$reportsObj) {
       $gp_vanid = $gp_report['vanid'];
       if(!empty($gp_voters[$gp_vanid])) {
         $gp_voters[$gp_vanid]['attempt'] = TRUE;
-        if($gp_report['type']==$reportsObj::CONTACT AND $gp_report['value']==$reportsObj::F2F) {
+        if($gp_report['type']==$reportsObj::SURVEY) {
           $gp_voters[$gp_vanid]['contact'] = TRUE;
         }
       }
     }
   }
+  //voterdb_debug_msg('voters', $gp_voters);
   //  Now count the voters with a f2f contact.
   $gp_ccnt = $gp_acnt = 0;
   if(!empty($gp_voters)) {
@@ -135,6 +143,7 @@ function voterdb_get_progress($nlRecord,$reportsObj) {
   if($gp_ccnt == $gp_voter_cnt AND $gp_voter_cnt != 0) {
     $gp_progress['done'] = 'Done';  // Every voter was contacted.
   }
+  //voterdb_debug_msg('progress', $gp_progress);
   return $gp_progress;
 }
 

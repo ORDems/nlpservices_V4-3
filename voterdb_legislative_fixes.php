@@ -103,7 +103,7 @@ function voterdb_legislative_fixes_form($form, &$form_state) {
   // Description of add
   $form['newfix']['fxadddesc'] = array(
       '#type' => 'item',
-      '#markup' => 'Enter information to add a substitute values.',
+      '#markup' => 'Enter information to add substitute values for HD and Precinct.',
     );
   // MCID data entry field.
   $form['newfix']['fxmcid'] = array (
