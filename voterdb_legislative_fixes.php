@@ -24,9 +24,9 @@ use Drupal\voterdb\NlpLegFix;
  * @return boolean - array of fixes in text form for checkboxes.
  */
 function voterdb_fix_display ($fd_fixes) {
-  $fd_i = 0;
+
   foreach ($fd_fixes as $fd_fix) {
-    $fd_fix_array[$fd_i++] = 'MCID ['.$fd_fix['mcid'].
+    $fd_fix_array[$fd_fix['mcid']] = 'MCID ['.$fd_fix['mcid'].
             '] '.$fd_fix['firstName'].' '.$fd_fix['lastName'].
             ' HD ['.$fd_fix['hd'].'] PCT ['.$fd_fix['pct'].']';
   }
@@ -69,7 +69,7 @@ function voterdb_legislative_fixes_form($form, &$form_state) {
   
   
   $hf_fixes = $legFixObj->getLegFixes($hf_county);
-  //$hf_fixes = voterdb_get_leg_districts ($hf_county);
+
   // If fixes exist, display them incase one or more are to be deleted.
   if(!empty($hf_fixes)) {
     $form_state['voterdb']['fixes'] = $hf_fixes;
@@ -246,11 +246,13 @@ function voterdb_legislative_fixes_form_submit($form, &$form_state) {
     case  'fxsubdel':
       // At least one was selected.
       $fs_selections = $form_state['values']['fxdel'];
+      voterdb_debug_msg('selections', $fs_selections);
       $fs_fixes = $form_state['voterdb']['fixes'];
+      voterdb_debug_msg('fixes', $fs_fixes);
       foreach ($fs_selections as $fs_sel) {
         if ($fs_sel != '') {
-          $fs_mcid = $fs_fixes[$fs_sel][LD_MCID];
-          $fs_county = $fs_fixes[$fs_sel][LD_COUNTY];
+          $fs_mcid = $fs_fixes[$fs_sel]['mcid'];
+          $fs_county = $fs_fixes[$fs_sel]['county'];
           $legFixObj->deleteLegFix($fs_county,$fs_mcid);
         }
       }

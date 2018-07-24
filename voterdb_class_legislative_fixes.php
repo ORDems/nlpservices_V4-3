@@ -26,12 +26,12 @@ class NlpLegFix{
   public function createLegFix($fix) {
     $fields = array();
     foreach ($fix as $nlpKey => $dbField) {
-      if(isset($fix[$nlpKey])) {
-        $fields[$dbField] = $fix[$nlpKey];
-      } else {
-        $fields[$dbField] = NULL;
-      }
+      if(isset($this->legList[$nlpKey])) {
+        $fields[$this->legList[$nlpKey]] = $dbField;
+      } 
     }
+    
+    //voterdb_debug_msg('fields', $fields);
     try {
       db_set_active('nlp_voterdb');
       db_merge(self::LEGFIXTBL)
@@ -83,10 +83,10 @@ class NlpLegFix{
   public function deleteLegFix($county,$mcid) {
     db_set_active('nlp_voterdb');
     try {
-    db_delete(self::LEGFIXTBL)
-      ->condition('County', $county)
-      ->condition('MCID', $mcid)
-      ->execute();
+      db_delete(self::LEGFIXTBL)
+        ->condition('County', $county)
+        ->condition('MCID', $mcid)
+        ->execute();
     }
     catch (Exception $e) {
       db_set_active('default');
