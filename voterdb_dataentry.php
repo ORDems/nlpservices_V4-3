@@ -101,10 +101,11 @@ define('DC_HINTS',
  * @return array - $form.
  */
 function voterdb_dataentry_form($form, &$form_state) {
-
+  //voterdb_debug_msg('formstate', $form_state);
   if (!isset($form_state['voterdb']['reenter'])) {
     $form_state['voterdb']['reenter'] = TRUE;
     $form_state['voterdb']['history'] = FALSE;
+    $form_state['voterdb']['page'] = 'start';
   }
   $dn_button_obj = new NlpButton();
   $dn_button_obj->setStyle();
@@ -169,45 +170,46 @@ function voterdb_dataentry_form($form, &$form_state) {
     '#type' => 'markup',
     '#markup' => $dv_banner
   ); 
-  
-  $form['announcement'] = voterdb_build_announcement();
+  // If the first pass, check if we have a turf.
+  if($form_state['voterdb']['page'] == 'start') {
+    $form['announcement'] = voterdb_build_announcement();
 
-  $dv_mcid = $form_state['voterdb']['mcid'];
-  
-  // Check if this NL has one or more turfs.
+    $dv_mcid = $form_state['voterdb']['mcid'];
 
-  $turfArray = $turfObj->turfExists($dv_mcid,$dv_county);
-  $form_state['voterdb']['turfArray'] = $turfArray;
-  //voterdb_debug_msg('turfarray', $turfArray);
-  if (empty($turfArray)) {
-    drupal_set_message("You do not have a turf assigned",'error');
-    $dv_info = $dv_fname.' '.$dv_lname;
-    voterdb_login_tracking('login',$dv_county,'No turf',$dv_info);  // func.
-    global $base_url;
-    $form['done'] = array(
-      '#markup' => '<p><a href="'.$base_url.'" class="button ">Return to the front page >></a></p>',
-    );
-    return $form;
+    // Check if this NL has one or more turfs.
+
+    $turfArray = $turfObj->turfExists($dv_mcid,$dv_county);
+    $form_state['voterdb']['turfArray'] = $turfArray;
+    //voterdb_debug_msg('turfarray', $turfArray);
+    if (empty($turfArray)) {
+      drupal_set_message("You do not have a turf assigned",'error');
+      $dv_info = $dv_fname.' '.$dv_lname;
+      voterdb_login_tracking('login',$dv_county,'No turf',$dv_info);  // func.
+      global $base_url;
+      $form['done'] = array(
+        '#markup' => '<p><a href="'.$base_url.'" class="button ">Return to the front page >></a></p>',
+      );
+      return $form;
+    }
+    $form_state['voterdb']['turfIndex'] = $turfArray['turfIndex'];
+    $dv_info = $dv_fname.' '.$dv_lname.' : '.$dv_browser['platform'].' '.$dv_browser['browser'];
+    voterdb_login_tracking('login',$dv_county,'Successful Login',$dv_info);  // func
+
+    $dv_date = date('Y-m-d');
+    db_set_active('nlp_voterdb');
+    db_merge(DB_NLSSTATUS_TBL)
+      ->key(array(
+        NN_COUNTY => $dv_county,
+        NN_MCID => $dv_mcid))
+      ->fields(array(
+        NN_LOGINDATE => $dv_date))
+      ->execute();
+    db_set_active('default');
+    // If more than one turf, ask the NL which one is wanted.
+    $dv_turf_cnt = $turfArray['turfCnt'];
+    $form_state['voterdb']['page'] = ($dv_turf_cnt==1)?'data-entry':'turf-select';
+    $form_state['voterdb']['turf-select'] = FALSE;
   }
-  $form_state['voterdb']['turfIndex'] = $turfArray['turfIndex'];
-  $dv_info = $dv_fname.' '.$dv_lname.' : '.$dv_browser['platform'].' '.$dv_browser['browser'];
-  voterdb_login_tracking('login',$dv_county,'Successful Login',$dv_info);  // func
-  
-  $dv_date = date('Y-m-d');
-  db_set_active('nlp_voterdb');
-  db_merge(DB_NLSSTATUS_TBL)
-    ->key(array(
-      NN_COUNTY => $dv_county,
-      NN_MCID => $dv_mcid))
-    ->fields(array(
-      NN_LOGINDATE => $dv_date))
-    ->execute();
-  db_set_active('default');
-  // If more than one turf, ask the NL which one is wanted.
-  $dv_turf_cnt = $turfArray['turfCnt'];
-  $form_state['voterdb']['page'] = ($dv_turf_cnt==1)?'data-entry':'turf-select';
-  $form_state['voterdb']['turf-select'] = FALSE;
-  
   $page = $form_state['voterdb']['page'];
   switch ($page) {
 
@@ -215,7 +217,8 @@ function voterdb_dataentry_form($form, &$form_state) {
  * This NL has more than one turf so one has to be chosen for dataentry.
  */
     case 'turf-select':
-      $form['turfselect'] = voterdb_build_turf_select($form_state); // func.
+      //voterdb_debug_msg('turfselect', '');
+      $form['turfselection'] = voterdb_build_turf_select($form_state); // func.
       break;
 /* * * * * * * * * * * * *
  * We have a turf selected so display the list of voters in this turf for
@@ -298,6 +301,7 @@ function voterdb_dataentry_form($form, &$form_state) {
       break;
 
   }
+  //voterdb_debug_msg('form', $form);
   return $form;
 }
 
@@ -320,9 +324,8 @@ function voterdb_dataentry_form($form, &$form_state) {
  * @return boolean
  */
 function voterdb_dataentry_form_validate($form, &$form_state) {
-  $form_state['voterdb']['reenter'] = TRUE;
-  $form_state['rebuild'] = TRUE;  // form_state will persist
   $page = $form_state['voterdb']['page'];
+  //voterdb_debug_msg('verifypage '.$page, '');
   switch ($page) {
 
 /* * * * * * * * * * * * *
@@ -330,6 +333,7 @@ function voterdb_dataentry_form_validate($form, &$form_state) {
  */
     case 'data-entry':
       $form_state['voterdb']['reenter'] = TRUE;
+      $form_state['rebuild'] = TRUE;  // form_state will persist
       // Check if NL wants to see the list of other NLs.
       if(($form_state['triggering_element']['#id'] == 'show-list') OR 
         ($form_state['triggering_element']['#id'] == 'show-turfs')) {
@@ -358,9 +362,11 @@ function voterdb_dataentry_form_validate($form, &$form_state) {
  * @param type $form_state
  */
 function voterdb_dataentry_form_submit($form, &$form_state) {
+  
   $form_state['voterdb']['reenter'] = TRUE;
   $form_state['rebuild'] = TRUE;  // form_state will persist
   $page = $form_state['voterdb']['page'];
+  //voterdb_debug_msg('submitpage '.$page, '');
   switch ($page) {
 
 /* * * * * * * * * * * * *
@@ -370,12 +376,8 @@ function voterdb_dataentry_form_submit($form, &$form_state) {
       $form_state['voterdb']['reenter'] = TRUE;
       $form_state['voterdb']['page'] = 'data-entry';
       $form_state['rebuild'] = TRUE;  // form_state will persist.
-      //$dv_turf = $form_state['values']['turfselect'];  // Index to names.
-      // The selected turf. Get the name and the index.
-      //$form_state['voterdb']['turfArray']['TurfName'] = 
-      //        $form_state['voterdb']['turf-array'][$dv_turf]['TurfName'];
-      $form_state['voterdb']['TurfIndex'] = $form_state['values']['turfselect'];
-              //$form_state['voterdb']['turf-array'][$dv_turf]['TurfIndex'];
+      //voterdb_debug_msg('values', $form_state['values']);
+      $form_state['voterdb']['turfIndex'] = $form_state['values']['turfselect'];
       $form_state['voterdb']['turf-select'] = TRUE;  // There is more than one turf.
       // get a new list of voters.
       unset($form_state['voterdb']['voters']);
