@@ -14,9 +14,10 @@ class ApiActivistCodes {
     $apiKey = $countyAuthenticationObj->apiKey;
     $apiURL = $countyAuthenticationObj->URL;
     $user = $countyAuthenticationObj->User;
-    $url = 'https://'.$user.':'.$apiKey.'|'.$database.'@'.$apiURL.'/activistCodes?$top=200';
+    $url = 'https://'.$apiURL.'/activistCodes?$top=200';
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_HEADER, "Content-type: application/json");
+    curl_setopt($ch, CURLOPT_USERPWD, $user.':'.$apiKey.'|'.$database);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $result = curl_exec($ch);
     if($result === FALSE) {
@@ -50,9 +51,10 @@ class ApiActivistCodes {
     $apiKey = $countyAuthenticationObj->apiKey;
     $apiURL = $countyAuthenticationObj->URL;
     $user = $countyAuthenticationObj->User;
-    $url = 'https://'.$user.':'.$apiKey.'|'.$database.'@'.$apiURL.'/activistCodes?$top=200';
+    $url = 'https://'.$apiURL.'/activistCodes?$top=200';
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_HEADER, "Content-type: application/json");
+    curl_setopt($ch, CURLOPT_USERPWD, $user.':'.$apiKey.'|'.$database);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $result = curl_exec($ch);
     if($result === FALSE) {

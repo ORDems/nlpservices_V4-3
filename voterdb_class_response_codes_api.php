@@ -39,9 +39,10 @@ class ApiResponseCodes {
     $apiKey = $countyAuthenticationObj->apiKey;
     $apiURL = $countyAuthenticationObj->URL;
     $user = $countyAuthenticationObj->User;
-    $url = 'https://'.$user.':'.$apiKey.'|'.$database.'@'.$apiURL.'/canvassResponses/contactTypes?inputTypeId=11';
+    $url = 'https://'.$apiURL.'/canvassResponses/contactTypes?inputTypeId=11';
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_HEADER, "Content-type: application/json");
+    curl_setopt($ch, CURLOPT_USERPWD, $user.':'.$apiKey.'|'.$database);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $result = curl_exec($ch);
     if($result === FALSE) {
@@ -62,9 +63,10 @@ class ApiResponseCodes {
     $apiKey = $countyAuthenticationObj->apiKey;
     $apiURL = $countyAuthenticationObj->URL;
     $user = $countyAuthenticationObj->User;
-    $url = 'https://'.$user.':'.$apiKey.'|'.$database.'@'.$apiURL.'/canvassResponses/resultCodes?contactTypeId='.$contactTypeId;
+    $url = 'https://'.$apiURL.'/canvassResponses/resultCodes?contactTypeId='.$contactTypeId;
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_HEADER, "Content-type: application/json");
+    curl_setopt($ch, CURLOPT_USERPWD, $user.':'.$apiKey.'|'.$database);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $result = curl_exec($ch);
     if($result === FALSE) {
@@ -131,14 +133,18 @@ class ApiResponseCodes {
     $apiKey = $countyAuthenticationObj->apiKey;
     $apiURL = $countyAuthenticationObj->URL;
     $user = $countyAuthenticationObj->User;
-    $url = 'https://'.$user.':'.$apiKey.'|'.$database.'@'.$apiURL.'/people/'.$vanid.'/canvassResponses';
-    drupal_set_message("url: ".'<pre>'.print_r($url, true).'</pre>','status');
-    $data = http_build_query($response);
-    $options = array(
-      'method' => 'POST',
-      'data' => $data,
-      'headers' => array('Content-Type' => 'application/json'),
-    );
-    drupal_set_message("options: ".'<pre>'.print_r($options, true).'</pre>','status');
+    $url = 'https://'.$apiURL.'/people/'.$vanid.'/canvassResponses';
+    drupal_set_message("url: ".'<pre>'.print_r($url, true).'</pre>','status'); 
+    $data = json_encode($response);
+    
+    $ch = curl_init($url);   
+    curl_setopt($ch, CURLOPT_USERPWD, $user.':'.$apiKey.'|'.$database);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: application/json", "Accept: application/json", "Expect:"));
+    curl_setopt($ch,CURLOPT_POST, 1);
+    curl_setopt($ch,CURLOPT_POSTFIELDS, $data);
+    $result = curl_exec($ch);
+    
+    drupal_set_message("result: ".'<pre>'.print_r($result, true).'</pre>','status');
   }
 }
