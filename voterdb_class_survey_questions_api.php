@@ -45,7 +45,7 @@ class ApiSurveyQuestions {
     $apiKey = $countyAuthenticationObj->apiKey;
     $apiURL = $countyAuthenticationObj->URL;
     $user = $countyAuthenticationObj->User;
-    $questionsURL = 'https://'.'@'.$apiURL.'/surveyQuestions';
+    $questionsURL = 'https://'.$apiURL.'/surveyQuestions';
     $ch = curl_init($questionsURL);
     curl_setopt($ch, CURLOPT_HEADER, "Content-type: application/json");
     curl_setopt($ch, CURLOPT_USERPWD, $user.':'.$apiKey.'|'.$database);
