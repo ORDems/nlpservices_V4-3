@@ -45,9 +45,10 @@ class ApiSurveyQuestions {
     $apiKey = $countyAuthenticationObj->apiKey;
     $apiURL = $countyAuthenticationObj->URL;
     $user = $countyAuthenticationObj->User;
-    $questionsURL = 'https://'.$user.':'.$apiKey.'|'.$database.'@'.$apiURL.'/surveyQuestions';
+    $questionsURL = 'https://'.'@'.$apiURL.'/surveyQuestions';
     $ch = curl_init($questionsURL);
     curl_setopt($ch, CURLOPT_HEADER, "Content-type: application/json");
+    curl_setopt($ch, CURLOPT_USERPWD, $user.':'.$apiKey.'|'.$database);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $result = curl_exec($ch);
     if($result === FALSE) {
@@ -81,7 +82,7 @@ class ApiSurveyQuestions {
     $apiKey = $countyAuthenticationObj->apiKey;
     $apiURL = $countyAuthenticationObj->URL;
     $user = $countyAuthenticationObj->User;
-    $url = 'https://'.$user.':'.$apiKey.'|'.$database.'@'.$apiURL.'/people/'.$surveyResponse['vanid'].'/canvassResponses';
+    $url = 'https://'.$apiURL.'/people/'.$surveyResponse['vanid'].'/canvassResponses';
     $this->canvassContext->contactTypeId = $surveyResponse['contactType'];
     switch ($surveyResponse['type']) {
       case 'Survey':
@@ -114,6 +115,7 @@ class ApiSurveyQuestions {
         break;
     }
     $data = json_encode($this);
+    /*
     $options = array(
       'method' => 'POST',
       'data' => $data,
@@ -121,6 +123,15 @@ class ApiSurveyQuestions {
     );
     //drupal_set_message("options: ".'<pre>'.print_r($options, true).'</pre>','status');
     $result = drupal_http_request($url, $options);
+     */
+    
+    $ch = curl_init($url);   
+    curl_setopt($ch, CURLOPT_USERPWD, $user.':'.$apiKey.'|'.$database);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: application/json", "Accept: application/json", "Expect:"));
+    curl_setopt($ch,CURLOPT_POST, 1);
+    curl_setopt($ch,CURLOPT_POSTFIELDS, $data);
+    $result = curl_exec($ch);
     $code = $result->code;
     if($code != 204) {
       drupal_set_message("Response: ".'<pre>'.print_r($result, true).'</pre>','status');

@@ -6,7 +6,6 @@
 
 namespace Drupal\voterdb;
 
-//require_once "voterdb_constants_van_api_tbl.php";
 require_once "voterdb_constants_voter_tbl.php";
 
 class ApiVoter {
@@ -17,13 +16,6 @@ class ApiVoter {
   }
   
 
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   * parseAddress
-   * 
-   * 
-   * @param type $address
-   * @return type
-   */
   private function parseAddress($address) {
     $addrFields = array();
     $streetParts = array();
@@ -56,68 +48,33 @@ class ApiVoter {
     return $addrFields;
   }
 
-
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * getApiVoter
- * 
- * 
- */
   public function getApiVoter($countyAuthenticationObj,$database,$vanid) {
-    
     $apiKey = $countyAuthenticationObj->apiKey;
     $apiURL = $countyAuthenticationObj->URL;
     $user = $countyAuthenticationObj->User;
-
-     $expandOptions = '?$expand=phones,emails,addresses,codes,districts,electionRecords';
-    
-    $url = 'https://'.$user.':'.$apiKey.'|'.$database.'@'.$apiURL.'/people/'.$vanid.$expandOptions;
-    //voterdb_debug_msg('voter URL', $url);
-
+    $expandOptions = '?$expand=phones,emails,addresses,codes,districts,electionRecords';
+    $url = 'https://'.$apiURL.'/people/'.$vanid.$expandOptions;
     $ch = curl_init($url);
-      
-    if(!curl_setopt($ch, CURLOPT_HEADER, "Content-type: application/json")) {
-      voterdb_debug_msg('setopt HEADER error', curl_error($ch));
-    }
-    //if(!curl_setopt($ch, CURLOPT_USERPWD, $user.':'.$apiKey.'|'.$database)) {
-    //  voterdb_debug_msg('setopt USERPWD error', curl_error($ch));
-    //}
-
-    if(!curl_setopt($ch, CURLOPT_RETURNTRANSFER, true)) {
-      voterdb_debug_msg('setopt USERPWD error', curl_error($ch));
-    }
-
-
+    curl_setopt($ch, CURLOPT_HEADER, "Content-type: application/json");
+    curl_setopt($ch, CURLOPT_USERPWD, $user.':'.$apiKey.'|'.$database);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $result = curl_exec($ch);
-
     if($result === FALSE) {
       voterdb_debug_msg('setopt exec error', curl_error($ch));
       return FALSE;
     }
-    //$info = curl_getinfo($ch);
-    //voterdb_debug_msg('info', $info);
-    //voterdb_debug_msg('result', $result);
-    //voterdb_debug_msg('curl hdl', $ch);
     curl_close($ch);
-    
     $resultObj = json_decode($result);
-    //voterdb_debug_msg('result array', $resultObj);
-    
     $voter[VN_VANID] = $resultObj->vanId;
     $voter[VN_FIRSTNAME] = $resultObj->firstName;
     $voter[VN_LASTNAME] = $resultObj->lastName;
     $voter[VN_NICKNAME] = $resultObj->nickname;
     $voter[VN_PARTY] = $resultObj->party;
     $voter[VN_SEX] = $resultObj->sex;
-    
-    
     $voter[VN_CITY] = $voter[VN_STREETNAME] = $voter[VN_STREETPREFIX] =  $voter[VN_STREETNO] = NULL;
-
     $voter[VN_MZIP] = $voter[VN_MCITY] = $voter[VN_MADDRESS] = NULL;
-
-    
     if(!empty($resultObj->addresses)) {
       foreach ($resultObj->addresses as $addressObj) {
-        //voterdb_debug_msg('address object', $addressObj);
         $type = $addressObj->type;
         switch ($type) {
           case 'Voting':
@@ -210,13 +167,8 @@ class ApiVoter {
       }
       $voter[VN_VOTING] = $voting;
     }
-    
-    
-    
-    
-    
+
     return $voter;
 
   }
 }
-
