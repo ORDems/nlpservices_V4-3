@@ -5,7 +5,7 @@
  */
 /*
  * voterdb_build_cell, voterdb_build_column, voterdb_build_row,
- * voterdb_get_progress
+ * voterdb_get_progress, voterdb_create_csv
  */
 
 use Drupal\voterdb\NlpReports;
@@ -167,6 +167,7 @@ function voterdb_create_csv($cc_county,$cc_hd,$nlRecords) {
       'lastName'=>'LastName',
       'nickname'=>'NickName',
       'address'=>'Address',
+      'city'=>'City',
       'email'=>'Email',
       'phone'=>'Phone',
       'asked'=>'NL',
