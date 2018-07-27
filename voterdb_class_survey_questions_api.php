@@ -115,6 +115,7 @@ class ApiSurveyQuestions {
         break;
     }
     $data = json_encode($this);
+    //voterdb_debug_msg('data', $data);
     /*
     $options = array(
       'method' => 'POST',
@@ -132,8 +133,9 @@ class ApiSurveyQuestions {
     curl_setopt($ch,CURLOPT_POST, 1);
     curl_setopt($ch,CURLOPT_POSTFIELDS, $data);
     $result = curl_exec($ch);
-    $code = $result->code;
-    if($code != 204) {
+    //voterdb_debug_msg('result', $result);
+    //$code = $result->code;
+    if(!empty($result)) {
       drupal_set_message("Response: ".'<pre>'.print_r($result, true).'</pre>','status');
     }
   }

@@ -27,6 +27,8 @@ class NlpReports {
   const HOSTILE = 'Hostile';
   const MOVED = 'Moved';
   
+  const MAXCOMMENT = '190';
+  
   public $resultsArray = array(
     'Select Result',self::F2F, 'Left Lit', 'Post Card',
     'Phone Contact', 'Voice Mail', 'Disconnected', 'Not at this Number',

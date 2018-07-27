@@ -238,9 +238,10 @@ function voterdb_process_voter_info(&$form_state) {
     // Process a comment.
     case 'CM':   
       if ($pv_value != '') {  // a comment was entered.
-        if (strlen($pv_value) > NC_COMMENT_MAX) {
-          drupal_set_message('Comment is limited to '.NC_COMMENT_MAX.' characters', 'warning');
-          $pv_tvalue = substr($pv_value,0,NC_COMMENT_MAX);  // Truncate the comment.
+        $commentMax = $nlpReportsObj::MAXCOMMENT;
+        if (strlen($pv_value) > $commentMax) {
+          drupal_set_message('Comment is limited to '.$commentMax.' characters', 'warning');
+          $pv_tvalue = substr($pv_value,0,$commentMax);  // Truncate the comment.
         } else {
           $pv_tvalue = $pv_value;
         }
