@@ -37,14 +37,11 @@ class NlpSurveyQuestion {
   }
 
   private function insertQuestion($surveyFields) {
-    $fields = array();
-    foreach ($surveyFields as $nlpKey => $value) {
-      $fields[$this->questionsList[$nlpKey]] = $value;
-    }
+    //voterdb_debug_msg('fields', $surveyFields);
     db_set_active('nlp_voterdb');
     try {
       db_insert(self::QUESTIONSTBL)
-        ->fields($fields)
+        ->fields($surveyFields)
         ->execute();
       }
     catch (Exception $e) {
@@ -92,30 +89,32 @@ class NlpSurveyQuestion {
 
   public function setSurveyQuestion($surveyQuestion,$surveyQuestionId) {
     $this->deleteQuestion($surveyQuestionId);
-    $this->deleteResponses($surveyQuestionId);
+    $this->responsesObj->deleteResponses($surveyQuestionId);
     $surveyFields = array(  
-        'Qid'=>$surveyQuestionId,
-        'QuestionName'=>$surveyQuestion['name'],
-        'QuestionType'=>$surveyQuestion['type'],
-        'Cycle'=>$surveyQuestion['cycle'],
-        'ScriptQuestion'=>$surveyQuestion['scriptQuestion'],
-        );
+      'Qid'=>$surveyQuestionId,
+      'QuestionName'=>$surveyQuestion['name'],
+      'QuestionType'=>$surveyQuestion['type'],
+      'Cycle'=>$surveyQuestion['cycle'],
+      'ScriptQuestion'=>$surveyQuestion['scriptQuestion'],
+      );
+    //voterdb_debug_msg('fields', $surveyFields);
     $this->insertQuestion($surveyFields);
     $responses = $surveyQuestion['responses'];
     foreach ($responses as $surveyResponseId=>$surveyResponseName) {
       $responseFields = array(
-          'qid'=>$surveyQuestionId,
-          'rid'=>$surveyResponseId,
-          'responseName'=>$surveyResponseName,
-          'questionName'=>$surveyQuestion['name'],
-          );
+        'qid'=>$surveyQuestionId,
+        'rid'=>$surveyResponseId,
+        'responseName'=>$surveyResponseName,
+        'questionName'=>$surveyQuestion['name'],
+        );
+      //voterdb_debug_msg('responses', $responseFields);
       $this->responsesObj->insertResponse($responseFields);
     }
   }
   
   public function deleteSurveyQuestion($qid) {
     $this->deleteQuestion($qid);
-    $this->deleteResponses($qid);
+    $this->responsesObj->deleteResponses($qid);
   }
   
   

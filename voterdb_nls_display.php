@@ -242,7 +242,7 @@ function voterdb_display_nls_form_validate($form, &$form_state) {
   $nv_status = $nlsObj->getNlsStatus($nv_mcid,$nv_county);
   //
   $nv_value = $form_state['triggering_element']['#value'];
-  voterdb_debug_msg('value', $nv_value);
+  //voterdb_debug_msg('value', $nv_value);
   
   //$nv_history = array(DZ_NL=>NY_SIGNEDUP,DZ_TC=>NY_TURFCHECKEDIN,DZ_TD=>NY_DELIVEREDTURF);
   // Process the checkbox, select or textbox for this NL.

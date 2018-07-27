@@ -107,32 +107,6 @@ function voterdb_display_voting($di_link,$di_county,$di_mcid) {
 }
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_get_goals
- *
- * Get the NL recruitment goal for a house district.  If the HD is set to ALL
- * the goal for the entire county is retrieved.  The county goal is set
- * separately and is not necessarily the sum of the HD goals.
- *
- * @param type $gg_county - name of the county.
- * @param type $gg_hd : HD number or ALL.
- * @return int : the numeric goal for HD or county.
- */
-function voterdb_get_goals($gg_county,$gg_hd) {
-  db_set_active('nlp_voterdb');
-  $gg_tselect = "SELECT * FROM {".DB_NLPGOALS_TBL."} WHERE  ".
-    NM_COUNTY. " = :county AND ".NM_HD." = :hd";
-  $gg_targs = array(
-    ':county' => $gg_county,
-    ':hd' => $gg_hd);
-  $gg_result = db_query($gg_tselect,$gg_targs);
-  $gg_goal = $gg_result->fetchAssoc();
-  db_set_active('default');  
-  if(empty($gg_goal)) {return '';}
-  // Return the requested goal, or zero if goals is not yet set.
-  return $gg_goal[NM_NLPGOAL];
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_get_nlscount
  *
  * Counts NLs that either have signed up or who have reported results.  Type

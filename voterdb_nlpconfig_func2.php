@@ -26,8 +26,14 @@ function voterdb_process_vbverify(&$form_state) {
   //voterdb_debug_msg('form state values', $form_state['values']);
   //voterdb_debug_msg('form state voterdb', $form_state['voterdb']);
   
-  $questionObj = $form_state['voterdb']['questionObj'];
+  //$questionObj = $form_state['voterdb']['questionObj'];
   
+  $surveyResponseObj = new NlpSurveyResponse();
+  $questionObj = new NlpSurveyQuestion($surveyResponseObj);
+  
+  $nlpActivistCodeObj = new NlpActivistCodes();
+  
+  //voterdb_debug_msg('questionobj', $questionObj);
   if(isset($form_state['values']['removeQuestion']) AND $form_state['values']['removeQuestion']) {
     drupal_set_message('The current survey question is deselected','status');
     $qid = $form_state['voterdb']['surveyQuestionQid'];
@@ -38,14 +44,14 @@ function voterdb_process_vbverify(&$form_state) {
     $surveyQuestionId = $form_state['values']['questionChoice'];
     drupal_set_message('The survey question is selected.','status');
     $questionsArray = $form_state['voterdb']['questionsArray'];
-    //voterdb_debug_msg('questions array',$questionsArray);
+    voterdb_debug_msg('question: '.$surveyQuestionId,$questionsArray[$surveyQuestionId]);
     $questionObj->setSurveyQuestion($questionsArray[$surveyQuestionId],$surveyQuestionId);
   }
   
   if(isset($form_state['values']['removeAC']) AND $form_state['values']['removeAC']) {
     drupal_set_message('The current activist code is deselected','status');
     //$functionName = $form_state['voterdb']['functionName'];
-    $questionObj->deleteActivistCode('NotADem');
+    $nlpActivistCodeObj->deleteActivistCode('NotADem');
   }
   
   //$form_state['voterdb']['activistCodeId'] = $currentActivistCode['activistCodeId'];
@@ -53,7 +59,7 @@ function voterdb_process_vbverify(&$form_state) {
   if($form_state['values']['activistCode'] > 1) {
     $activistCodes = $form_state['voterdb']['activistCodes'];
     //voterdb_debug_msg('activist codes',$activistCodes);
-    $nlpActivistCodeObj = new NlpActivistCodes();
+    //$nlpActivistCodeObj = new NlpActivistCodes();
     $activistCode = $activistCodes[$form_state['values']['activistCode']];
     $activistCode['functionName'] = 'NotADem';
     //voterdb_debug_msg('activist code',$activistCode);
@@ -64,7 +70,7 @@ function voterdb_process_vbverify(&$form_state) {
   if(isset($form_state['values']['removeVoterAC']) AND $form_state['values']['removeAC']) {
     drupal_set_message('The current activist code is deselected','status');
     //$functionName = $form_state['voterdb']['functionName'];
-    $questionObj->deleteActivistCode('NLPVoter');
+    $nlpActivistCodeObj->deleteActivistCode('NLPVoter');
   }
   
   //$form_state['voterdb']['activistCodeId'] = $currentActivistCode['activistCodeId'];
@@ -72,7 +78,7 @@ function voterdb_process_vbverify(&$form_state) {
   if($form_state['values']['voterActivistCode'] > 1) {
     $activistCodes = $form_state['voterdb']['activistCodes'];
     voterdb_debug_msg('activist codes',$activistCodes);
-    $nlpActivistCodeObj = new NlpActivistCodes();
+    //$nlpActivistCodeObj = new NlpActivistCodes();
     $activistCode = $activistCodes[$form_state['values']['voterActivistCode']];
     $activistCode['functionName'] = 'NLPVoter';
     voterdb_debug_msg('activist code',$activistCode);
@@ -107,25 +113,21 @@ function voterdb_build_verify_votebuilder(&$form, &$form_state) {
   
   //$apiContactTtpes = $apiResultCodesObj->getApiContactTypes($countyAuthenticationObj,$database);
   //voterdb_debug_msg('contact types', $apiContactTtpes);
-   
-    
+  
+  $responseCodesObj = new NlpResponseCodes();
+  $responseCodesObj->setNlpResponseCodes($apiKnownResultCodes);
+  
+  
   //
   // - - - Survey question choice. - - - - - - - - - - - - - -
   //
-  
   $form['surveyq'] = array(
     '#title' => 'Selection of the survey question',
     '#prefix' => " \n".'<div style="width:750px;">'." \n",
     '#suffix' => " \n".'</div>'." \n",
     '#type' => 'fieldset',
   );
-  
-  $responseCodesObj = new NlpResponseCodes();
-  $responseCodesObj->setNlpResponseCodes($apiKnownResultCodes);
-  
-  
   $surveyResponseObj = new NlpSurveyResponse();
-  
   $questionObj = new NlpSurveyQuestion($surveyResponseObj);
   //voterdb_debug_msg('questionobj', $questionObj);
   $form_state['voterdb']['questionObj'] = $questionObj;
@@ -147,17 +149,11 @@ function voterdb_build_verify_votebuilder(&$form, &$form_state) {
     $form['surveyq']['removeQuestion'] = array(
       '#type' => 'checkbox',
       '#title' => t('Remove the currently chosen survey question'),
-      //'#default_value' => isset($node->active) ? $node->active : 1,
-      //'#options' => $candidateList,
-      //'#description' => t('Remove the currently chosen survey question.'),
     );
   }
 
-  
   $apiQuestionsObj = new ApiSurveyQuestions(NULL);
-  //voterdb_debug_msg('apiquestions', $apiquestionsObj);
   $form_state['voterdb']['apiQuestionObj'] = $apiQuestionsObj;
-  
   $questionsInfoObj = $apiQuestionsObj->getApiSurveyQuestions($countyAuthenticationObj,$database,'All');
   //voterdb_debug_msg('Questions info', $questionsInfoObj);
   $form_state['voterdb']['questionsArray'] = $questionsInfoObj->result;
@@ -165,22 +161,19 @@ function voterdb_build_verify_votebuilder(&$form, &$form_state) {
   $questionList = array();
   $questionList[1] = '<b>no change </b>';
   foreach ($questionsInfoObj->result as $surveyQuestion) {
-    
     if($surveyQuestion['type'] != 'Candidate') {
       $questionList[$surveyQuestion['qid']] = '<b>name: </b>'.$surveyQuestion['name']
         . '<b> cycle: </b>'.$surveyQuestion['cycle']
         . '<b> type: </b>'.$surveyQuestion['type']
         . '<b> scriptQuestion: </b>'.$surveyQuestion['scriptQuestion'];
     }
-    
   }
-  
   if(empty($questionList)) {
     $form['surveyq']['note'] = array(
       '#markup' => "<p>There are no survey questions visible to the API </p>",
     );
   } else {
-    
+    //voterdb_debug_msg('Questionslist', $questionList);
     $form['surveyq']['questionChoice'] = array(
       '#type' => 'radios',
       '#title' => t('Survey Question Choice'),
@@ -188,7 +181,6 @@ function voterdb_build_verify_votebuilder(&$form, &$form_state) {
       '#options' => $questionList,
       '#description' => t('Choose a survey question for this cycle.'),
     );
-
   }
   $form['surveyq']['saveQC'] = array(
     '#type' => 'submit',
@@ -241,7 +233,7 @@ function voterdb_build_verify_votebuilder(&$form, &$form_state) {
      '#type' => 'select',
      '#title' => '"Not a Dem" activist code selection',
      '#options' => $activistCodeList,
-     '#size' =>2,
+     //'#size' =>2,
      '#description' => t('Select the activist code to be set when a voter is declared to be "Not a Dem"'),
   );
   
@@ -297,7 +289,7 @@ function voterdb_build_verify_votebuilder(&$form, &$form_state) {
      '#type' => 'select',
      '#title' => '"NLP Voter" activist code selection',
      '#options' => $activistCodeList,
-     '#size' =>2,
+     //'#size' =>2,
      '#description' => t('Select the activist code to be set when a voter is assigned to an NL.'),
   );
   
