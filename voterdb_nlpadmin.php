@@ -1,6 +1,6 @@
 <?php
 /**
- * Name: voterdb_nladmin.php    V4.2   7/24/18
+ * Name: voterdb_nladmin.php    V4.3   7/27/18
 */
 require_once "voterdb_group.php";
 require_once "voterdb_banner.php";
@@ -52,7 +52,6 @@ function voterbd_nlpadmin() {
   $output .= "\n".'<p class="narrow" ><a href="'.$dn_path.'nlpcoordinators?'.$dn_grp_id.'">Identify the district coordinators</a></p>';
   $output .= "\n".'<p class="narrow" ><a href="'.$dn_path.'nlpblocked?'.$dn_grp_id.'">List of NL emails that are undeliverable</a></p>';
   $output .= "\n".'<p class="narrow" id="hint1"><a href="'.$dn_path.'nlp-documents">NLP Documents <span>The latest documents for coordinators and admins can be found here.</span> </a></p>';
-  $output .= "\n".'<p class="narrow" id="hint1"><a href="'.$dn_path.'nlpfixreport?'.$dn_grp_id.'">Fix NLS reports <span>This function allows you to set an NL report as inactive so it does not show in any reports.</span> </a></p>';
   $output .= "\n".'<p class="narrow" id="hint1"><a href="'.$dn_path.'nlpexportnlsstatus?'.$dn_grp_id.'">Export NL status report <span>This report gives the status of the NL activity for this cycle.</span> </a></p>';
   $output .= "\n".'</fieldset></div>';
   
@@ -64,7 +63,7 @@ function voterbd_nlpadmin() {
   $output .= "\n".'<p class="narrow";><a href="'.$dn_path.'nlpcandidates?'.$dn_grp_id.'">Set candidate names for this cycle</a></p>';
   $output .= "\n".'<p class="narrow";><a href="'.$dn_path.'nlpinstructions?'.$dn_grp_id.'">Upload the NLP instructions</a></p>';
   //$output .= "\n".'<p class="narrow";><a href="'.$dn_path.'nlpsurvey?'.$dn_grp_id.'">Create the survey question</a></p>';
-  $output .= "\n".'<p class="narrow";><a href="'.$dn_path.'nlpballotsreceived?'.$dn_grp_id.'">Upload the Ballot Received status</a></p>';
+  $output .= "\n".'<p class="narrow";><a href="'.$dn_path.'nlpimportmatchbacks?'.$dn_grp_id.'">Import the matchbacks</a></p>';
   $output .= "\n".'<p class="narrow";><a href="'.$dn_path.'nlpballotcounts?'.$dn_grp_id.'">Upload the Crosstab counts</a></p>';
   $output .= "\n".'<p class="narrow";><a href="'.$dn_path.'nlprestorenlsreports?'.$dn_grp_id.'">Restore NLS reports</a></p>';
   $output .= "\n".'</fieldset></div>';

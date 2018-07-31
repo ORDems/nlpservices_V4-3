@@ -1,12 +1,12 @@
 <?php
 
 /*
- * Name:  voterdb_turf_deliver.php               V4.2 7/12/18
+ * Name:  voterdb_turf_deliver.php               V4.3 7/30/18
  */
 require_once "voterdb_constants_voter_tbl.php";
 require_once "voterdb_constants_nls_tbl.php";
 require_once "voterdb_constants_nlp_instructions_tbl.php";
-require_once "voterdb_constants_coordinator_tbl.php";
+//require_once "voterdb_constants_coordinator_tbl.php";
 require_once "voterdb_group.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_track.php";
@@ -18,12 +18,14 @@ require_once "voterdb_class_turfs.php";
 require_once "voterdb_class_paths.php";
 require_once "voterdb_class_nls.php";
 require_once "voterdb_class_drupal_users.php";
+require_once "voterdb_class_coordinators_nlp.php";
 
 use Drupal\voterdb\NlpButton;
 use Drupal\voterdb\NlpTurfs;
 use Drupal\voterdb\NlpPaths;
 use Drupal\voterdb\NlpNls;
 use Drupal\voterdb\NlpDrupalUser;
+use Drupal\voterdb\NlpCoordinators;
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_hd_selected_callback
@@ -49,18 +51,6 @@ function voterdb_hd_selected_callback($form, $form_state) {
 function voterdb_pct_selected_callback($form, $form_state) {
   //Rebuild the form to list the NLs in the precinct after the precinct is selected.
   return $form['hd-change']['turf-select'];
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_get_nl_coordinator
- * 
- * @param type $cl_region - associate array with county, HD and Pct.
- * @return array - associate array for the coordinator or an empty array.
- */
-function voterdb_get_nl_coordinator($cl_region) {
-  $cl_region['coordinators'] = voterdb_coordinators_getall();
-  $cl_coordinator = voterdb_get_coordinator($cl_region);
-  return $cl_coordinator;
 }
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -328,19 +318,24 @@ function voterdb_turf_deliver_form_submit($form, &$form_state) {
   $df_colname = $df_user_lname;
   $df_semail = $df_user_email;
   $df_phone = $df_user_phone;
-  $df_region['hd'] = $df_nl['hd'];
-  $df_region['pct'] = $df_nl['pct'];
-  $df_region['county'] = $df_county;
   
-  $df_coordinator = voterdb_get_nl_coordinator($df_region);
-  //voterdb_debug_msg('coordinator', $df_coordinator);
+  $df_region = array(
+    'hd'=>$df_nl['hd'],
+    'pct'=>$df_nl['pct'],
+    'county'=>$df_county,
+  );
+  $coordinatorsObj = new NlpCoordinators();
+  $df_region['coordinators'] = $coordinatorsObj->getAllCoordinators();
+  voterdb_debug_msg('region', $df_region);
   
-  //$df_coordinator = voterdb_get_nl_coordinator($df_county,$df_hd,$df_pct);
+  $df_coordinator = $coordinatorsObj->getCoordinator($df_region);
+  voterdb_debug_msg('coordinator', $df_coordinator);
+
   if (!empty($df_coordinator)) {
-    $df_cofname = $df_coordinator[CR_FIRSTNAME];
-    $df_colname = $df_coordinator[CR_LASTNAME];
-    $df_phone = $df_coordinator[CR_PHONE];
-    $df_semail = $df_coordinator[CR_EMAIL];
+    $df_cofname = $df_coordinator['firstName'];
+    $df_colname = $df_coordinator['lastName'];
+    $df_phone = $df_coordinator['phone'];
+    $df_semail = $df_coordinator['email'];
   }
   // Construct the message.
   $df_message = "<p>" . $df_nl['nickname'] . ",</p>";

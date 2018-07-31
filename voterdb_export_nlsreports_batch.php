@@ -1,11 +1,10 @@
 <?php
 /*
- * Name: voterdb_export_nlsreports_batch.php   V4.2   7/16/18
+ * Name: voterdb_export_nlsreports_batch.php   V4.3   7/29/18
  * This include file contains the code to export voter contact reports by
  * NLs.  It creates a file that the browser can download to an admin's PC.
  */
-//require_once "voterdb_constants_rr_tbl.php";
-//require_once "voterdb_constants_nls_tbl.php"; 
+ 
 require_once "voterdb_class_nls.php";
 require_once "voterdb_class_nlreports_nlp.php";
 require_once "voterdb_debug.php";
@@ -35,7 +34,6 @@ function voterdb_export_nlsreports_batch($en_arg,&$en_context) {
     $en_context['finished'] = TRUE;
     return;
   }
-
   $en_context['finished'] = 0;
   if(empty($en_context['sandbox']['next_record'])) {
     $en_next_record = 0;
@@ -43,29 +41,17 @@ function voterdb_export_nlsreports_batch($en_arg,&$en_context) {
     // Seek to where we will restart.
     $en_next_record = $en_context['sandbox']['next_record'];
   }
-  
   $nlObj = new NlpNls();
   $nlpreportsObj = new NlpReports();
-  
   $en_result = $nlpreportsObj->selectAllReports($en_next_record);
-
-  
-  //watchdog('voterdb_export_restore_batch', 'result: @qry',array('@qry' =>  print_r($en_result, true)),WATCHDOG_DEBUG);
-  
-
-  
   // Get the records one at a time.
   $en_rcnt = 0;
   do {
-    
-    
     $en_record_raw = $en_result->fetchAssoc();
     if (!$en_record_raw) {break;}  // Last record processed.
     $en_rcnt++;
     // Get the name of the NL who recorded this report, if we have it.
-    
     $nl = $nlObj->getNlById($en_record_raw['MCID']);
-    //$en_name = voterdb_get_nl($en_record_raw['MCID']);
     $en_record_raw['nickname'] = $nl['nickname'];
     $en_record_raw['lastName'] = $nl['lastName'];
     // Convert the associative array to tab delimited string.
@@ -73,13 +59,8 @@ function voterdb_export_nlsreports_batch($en_arg,&$en_context) {
     $en_string = implode("\t", $en_record_row);
     $en_string .= "\tEOR\n";
     fwrite($en_rpt_fh,$en_string);
-    
   } while (TRUE);
-  
   fclose($en_rpt_fh);
-  
-  
-  //watchdog('voterdb_export_restore_batch', 'record count: @rec', array('@rec' =>  $en_rcnt),WATCHDOG_DEBUG);
   // Finish the batch if we are done.
   if($en_rcnt != $nlpreportsObj::BATCHLIMIT) {
     // We're done with the last record.
@@ -97,8 +78,6 @@ function voterdb_export_nlsreports_batch($en_arg,&$en_context) {
     $en_context['finished'] = $en_percent;
   }
   db_set_active('default');
-
-  
   return TRUE;
 }
 

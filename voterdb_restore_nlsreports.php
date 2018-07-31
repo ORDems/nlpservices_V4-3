@@ -1,19 +1,19 @@
 <?php
 /*
- * Name: voterdb_restore_nlsreports.php   V4.2   7/16/18
+ * Name: voterdb_restore_nlsreports.php   V4.3   7/29/18
  * This include file contains the code to restore voter contact reports by
  * NLs in previous elections.  It creates the database for historical results
  * that might be of value for this election.
  */
-//require_once "voterdb_constants_rr_tbl.php"; 
-//require_once "voterdb_constants_nls_tbl.php"; 
+
 require_once "voterdb_group.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_debug.php";
-//require_once "voterdb_van_hdr.php";
 require_once "voterdb_class_button.php";
+require_once "voterdb_class_nlreports_nlp.php";
 
 use Drupal\voterdb\NlpButton;
+use Drupal\voterdb\NlpReports;
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_validate_nlreports
@@ -43,13 +43,9 @@ function voterdb_validate_nlreports($vu_nlreports_name,$vu_delimiter) {
     $vu_column_header = explode($vu_delimiter, $vu_header_record);
   }
   // Find the column associated with each required field.
-  $vu_field_pos = voterdb_decode_header($vu_column_header, unserialize(NU_HEADER_ARRAY)); // van_hdr
-  if ($vu_column_header[$vu_field_pos[NU_VANID]] != NC_VANID) {
-    drupal_set_message('VANID is missing.', 'error');
-    return FALSE;
-    }
-  $vu_allreq = voterdb_export_required($vu_field_pos, unserialize(NU_REQUIRED_ARRAY), unserialize(NU_MESSAGE_ARRAY));
-  if ($vu_allreq) {
+  $reportsObj = new NlpReports();
+  $vu_field_pos = $reportsObj->decodeReportsHdr($vu_column_header);
+  if (!$vu_field_pos['ok']) {
     return FALSE;}  // One or more required fields are missing.
   return $vu_field_pos;
 }
@@ -87,7 +83,7 @@ function voterdb_validate_file(&$form_state) {
     form_set_error('nlreportsfile', 'Fix the problem before resubmit.');
     return FALSE;
   }
-  $form_state['voterdb']['field_pos'] = $fv_field_pos;
+  $form_state['voterdb']['field_pos'] = $fv_field_pos['pos'];
   return TRUE;
 }
 
@@ -126,7 +122,6 @@ function voterdb_restore_nlsreports_form($form_id, &$form_state) {
       '#id' => 'upload-file',
       '#value' => 'Process the uploaded reports file >>',
   );
-  
   $form['done'] = array(
     '#markup' => '<p><a href="nlpadmin?County='.$rr_county.'" class="button ">Return to Admin page >></a></p>',
   );
@@ -166,9 +161,8 @@ function voterdb_restore_nlsreports_form_submit($form,&$form_state) {
   // Move the temp file to somewhere useful for the batch operation.
   $rr_mpath = drupal_get_path('module','voterdb');
   // Empty the results table.
-  db_set_active('nlp_voterdb');
-  db_truncate(DB_NLPRESULTS_TBL)->execute();
-  db_set_active('default');
+  $reportsObj = new NlpReports();
+  $reportsObj->emptyNlTable();
   // Set up the batch operation.
   $rr_args = array (
     'uri' => $form_state['voterdb']['uri'],

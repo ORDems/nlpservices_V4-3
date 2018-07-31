@@ -1,40 +1,19 @@
 <?php
 /*
- * Name: voterdb_restore_nlsreports_upload.php   V4.0   2/17/18
+ * Name: voterdb_restore_nlsreports_upload.php   V4.3   7/29/18
  * This include file contains the code to restore voter contact reports by
  * NLs in previous elections.  It creates the database for historical results
  * that might be of value for this election.
  */
-require_once "voterdb_constants_rr_tbl.php";
-require_once "voterdb_constants_nls_tbl.php"; 
+
 require_once "voterdb_debug.php";
+require_once "voterdb_class_nlreports_nlp.php";
 // Loop limits.
 define("RR_SQL_LMT","100");
 define("RR_BATCH_LMT","100");
 
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_timer2
- * 
- * Calculate the duration of an event.
- *
- * @param type $vt_event - start or stop.
- * @param type $vt_stime - the starting time.
- * @return either the start time or the elapsed time.
- */
-function voterdb_timer2($vt_event,$vt_stime) {
-  $vt_ctime = microtime();
-  $vt_atime = explode(' ', $vt_ctime);
-  $vt_time = $vt_atime[1] + $vt_atime[0];
-  switch ($vt_event) {
-    case 'start':
-      $vt_rtime = $vt_time;
-      break;
-    case 'end':
-      $vt_rtime = ($vt_time - $vt_stime);
-      break;
-  }
-return $vt_rtime;
-}
+use Drupal\voterdb\NlpReports;
+
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_restore_nlsreports_upload
@@ -48,6 +27,7 @@ function voterdb_restore_nlsreports_upload($um_arg,&$um_context) {
   // Retrieve the values determined when we validated the form submittal
   $um_nlreports_uri = $um_arg['uri'];
   $um_field_pos = $um_arg['field_pos'];
+  //voterdb_debug_msg('pos', $um_field_pos);
   $um_delimiter = $um_arg['delimiter'];
   // Open the input file and position for reading.
   $um_rpt_fh = fopen($um_nlreports_uri, "r");
@@ -59,11 +39,12 @@ function voterdb_restore_nlsreports_upload($um_arg,&$um_context) {
   }
   $um_filesize = filesize($um_nlreports_uri);
   $um_context['finished'] = 0;
+  //voterdb_debug_msg('context', $um_context);
   if(empty($um_context['sandbox']['seek'])) {
     // Read the header record.
-    $um_voter_raw = fgets($um_rpt_fh);
+    $um_hdr_raw = fgets($um_rpt_fh);
     $um_rcd_cnt = 0;
-    $um_context['sandbox']['upload-start'] = voterdb_timer2('start',0);
+    $um_context['sandbox']['upload-start'] = voterdb_timer('start',0);
     $um_context['sandbox']['loop-max'] = 0;
     $um_seek = 0;
     $um_bad_rcds = array();
@@ -74,18 +55,20 @@ function voterdb_restore_nlsreports_upload($um_arg,&$um_context) {
     $um_rcd_cnt = $um_context['sandbox']['rcds'];
     $um_bad_rcds = $um_context['sandbox']['bad-rcds'];
   }
-  $um_loopstart = voterdb_timer2('start',0);
+  
+  $reportsObj = new NlpReports();
+  //voterdb_debug_msg('reportsobj', $reportsObj);
+  
+  $um_loopstart = voterdb_timer('start',0);
   // Overlap the commits for tbe insert.
   $um_transaction = db_transaction();
   // Get the records one at a time.
   set_time_limit(90);
   $um_done = TRUE;
-  $um_loopcnt = $um_sqlcnt = 0;
-  $um_previous = "";
-  $um_field_names = array(NC_CYCLE,NC_COUNTY,NC_ACTIVE,NC_VANID,NC_MCID,NC_CDATE,NC_TYPE,NC_VALUE,NC_TEXT);
-  $um_values = array();
+
   do {
     $um_raw_record = fgets($um_rpt_fh);
+    //voterdb_debug_msg('raw', $um_raw_record);
     if (empty($um_raw_record)) {break;} //We've processed the last report record.
     $um_txt_record = html_entity_decode($um_raw_record);
     if($um_delimiter == ',') {
@@ -97,9 +80,12 @@ function voterdb_restore_nlsreports_upload($um_arg,&$um_context) {
     } else {
       $um_report = explode($um_delimiter, $um_txt_record);
     }
+    //voterdb_debug_msg('report', $um_report);
     $um_rcd_cnt++;
     // Avoid a crash from a bad record.  And, let the user know so it can be corrected.
-    if(empty($um_report[$um_field_pos[NU_VANID]])) {
+    
+    if(empty($um_report[$um_field_pos['vanid']])) {
+      //voterdb_debug_msg('opps', '');
       $um_bc = count($um_bad_rcds);
       if ($um_bc < 101) {
         $um_bad_rcds[] = $um_rcd_cnt;
@@ -109,49 +95,32 @@ function voterdb_restore_nlsreports_upload($um_arg,&$um_context) {
       }
       continue;
     }
+    //voterdb_debug_msg('ok', '');
     // Convert the date to ISO.  This is only needed if the input file was
     // editted by Excel which changes to the date format.
-    $um_idate = $um_report[$um_field_pos[NU_CDATE]];
+    //$um_idate = $um_report[$um_field_pos['cdate']];
+    //$um_udate = strtotime($um_idate);
+    //$um_cdate = date('Y-m-d',$um_udate);
+    
+    $um_fields = array();  
+    foreach ($um_field_pos as $nlpKey => $column) {
+      $um_fields[$nlpKey] = $um_report[$column];
+    }
+    
+    
+    if(empty($um_fields['recorded'])) {
+      $um_fields['recorded'] = '2018-01-01';
+    }
+    
+    $um_idate = $um_fields['cdate'];
     $um_udate = strtotime($um_idate);
-    $um_cdate = date('Y-m-d',$um_udate);
-    $um_fields = array(
-      NC_CYCLE=>$um_report[$um_field_pos[NU_CYCLE]], 
-      NC_COUNTY=>$um_report[$um_field_pos[NU_COUNTY]], 
-      NC_ACTIVE=>$um_report[$um_field_pos[NU_ACTIVE]],
-      NC_VANID=>$um_report[$um_field_pos[NU_VANID]], 
-      NC_MCID=>$um_report[$um_field_pos[NU_MCID]],  
-      NC_CDATE=>$um_cdate, 
-      NC_TYPE=>$um_report[$um_field_pos[NU_TYPE]], 
-      NC_VALUE=>$um_report[$um_field_pos[NU_VALUE]], 
-      NC_TEXT=>$um_report[$um_field_pos[NU_TEXT]],
-    );
-    $um_values[$um_sqlcnt++] = $um_fields;
-    if($um_sqlcnt==RR_SQL_LMT) {
-      $um_bc = count($um_bad_rcds);
-      // Insert this result record.
-      $um_sqlcnt = 0;
-      db_set_active('nlp_voterdb');
-      $um_loopcnt++;
-      try {
-        $um_query = db_insert(DB_NLPRESULTS_TBL)->fields($um_field_names);
-        foreach ($um_values as $um_record) {
-          $um_query->values($um_record);
-        }
-        $um_query->execute();
-      }
-      catch (Exception $e) {
-        db_set_active('default');
-        watchdog('voterdb_reports_restore_upload', 'insert error record: @rec', 
-          array('@rec' =>  print_r($e->getMessage(), true)),WATCHDOG_DEBUG);
-        break;
-      }
-      db_set_active('default');
-      $um_values = array();
-    } 
-    // Stop and recycle the batch request every 100 inserts.
-    $um_previous = $um_raw_record;
-    if ($um_loopcnt == RR_BATCH_LMT) {
-      $um_loopcnt = 0;
+    $um_fields['cdate'] = date('Y-m-d',$um_udate);
+    //voterdb_debug_msg('fields', $um_fields);
+    
+    $batchLimit = $reportsObj->insertNlReports($um_fields);
+    
+
+    if ($batchLimit) {
       $um_done = FALSE;
       $um_seek = ftell($um_rpt_fh);
       $um_context['sandbox']['seek'] = $um_seek;
@@ -163,7 +132,7 @@ function voterdb_restore_nlsreports_upload($um_arg,&$um_context) {
       }
       $um_context['sandbox']['rcds'] = $um_rcd_cnt;
       $um_context['sandbox']['bad-rcds'] = $um_bad_rcds;
-      $um_loop_time = voterdb_timer2('end',$um_loopstart);
+      $um_loop_time = voterdb_timer('end',$um_loopstart);
       if($um_loop_time > $um_context['sandbox']['loop-max']) {
         $um_context['sandbox']['loop-max'] = $um_loop_time;
       }
@@ -172,26 +141,13 @@ function voterdb_restore_nlsreports_upload($um_arg,&$um_context) {
   } while (TRUE);
   // Finish the batch if we are done.
   if($um_done) {
-    if($um_sqlcnt != 0) {
-      db_set_active('nlp_voterdb');
-      try {
-        $um_query = db_insert(DB_NLPRESULTS_TBL)->fields($um_field_names);
-        foreach ($um_values as $um_record) {
-          $um_query->values($um_record);
-        }
-        $um_query->execute();
-      }
-      catch (Exception $e) {
-        db_set_active('default');
-        watchdog('voterdb_reports_restore_upload', 'insert error record: @rec', 
-          array('@rec' =>  print_r($e->getMessage(), true)),WATCHDOG_DEBUG);
-      }
-      db_set_active('default');
-    }
+    
+    $reportsObj->flushNlReports();
+    
     $um_context['finished'] = 1;
     $um_context['results']['rcds'] = $um_rcd_cnt;
     $um_context['results']['bad-rcds'] = $um_bad_rcds;
-    $um_upload_time = voterdb_timer2('end',$um_context['sandbox']['upload-start']);
+    $um_upload_time = voterdb_timer('end',$um_context['sandbox']['upload-start']);
     $um_context['results']['upload-time'] = $um_upload_time;
     $um_context['results']['loop-max'] = $um_context['sandbox']['loop-max'];
     $um_context['results']['uri'] = $um_nlreports_uri;
