@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_dataentry.php      V4.2  7/11/18
+ * Name: voterdb_dataentry.php      V4.3  7/30/18
  */
 require_once "voterdb_constants_mb_tbl.php";
 require_once "voterdb_constants_voter_tbl.php";
@@ -12,7 +12,7 @@ require_once "voterdb_debug.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_track.php";
 require_once "voterdb_dates.php";
-require_once "voterdb_coordinators_get.php"; 
+//require_once "voterdb_coordinators_get.php"; 
 require_once "voterdb_instructions_get.php";
 require_once "voterdb_dataentry_func.php";
 require_once "voterdb_dataentry_func2.php";
@@ -31,6 +31,7 @@ require_once "voterdb_class_paths.php";
 require_once "voterdb_class_nls.php";
 require_once "voterdb_class_drupal_users.php";
 require_once "voterdb_class_button.php";
+require_once "voterdb_class_coordinators_nlp.php";
 
 use Drupal\voterdb\GetBrowser;
 use Drupal\voterdb\NlpCandidates;

@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_ballots_received.php   V4.0 2/19/18
+ * Name: voterdb_ballots_received.php   V4.3 7/27/18
  * This include file contains the code to process the ballot received status
  * from the VAN.
  */
@@ -12,72 +12,10 @@ require_once "voterdb_debug.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_dates.php";
 require_once "voterdb_class_button.php";
+require_once "voterdb_class_matchback.php";
 
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_validate_matchback
- * 
- * Verify that we have a good header.
- *
- * @param type $vu_matchback_name - name of the file with matchback records.
- * @return field position array for required fields or FALSE if error.
- */
-function voterdb_validate_matchback($vu_matchback_name) {
-  $vu_voter_fh = fopen($vu_matchback_name, "r");
-  if ($vu_voter_fh == FALSE) {
-    drupal_set_message('Failed to open Matchback file', 'error');
-    return FALSE;
-  }
-  $vu_voter_raw = fgets($vu_voter_fh);
-  if (!$vu_voter_raw) {
-    drupal_set_message('Failed to read Matchback File Header', 'error');
-    return FALSE;
-  }
-  $vu_header_record = sanitize_string($vu_voter_raw);
-  //extract the column headers.
-  $vu_column_header = explode("\t", $vu_header_record);
-  $vu_field_pos = voterdb_decode_header($vu_column_header, unserialize(MB_HEADER_ARRAY));
-  if ($vu_column_header[$vu_field_pos[BR_VANID]] == MB_VANID) {
-    drupal_set_message('Identifying Column name: '.MB_VANID, 'status');
-  } elseif ($vu_column_header[$vu_field_pos[BR_VANID_ALT]] == MB_VANID_ALT) {
-    drupal_set_message('Identifying Column name: '.MB_VANID_ALT, 'status');
-    $vu_field_pos[BR_VANID] = $vu_field_pos[BR_VANID_ALT];  // Use the alt name.
-  } else {
-    drupal_set_message('Not a VAN export file', 'error');
-    return FALSE;
-  } 
-  $vu_allreq = voterdb_export_required($vu_field_pos, unserialize(MB_REQUIRED_ARRAY), unserialize(MB_MESSAGE_ARRAY));
-  if ($vu_allreq) {return FALSE;}  // One or more required fields are missing.
-  $vu_state = variable_get('voterdb_state', 'Select');
-  if ($vu_state == "Oregon") {
-    if(empty($vu_field_pos[BR_PARTY])) {
-      drupal_set_message('Party is missing', 'error');
-    }
-  }
-  return $vu_field_pos;
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_validate_file
- * 
- * Verify that the user provided a file name and that it is a VAN export with
- * the required fields.
- * 
- * @param type &$form_state
- * @return boolean - TRUE if successful, and the file name and field positions
- *                   are retained.
- */
-function voterdb_validate_file(&$form_state) {
-  $fv_fname = $form_state['voterdb']['uri'];
-  // Verify a name was set.
-  $fv_field_pos = voterdb_validate_matchback($fv_fname);
-  if (!$fv_field_pos) {
-    form_set_error('matchbackfile', 'Fix the problem before resubmit.');
-    return FALSE;
-  }
-  $form_state['voterdb']['matchback_name'] = $fv_fname;
-  $form_state['voterdb']['field_pos'] = $fv_field_pos;
-  return TRUE;
-}
+use Drupal\voterdb\NlpButton;
+use Drupal\voterdb\NlpMatchback;
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_ballots_received_form
@@ -93,7 +31,7 @@ function voterdb_ballots_received_form($form_id, &$form_state) {
     $form_state['voterdb']['reenter'] = TRUE;
     if(!voterdb_get_group($form_state)) {return;}
   } 
-  $br_button_obj = new NlpButton;
+  $br_button_obj = new NlpButton();
   $br_button_obj->setStyle();
   $br_county = $form_state['voterdb']['county'];
   $br_temp_dir = 'public://temp';
@@ -138,7 +76,39 @@ function voterdb_ballots_received_form_validate($form,&$form_state) {
   $rv_file = file_load($form_state['values']['matchbackfile']);
   $form_state['voterdb']['uri'] = $rv_file->uri;
   // Validate the file supplied.
-  voterdb_validate_file($form_state);
+  
+  $matchbackObj = new NlpMatchback();
+  $rv_voter_fh = fopen($rv_file->uri, "r");
+  if ($rv_voter_fh == FALSE) {
+    drupal_set_message('Failed to open Matchback file', 'error');
+    return FALSE;
+  }
+  $rv_voter_raw = fgets($rv_voter_fh);
+  if (!$rv_voter_raw) {
+    drupal_set_message('Failed to read Matchback File Header', 'error');
+    return FALSE;
+  }
+  $rv_header_record = sanitize_string($rv_voter_raw);
+  //extract the column headers.
+  $rv_column_header = explode("\t", $rv_header_record);
+  
+  $rv_field_pos = $matchbackObj->decodeMatchbackHdr($rv_column_header);
+  
+  if(!$rv_field_pos['ok']) {
+    foreach ($rv_field_pos['err'] as $errMsg) {
+      drupal_set_message($errMsg,'warning');
+    }
+    form_set_error('upload', 'Fix the problem before resubmit.');
+    return FALSE;
+  }
+  
+  
+  $form_state['voterdb']['matchback_name'] = $rv_file->uri;
+  $form_state['voterdb']['field_pos'] = $rv_field_pos['pos'];
+  
+  
+  
+  //voterdb_validate_file($form_state);
   return;
 }
 

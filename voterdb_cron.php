@@ -1,13 +1,14 @@
 <?php
 /**
- * Name:  voteredb_cron.php     V4.2  6/20/18
+ * Name:  voteredb_cron.php     V4.3  7/30/18
  * @file
  * Implements the nlp voter database
  */
 require_once "voterdb_constants_nls_tbl.php";
 require_once "voterdb_constants_bounce_tbl.php";
-require_once "voterdb_coordinators_get.php";
+//require_once "voterdb_coordinators_get.php";
 require_once "voterdb_track.php";
+require_once "voterdb_class_coordinators_nlp.php";
 
 define('CR_TIME_WINDOW','3');  // Window of time when emails will be sent.  
    // Start time is midnight and the window is the end.  Typically, this is

@@ -9,6 +9,7 @@
  */
 
 use Drupal\voterdb\NlpPaths;
+use Drupal\voterdb\NlpCoordinators;
 
 define('VO_CALLLIST_PAGE', 'nlp_call_list');
 define('VO_MAILLIST_PAGE', 'nlp_mail_list');
@@ -378,16 +379,32 @@ function voterdb_instruct_disp($form_state) {
  * @return array - form element for display.
  */
 function voterdb_coordinator_disp($form_state) {
-  $cd_region['coordinators'] = voterdb_coordinators_getall();
-  $cd_region['hd'] = $form_state['voterdb']['HD'];
-  $cd_region['pct'] = $form_state['voterdb']['pct'];
-  $cd_region['county'] = $form_state['voterdb']['county'];
-  $cd_co = voterdb_get_coordinator($cd_region);
+  
+  $coordinatorsObj = new NlpCoordinators();
+  
+  $cd_region = array(
+    'hd'=>$form_state['voterdb']['HD'],
+    'pct'=>$form_state['voterdb']['pct'],
+    'county'=>$form_state['voterdb']['county'],
+  );
+  $cd_region['coordinators'] = $coordinatorsObj->getAllCoordinators();
+  voterdb_debug_msg('region', $cd_region);
+  
+  $cd_co = $coordinatorsObj->getCoordinator($cd_region);
+  voterdb_debug_msg('coordinator', $cd_co);
+  
+  
+  
+  //$cd_region['coordinators'] = voterdb_coordinators_getall();
+  //$cd_region['hd'] = $form_state['voterdb']['HD'];
+  //$cd_region['pct'] = $form_state['voterdb']['pct'];
+  //$cd_region['county'] = $form_state['voterdb']['county'];
+  //$cd_co = voterdb_get_coordinator($cd_region);
   if(empty($cd_co)) {return NULL;}
-  $cd_fname = $cd_co[CR_FIRSTNAME];
-  $cd_lname = $cd_co[CR_LASTNAME];
-  $cd_email = $cd_co[CR_EMAIL];
-  $cd_phone = $cd_co[CR_PHONE];
+  $cd_fname = $cd_co['firstName'];
+  $cd_lname = $cd_co['lastName'];
+  $cd_email = $cd_co['email'];
+  $cd_phone = $cd_co['phone'];
   $form['co-box-c1'] = array(
         '#markup' => " \n".'<div>'.
         " \n".'<!-- Co box table -->'." \n".'<table style="width:190px; margin:0px; padding:0px; border: 1px solid #3090cc; ">'.
@@ -401,9 +418,7 @@ function voterdb_coordinator_disp($form_state) {
   $form['co-box-c4'] = array('#markup'=>" \n ".'</td></tr><tr>'.
         " \n ".'<td style="width:100px; margin:0px; padding:0px 0px 4px 2px; font-size:x-small; line-height:100%;">',);
   $form['co-box-c5'] = array(
-        '#markup' => " \n ".$cd_fname.' '.$cd_lname.'<br>'.$cd_phone.'<br>'.
-    $cd_email,
-      );
+        '#markup' => " \n ".$cd_fname.' '.$cd_lname.'<br>'.$cd_phone.'<br>'.$cd_email,);
   $form['co-box-c6'] = array('#markup' => " \n ".'</td>'.
         " \n".'</tr>'.
         " \n".'</tbody>'.

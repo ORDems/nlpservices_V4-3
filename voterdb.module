@@ -1,6 +1,6 @@
 <?php
 /**
- * Name:  voteredb_module     V4.2  6/20/18
+ * Name:  voteredb_module     V4.3  7/27/18
  * @file
  * Implements the nlp voter database
  */
@@ -147,6 +147,17 @@ function voterdb_menu() {
     'file' => 'voterdb_ballots_received.php',
     'type' => MENU_CALLBACK,
   );
+
+  $items ['nlpimportmatchbacks'] = array (
+    'title' => 'Import Matchback',
+    'description' => 'Upload the voter matchback data',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_import_matchbacks_form'),
+    'file' => 'voterdb_import_matchbacks.php',
+    'type' => MENU_CALLBACK,
+  );
+          
   $items ['nlpballotcounts'] = array (
     'title' => 'Ballot Counts',
     'description' => 'Upload the counts of ballots recieved to date.',

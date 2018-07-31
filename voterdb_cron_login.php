@@ -1,49 +1,12 @@
 <?php
 /**
- * Name:  voteredb_cron_login.php     V4.1  6/1/18
+ * Name:  voteredb_cron_login.php     V4.3  7/30/18
  * @file
  * Implements the nlp voter database
  */
 
 use Drupal\voterdb\NlpTurfs;
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_fetch_coordinator
- * 
- * Find the coordinator closest to the NL.  If there are more than one in 
- * a catagory chosen, we pop the first one.  It's a bit random but at least
- * one is chosen.
- * 
- * @param type $gc_region - contains the coordinator array and the Pct, HD, and
- *              county of the NL.
- * @return type -  either the coordinator array or an empty array.
- */
-function voterdb_fetch_coordinator($gc_region) {
-  $gc_all_cos = $gc_region['coordinators'];
-  if(empty($gc_all_cos)) {
-    return array();
-  }
-  $gc_pct = $gc_region['pct'];
-  $gc_hd = $gc_region['hd'];
-  $gc_county  = $gc_region['county'];
-  $gc_co = array();
-  // If there is a coordinator assigned to the precinct, use that person.  Else
-  // chose the house district coordinator.  If there is no HD coordinator, 
-  // then the county coordinator.  There should be at least one of these.  
-  // If not, no one will be chosen.
-  if(!isset($gc_all_cos[$gc_county])) {
-    return $gc_co;  // No one in the county is a coordinator.
-  }
-  $gc_cnty_cos = $gc_all_cos[$gc_county];
-  if(isset($gc_cnty_cos[CS_PCT][$gc_pct])) {
-    $gc_co = $gc_cnty_cos[CS_PCT][$gc_pct];
-  } elseif(isset($gc_cnty_cos[CS_HD][$gc_hd])) {
-    $gc_co = $gc_cnty_cos[CS_HD][$gc_hd];
-  } elseif (isset($gc_cnty_cos[CS_COUNTY])) {
-    $gc_co = $gc_cnty_cos[CS_COUNTY];
-  }
-  return $gc_co;
-}
+use Drupal\voterdb\NlpCoordinators;
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_nl_get
@@ -87,8 +50,7 @@ function voterdb_nl_get($ng_mcid) {
  */
 function voterdb_login_chk() {
   watchdog('voterdb_cron_login', 'login chk called');
-  // Get the list of coordinators.
-  $la_coordinators = voterdb_coordinators_getall(); // coordinators_get.
+  
   // Get the ISO date for last week.
   $la_lastWeek = time() - (7 * 24 * 60 * 60);
   $la_isodatetime = date('c',$la_lastWeek);  // date/time in ISO format.
@@ -101,15 +63,23 @@ function voterdb_login_chk() {
   //watchdog('voterdb_cron_login', 'tardy complete');
   // For each turf, check if there is a coordinator.  If there is a coordinator,
   // then add the turf to the array for notification.
-  $la_region['coordinators'] = $la_coordinators;
+  
+  $coordinatorsObj = new NlpCoordinators();
+  $la_coordinators = $coordinatorsObj->getAllCoordinators();
+  
   $la_co_array = array();
   foreach ($la_turfs as $la_turf) {
-    $la_region['hd'] = $la_turf['TurfHD'];
-    $la_region['pct'] = $la_turf['TUrfPct'];
-    $la_region['county'] = $la_turf['County'];
-    $la_coordinator = voterdb_fetch_coordinator($la_region);
+    
+    $la_region = array(
+      'hd'=>$la_turf['TurfHD'],
+      'pct'=>$la_turf['TurfPct'],
+      'county'=>$la_turf['County'],
+      'coordinators'=>$la_coordinators,
+    );
+    $la_coordinator = $coordinatorsObj->getCoordinator($la_region);
+    
     if(!empty($la_coordinator)) {
-      $la_cindex = $la_coordinator[CR_CINDEX];
+      $la_cindex = $la_coordinator['cindex'];
       $la_tindex = $la_turf['TurfIndex'];
       $la_co_array[$la_cindex][$la_tindex] = array(
         'TurfIndex' => $la_turf['TurfIndex'],
@@ -118,7 +88,7 @@ function voterdb_login_chk() {
         'TurfHD' => $la_turf['TurfHD'],
       );
       // Track the NLs who have not logged in.
-      $la_info = 'CO ['.$la_coordinator[CR_FIRSTNAME].' '.$la_coordinator[CR_LASTNAME].
+      $la_info = 'CO ['.$la_coordinator['firstName'].' '.$la_coordinator['lastName'].
         '] NL ['.$la_turf['NLlname'].' '.$la_turf['NLfname'].']';
       voterdb_login_tracking('turf',$la_turf['County'], 'Login reminder',$la_info);
       }
