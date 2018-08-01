@@ -158,13 +158,13 @@ function voterdb_menu() {
     'type' => MENU_CALLBACK,
   );
           
-  $items ['nlpballotcounts'] = array (
+  $items ['nlpcrosstabcounts'] = array (
     'title' => 'Ballot Counts',
     'description' => 'Upload the counts of ballots recieved to date.',
     'access arguments' => array('access voterdb tools'),
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('voterdb_ballot_counts_form'),
-    'file' => 'voterdb_ballot_counts.php',
+    'page arguments' => array('voterdb_crosstabs_and_counts_form'),
+    'file' => 'voterdb_crosstabs_and_counts.php',
     'type' => MENU_CALLBACK,
   );
   $items ['nlpexportnlsreports'] = array (

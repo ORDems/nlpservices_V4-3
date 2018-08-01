@@ -392,14 +392,7 @@ function voterdb_coordinator_disp($form_state) {
   
   $cd_co = $coordinatorsObj->getCoordinator($cd_region);
   voterdb_debug_msg('coordinator', $cd_co);
-  
-  
-  
-  //$cd_region['coordinators'] = voterdb_coordinators_getall();
-  //$cd_region['hd'] = $form_state['voterdb']['HD'];
-  //$cd_region['pct'] = $form_state['voterdb']['pct'];
-  //$cd_region['county'] = $form_state['voterdb']['county'];
-  //$cd_co = voterdb_get_coordinator($cd_region);
+
   if(empty($cd_co)) {return NULL;}
   $cd_fname = $cd_co['firstName'];
   $cd_lname = $cd_co['lastName'];

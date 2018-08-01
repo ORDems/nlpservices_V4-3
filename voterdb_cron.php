@@ -6,7 +6,6 @@
  */
 require_once "voterdb_constants_nls_tbl.php";
 require_once "voterdb_constants_bounce_tbl.php";
-//require_once "voterdb_coordinators_get.php";
 require_once "voterdb_track.php";
 require_once "voterdb_class_coordinators_nlp.php";
 

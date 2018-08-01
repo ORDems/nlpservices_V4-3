@@ -1,193 +1,30 @@
 <?php
 /*
- * Name: voterdb_display_results.php   V4.2 6/20/18
+ * Name: voterdb_display_results.php   V4.3 7/31/18
  */
-require_once "voterdb_constants_rr_tbl.php";
-require_once "voterdb_constants_log_tbl.php";
-require_once "voterdb_constants_voter_tbl.php";
-require_once "voterdb_constants_mb_tbl.php";
+//require_once "voterdb_constants_rr_tbl.php";
+//require_once "voterdb_constants_log_tbl.php";
+//require_once "voterdb_constants_voter_tbl.php";
+//require_once "voterdb_constants_mb_tbl.php";
 require_once "voterdb_constants_bc_tbl.php";
-require_once "voterdb_constants_nls_tbl.php";
-//require_once "voterdb_get_county_names.php";
+//require_once "voterdb_constants_nls_tbl.php";
 require_once "voterdb_group.php";
-//require_once "voterdb_path.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_class_button.php";
 require_once "voterdb_class_nlreports_nlp.php";
+require_once "voterdb_class_nls.php";
+require_once "voterdb_class_voters.php";
+require_once "voterdb_class_matchback.php";
+require_once "voterdb_class_crosstabs_and_counts.php";
 
 use Drupal\voterdb\NlpButton;
 use Drupal\voterdb\NlpReports;
+use Drupal\voterdb\NlpNls;
+use Drupal\voterdb\NlpVoters;
+use Drupal\voterdb\NlpMatchback;
+use Drupal\voterdb\NlpCrosstabCounts;
 
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_get_nlscount
- *
- * Counts NLs that either have signed up or who have reported results.  Type
- * selects which type to count.  The count is either for a single HD or for
- * the entire county.   The HD parameter selects which kind of count.
- *
- * The type parameter is the field name to count.  It is either the
- * NN_RESULTSREPORTED or the NN_NLSIGNUP column in the DB_NLSSTATUS_TBL.
- * These fields are either Y for yes or null for no.  We count the number
- * with Y set.
- *
- * @param type $gc_county - name of the group.
- * @param type $gc_hd - HD number or set to ALL to for a county wide count.
- * @param type $gc_type - Column name to count.
- * @return type - goal count or zero if error.
- */
-function voterdb_get_nlscount($gc_county,$gc_hd,$gc_type) {
-  db_set_active('nlp_voterdb');
-  try {
-    $gc_query = db_select(DB_NLSSTATUS_TBL, 'r');
-    $gc_query->join(DB_NLS_TBL, 'n', 'r.'.NN_MCID.' = n.'.NH_MCID );
-    $gc_query->condition(NN_NLSIGNUP,'Y');
-    $gc_query->condition('r.'.NN_COUNTY,$gc_county);
-    $gc_query->condition($gc_type,'Y');
-    $gc_cnt = $gc_query->countQuery()->execute()->fetchField();
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return 0;
-  }
-  db_set_active('default');
-  return $gc_cnt;
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_get_participating_counties
- * 
- * @return int
- */
-function voterdb_get_participating_counties() {
-  // Count the number of voters assigned to NLs for this group.
-  db_set_active('nlp_voterdb');
-  try {
-    $pc_query = db_select(DB_NLPVOTER_GRP_TBL, 'r');
-    $pc_query->addField('r', NV_COUNTY);
-    $pc_query->distinct();
-    $pc_result = $pc_query->execute();
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return FALSE;
-  }
-  $pc_county_list = $pc_result->fetchAll(PDO::FETCH_ASSOC);
-  db_set_active('default');
-  $pc_names = array();
-  foreach ($pc_county_list as $pc_name) {
-    $pc_names[] = $pc_name[NV_COUNTY];
-  } 
-  return $pc_names;
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_get_voter_count
- * 
- * @param type $vc_county
- * @return boolean
- */
-function voterdb_get_voter_count($vc_county) {
-  // Count the number of voters assigned to NLs for this group.
-  db_set_active('nlp_voterdb');
-  try {
-    $vc_query = db_select(DB_NLPVOTER_GRP_TBL, 'g');
-    $vc_query->addField('g',NV_VANID);
-    $vc_query->condition(NV_COUNTY,$vc_county);
-    $vc_vtr = $vc_query->countQuery()->execute()->fetchField();
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return 0;
-  }
-  db_set_active('default');
-  return $vc_vtr;
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_get_voted
- * 
- * @param type $gv_county
- * @return boolean
- */
-function voterdb_get_voted($gv_county) {
-  db_set_active('nlp_voterdb');
-  try {
-    $gv_query = db_select(DB_NLPVOTER_GRP_TBL, 'g');
-    $gv_query->join(DB_MATCHBACK_TBL, 'm', 'g.'.VN_VANID.' = m.'.MT_VANID );
-    $gv_query->condition('g.'.NV_COUNTY,$gv_county);
-    $gv_query->condition(MT_DATE_INDEX,'','!=');
-    $gv_br2 = $gv_query->countQuery()->execute()->fetchField();
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return 0;
-  }
-  db_set_active('default');
-  return $gv_br2;
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_contacted
- * 
- * @param type $co_county
- * @return boolean
- */
-function voterdb_contacted($co_county) {
-  $co_cycle = variable_get('voterdb_ecycle', 'xxxx-mm-G');
-  db_set_active('nlp_voterdb');
-  try {
-    $co_query = db_select(DB_NLPRESULTS_TBL, 'r');
-    $co_query->addField('r',NC_VANID);
-    $co_query->distinct();
-    $co_query->condition(NC_CYCLE,$co_cycle);
-    $co_query->condition(NC_COUNTY,$co_county);
-    $co_query->condition(NC_TYPE,'Contact');
-    $co_query->condition(db_or()->condition(NC_VALUE, 'Face-to-Face')->condition(NC_VALUE, 'Phone Contact'));
-    $co_rr = $co_query->countQuery()->execute()->fetchField();
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return 0;
-  }
-  db_set_active('default');
-  return $co_rr;
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_voting_contact
- * 
- * @param type $vc_county
- * @return boolean
- */
-function voterdb_voting_contact($vc_county) {
-  $vc_cycle = variable_get('voterdb_ecycle', 'xxxx-mm-G');
-  db_set_active('nlp_voterdb');
-  try {
-    $vc_query = db_select(DB_NLPRESULTS_TBL, 'r');
-    $vc_query->join(DB_MATCHBACK_TBL, 'm', 'r.'.NC_VANID.' = m.'.MT_VANID );
-    $vc_query->addField('r',NC_VANID);
-    $vc_query->distinct();
-    $vc_query->condition(NC_CYCLE,$vc_cycle);
-    $vc_query->condition('r.'.NC_COUNTY,$vc_county);
-    $vc_query->condition(NC_TYPE,'Contact');
-    $vc_query->condition(MT_DATE_INDEX,'','!=');
-    $vc_query->condition(db_or()->condition(NC_VALUE, 'Face-to-Face')->condition(NC_VALUE, 'Phone Contact'));
-    $vc_br = $vc_query->countQuery()->execute()->fetchField();
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return 0;
-  }
-  db_set_active('default');
-  return $vc_br;
-}
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_percent
@@ -211,52 +48,36 @@ function voterdb_percent($pe_base,$pe_cnt) {
  * 
  * @return associate array of counties and the counts for each.
  */
-function voterdb_get_ballot_counts(&$bc_cnts,$bc_grp_array) {
+function voterdb_get_ballot_counts($bc_counts) {
+  if(empty($bc_counts)) {return NULL;}
   $bc_cnts = array();
   // Get all the records from the ballot count table.
-  db_set_active('nlp_voterdb');
-  $bc_tselect = "SELECT * FROM {".DB_BALLOTCOUNT_TBL."} WHERE  1";
-  $bc_result = db_query($bc_tselect);
-  $bc_counts = $bc_result->fetchAll(PDO::FETCH_ASSOC);
-  // If the cross tab counts are not yet loaded, return zeros.
-  // Initialize to count array.
-  $bc_cnt_keys = array('dem','dem-br','dem-pc','rep','rep-br','rep-pc','all','all-br','all-pc');
-  foreach ($bc_grp_array as $bc_county) {
-    foreach ($bc_cnt_keys as $bc_cnt_key) {
-      $bc_cnts[$bc_county][$bc_cnt_key] = 0;
-    }
-  }
-  if(empty($bc_counts)) {return TRUE;}
-  db_set_active('default');
+
   // Fetch each record and convert to the associate array.
-  foreach ($bc_counts as $bc_cnt_array) {
-    $bc_party = $bc_cnt_array[BC_PARTY];
-    $bc_county = $bc_cnt_array[BC_COUNTY];
-    switch ($bc_party) {
-      case 'D':
-        $bc_v = $bc_cnt_array[BC_REG_VOTERS];
-        $bc_v_br = $bc_cnt_array[BC_REG_VOTED];
-        $bc_cnts[$bc_county]['dem'] = $bc_v;
-        $bc_cnts[$bc_county]['dem-br'] = $bc_v_br;
-        $bc_cnts[$bc_county]['dem-pc'] = voterdb_percent($bc_v, $bc_v_br);
-        break;
-      case 'R':
-        $bc_v = $bc_cnt_array[BC_REG_VOTERS];
-        $bc_v_br = $bc_cnt_array[BC_REG_VOTED];
-        $bc_cnts[$bc_county]['rep'] = $bc_v;
-        $bc_cnts[$bc_county]['rep-br'] = $bc_v_br;
-        $bc_cnts[$bc_county]['rep-pc'] = voterdb_percent($bc_v, $bc_v_br);
-        break;
-      case 'ALL':
-        $bc_v = $bc_cnt_array[BC_REG_VOTERS];
-        $bc_v_br = $bc_cnt_array[BC_REG_VOTED];
-        $bc_cnts[$bc_county]['all'] = $bc_v;
-        $bc_cnts[$bc_county]['all-br'] = $bc_v_br;
-        $bc_cnts[$bc_county]['all-pc'] = voterdb_percent($bc_v, $bc_v_br);
-        break;
+  foreach ($bc_counts as $county=>$countyCounts) {
+    foreach ($countyCounts as $party => $partyCounts) {
+      $bc_v = $partyCounts['regVoters'];
+      $bc_v_br = $partyCounts['regVoted'];
+      switch ($party) {
+        case 'Democrats':
+          $bc_cnts[$county]['dem'] = $bc_v;
+          $bc_cnts[$county]['dem-br'] = $bc_v_br;
+          $bc_cnts[$county]['dem-pc'] = voterdb_percent($bc_v, $bc_v_br);
+          break;
+        case 'Republicans':
+          $bc_cnts[$county]['rep'] = $bc_v;
+          $bc_cnts[$county]['rep-br'] = $bc_v_br;
+          $bc_cnts[$county]['rep-pc'] = voterdb_percent($bc_v, $bc_v_br);
+          break;
+        case 'ALL':
+          $bc_cnts[$county]['all'] = $bc_v;
+          $bc_cnts[$county]['all-br'] = $bc_v_br;
+          $bc_cnts[$county]['all-pc'] = voterdb_percent($bc_v, $bc_v_br);
+          break;
+      }
     }
   }
-  return TRUE;
+  return $bc_cnts;
 }
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -312,22 +133,37 @@ function voterdb_display_results() {
     td {border: 1px solid black;
       text-align: right;}
     th{text-align: right;}', array('type' => 'inline'));
+  
+  $matchbackObj = new NlpMatchback();
+  $voterObj = new NlpVoters();
   if ($gc_all) {
-    // All the groups.
-    $gc_grp_array = voterdb_get_participating_counties();
+    $gc_counties = $voterObj->getParticipatingCounties();
   } else {
-    $gc_grp_array = array($gc_county);  // Just one group.
+    $gc_counties = array($gc_county); 
   }
+  
+  $nlsObj = new NlpNls();
   $reportsObj = new NlpReports();
-  $gc_cnts = array();
-  voterdb_get_ballot_counts($gc_cnts,$gc_grp_array);
-  foreach ($gc_grp_array as $gc_county) {
+
+  
+  
+  $crosstabsObj = new NlpCrosstabCounts();
+  $gc_counts = $crosstabsObj->fetchCrosstabCounts();
+  //voterdb_debug_msg('counts', $gc_counts);
+  
+  $gc_cnts = voterdb_get_ballot_counts($gc_counts);
+  
+  foreach ($gc_counties as $gc_county) {
     // For a county, get the ballot counts and percentages of voting.
     // Count the number of voters assigned to NLs for this group.
-    $gc_vtr = voterdb_get_voter_count($gc_county);
+    //voterdb_debug_msg('county: '.$gc_county, '');
+    $gc_vtr = $voterObj->getVoterCount($gc_county);
+    //voterdb_debug_msg('vtr: '.$gc_vtr, '');
     $gc_cnts[$gc_county]['vtr'] = $gc_vtr;
     // Count the number of these voters who returned ballots.
-    $gc_br2 = voterdb_get_voted($gc_county);
+    
+    $gc_br2 = $voterObj->getVoted($gc_county,$matchbackObj);
+    //voterdb_debug_msg('br: '.$gc_br2, '');
     $gc_cnts[$gc_county]['vtr-br'] = $gc_br2;
     // Display the voter participation.
     $gc_vtr_percent = '0%';
@@ -337,10 +173,14 @@ function voterdb_display_results() {
     // Count the number of voters who were contacted by NLs, either Face-to-face or by phone.
     
     $gc_rr = $reportsObj->countyContacted($gc_county);
-    //$gc_rr = voterdb_contacted($gc_county);
+    //voterdb_debug_msg('rr: '.$gc_rr, '');
+
     $gc_cnts[$gc_county]['ctd'] = $gc_rr;
     // Count the number of the voters who had a personal contact and who voted.
-    $gc_br = voterdb_voting_contact($gc_county);
+    
+    $gc_br = $voterObj->getVotedAndContacted($gc_county,$matchbackObj,$reportsObj);
+    //voterdb_debug_msg('br: '.$gc_br, '');
+    
     $gc_cnts[$gc_county]['ctd-br'] = $gc_br;
     // Results for personal contact.
     $gc_rr_percent = '0%';
@@ -349,7 +189,7 @@ function voterdb_display_results() {
   }
   // Build the tables.
   $gc_nls_sum = $gc_rpt_sum = 0;
-  foreach ($gc_grp_array as $gc_county) {
+  foreach ($gc_counties as $gc_county) {
     $output .= '<p style="text-decoration: underline; font-size: large;">'.$gc_county.'</p>';
     $gc_grp_cnts = $gc_cnts[$gc_county];
     if (!isset($gc_sum_cnts)) {
@@ -359,8 +199,15 @@ function voterdb_display_results() {
         $gc_sum_cnts[$gc_key] += $gc_value;
       }
     }
-    $gc_nls_cnt = voterdb_get_nlscount($gc_county,'ALL', NN_NLSIGNUP);
-    $gc_nls_rpt = voterdb_get_nlscount($gc_county,'ALL', NN_RESULTSREPORTED);
+    
+    $gc_nls = $nlsObj->getNls($gc_county,'ALL');
+    $gc_nls_cnt = $gc_nls_rpt = 0;
+    foreach ($gc_nls as $gc_nl) {
+      if($gc_nl['status']['nlSignup']) {$gc_nls_cnt++;}
+      if($gc_nl['status']['resultsReported']) {$gc_nls_rpt++;}
+    }
+    //$gc_nls_cnt = voterdb_get_nlscount($gc_county,'ALL', NN_NLSIGNUP);
+    //$gc_nls_rpt = voterdb_get_nlscount($gc_county,'ALL', NN_RESULTSREPORTED);
     $gc_nls_sum += $gc_nls_cnt;
     $gc_rpt_sum += $gc_nls_rpt;
     $output .= "<p>Number of participating NLs: ".$gc_nls_cnt."<br>";

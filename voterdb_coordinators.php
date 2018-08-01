@@ -2,7 +2,6 @@
 /*
  * Name:  voterdb_coordinators.php               V4.3 7/29/18
  */
-//require_once "voterdb_constants_coordinator_tbl.php";
 require_once "voterdb_group.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_track.php";

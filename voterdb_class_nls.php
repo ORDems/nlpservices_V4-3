@@ -261,6 +261,7 @@ class NlpNls {
     db_set_active('default');
     // Fetch each NL record and build the array of information about each NL
     // needed to build the display table.
+    $nlRecords = array();
     do {
       $fields = $results->fetchAssoc();
       if(empty($fields)) {break;}
