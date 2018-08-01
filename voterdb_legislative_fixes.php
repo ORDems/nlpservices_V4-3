@@ -1,11 +1,9 @@
 <?php
 /**
- * Name: voterdb_legislative_fixes.php    V4.2    6/5/18
+ * Name: voterdb_legislative_fixes.php    V4.3    7/31/18
  * 
  */
 
-//require_once "voterdb_constants_nls_tbl.php";
-//require_once "voterdb_constants_ld_tbl.php";
 require_once "voterdb_group.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_banner.php";

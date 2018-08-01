@@ -4,13 +4,10 @@
  * This include file contains the code to process the ballot received status
  * from the VAN.
  */
-//require_once "voterdb_constants_bc_tbl.php";
-//require_once "voterdb_constants_mb_tbl.php";
+
 require_once "voterdb_group.php";
-//require_once "voterdb_van_hdr.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_banner.php";
-//require_once "voterdb_dates.php";
 require_once "voterdb_class_button.php";
 require_once "voterdb_class_matchback.php";
 

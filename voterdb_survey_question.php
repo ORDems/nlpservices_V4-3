@@ -6,7 +6,6 @@
 require_once "voterdb_group.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_debug.php";
-require_once "voterdb_path.php";
 require_once "voterdb_class_button.php";
 
 define('SQ_TITLE_LEN','16');

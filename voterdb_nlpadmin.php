@@ -36,7 +36,7 @@ function voterbd_nlpadmin() {
   $dn_path = $base_url ."/";
   // Start the table.
   $output .= "\n".'<div style="width:850px;">';
-  $output .= "\n".'<table style="width:800px;"><body><tr><td style="width:380px;   vertical-align: top;">';
+  $output .= "\n".'<table style="width:810px;"><body><tr><td style="width:380px;   vertical-align: top;">';
   // Admin Turfs section.
   $output .= "\n".'<div style="width:400px;"> <fieldset><legend><span style="font-size:large; color:#af2108; font_weight:bold;">Admin Turfs</span></legend>';
   $output .= "\n".'<p class="narrow" id="hint1"><a href="'.$dn_path.'nlpturfcheckin?'.$dn_grp_id.'">Check in a turf<span>You will need both the exported turf and the PDF files</span></a></a></p>';
@@ -58,17 +58,17 @@ function voterbd_nlpadmin() {
   $output .= "\n".'</td><td style="width:380px;   vertical-align: top;">';
   
   // Admin election cycle section.
-  $output .= "\n".'<div style="width:350px;"> <fieldset><legend><span style="font-size:large; color:#af2108; font_weight:bold;">Admin Election Cycle Start</span></legend>';
+  $output .= "\n".'<div style="width:400px;"> <fieldset><legend><span style="font-size:large; color:#af2108; font_weight:bold;">Admin Election Cycle Start</span></legend>';
   //$output .= "\n".'<p class="narrow";><a href="'.$dn_path.'nlpgoals?'.$dn_grp_id.'">Set NL Volunteer recruitment goals</a></p>';
   $output .= "\n".'<p class="narrow";><a href="'.$dn_path.'nlpcandidates?'.$dn_grp_id.'">Set candidate names for this cycle</a></p>';
   $output .= "\n".'<p class="narrow";><a href="'.$dn_path.'nlpinstructions?'.$dn_grp_id.'">Upload the NLP instructions</a></p>';
   //$output .= "\n".'<p class="narrow";><a href="'.$dn_path.'nlpsurvey?'.$dn_grp_id.'">Create the survey question</a></p>';
   $output .= "\n".'<p class="narrow";><a href="'.$dn_path.'nlpimportmatchbacks?'.$dn_grp_id.'">Import the matchbacks</a></p>';
-  $output .= "\n".'<p class="narrow";><a href="'.$dn_path.'nlpballotcounts?'.$dn_grp_id.'">Upload the Crosstab counts</a></p>';
+  $output .= "\n".'<p class="narrow";><a href="'.$dn_path.'nlpcrosstabcounts?'.$dn_grp_id.'">Import the Crosstab and Counts export file</a></p>';
   $output .= "\n".'<p class="narrow";><a href="'.$dn_path.'nlprestorenlsreports?'.$dn_grp_id.'">Restore NLS reports</a></p>';
   $output .= "\n".'</fieldset></div>';
   // Admin end of cycle.
-  $output .= "\n".'<div style="width:350px;"> <fieldset><legend><span style="font-size:large; color:#af2108; font_weight:bold;">Admin End of Election Cycle</span></legend>';
+  $output .= "\n".'<div style="width:400px;"> <fieldset><legend><span style="font-size:large; color:#af2108; font_weight:bold;">Admin End of Election Cycle</span></legend>';
   $output .= "\n".'<p class="narrow";><a href="'.$dn_path.'nlpdisplayresults?'.$dn_grp_id.'">Display a summary of results</a></p>';
   $output .= "\n".'<p class="narrow";><a href="'.$dn_path.'nlpexportblob?'.$dn_grp_id.'">Export NL email blob</a></p>';
   $output .= "\n".'<p class="narrow";><a href="'.$dn_path.'nlpexportturfstatus?'.$dn_grp_id.'">Export canvassing status by turf</a></p>';

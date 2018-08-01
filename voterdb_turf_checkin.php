@@ -428,7 +428,7 @@ function voterdb_turf_checkin_form_submit($form,&$form_state) {
   
   $turfsObj = $form_state['voterdb']['turfsObj'];
   $turfsObj->updateTurfFiles('mail',$tc_mail_file,$tc_turf_index);
-  //voterdb_update_turf_tbl($form_state);
+
   // Set the NL status to reflect the turf was cut (checked in).
   
   $magicWordObj = new NlpMagicWord();

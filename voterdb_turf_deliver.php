@@ -5,20 +5,17 @@
  */
 require_once "voterdb_constants_voter_tbl.php";
 require_once "voterdb_constants_nls_tbl.php";
-require_once "voterdb_constants_nlp_instructions_tbl.php";
-//require_once "voterdb_constants_coordinator_tbl.php";
 require_once "voterdb_group.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_track.php";
 require_once "voterdb_banner.php";
-require_once "voterdb_coordinators_get.php";
-require_once "voterdb_instructions_get.php";
 require_once "voterdb_class_button.php";
 require_once "voterdb_class_turfs.php";
 require_once "voterdb_class_paths.php";
 require_once "voterdb_class_nls.php";
 require_once "voterdb_class_drupal_users.php";
 require_once "voterdb_class_coordinators_nlp.php";
+require_once "voterdb_class_instructions_nlp.php";
 
 use Drupal\voterdb\NlpButton;
 use Drupal\voterdb\NlpTurfs;
@@ -26,6 +23,7 @@ use Drupal\voterdb\NlpPaths;
 use Drupal\voterdb\NlpNls;
 use Drupal\voterdb\NlpDrupalUser;
 use Drupal\voterdb\NlpCoordinators;
+use Drupal\voterdb\NlpInstructions;
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_hd_selected_callback
@@ -164,28 +162,14 @@ function voterdb_turf_deliver_form($form, &$form_state) {
     foreach ($turfArray as $fv_turf_index=>$fv_turf) {
       // Get the information about the NL for this turf.
       $fv_mcid = $fv_turf['MCID'];
-      
-      //voterdb_debug_msg('mcid', $fv_mcid);
 
       $nl = $nlsObj->getNlById($fv_mcid);
       $fv_email = $nl['email'];
-      /*
-      db_set_active('nlp_voterdb');
-      $fv_tselect = "SELECT * FROM {" . DB_NLS_TBL . "} WHERE  " .
-              NH_MCID . " = :mcid";
-      $fv_targs = array(
-          ':mcid' => $fv_mcid);
-      $fv_result = db_query($fv_tselect, $fv_targs);
-      $fv_nl = $fv_result->fetchAll(PDO::FETCH_ASSOC);
-      $fv_email = $fv_nl[0][NH_EMAIL];
-      db_set_active('default');
-       */
+
       // Create the display for this turf choice.
       $fv_turf_choices[$fv_turf_index] = '['.$fv_email.'] '.$turfDisplay[$fv_turf_index];
       $form_state['voterdb']['turfs'][$fv_turf_index]['email'] = $fv_email;
     }
-    
-    
     
     $form['hd-change']['turf-select'] = array(
         '#title' => t('Select the NL to to recieve the turf and instructions'),
@@ -245,9 +229,11 @@ function voterdb_turf_deliver_form_submit($form, &$form_state) {
   $df_note = $form_state['input']['note'];
   $df_plain_note = check_plain($df_note);
   // Get the canvass instruction file name.
-  $df_instuctions = voterdb_get_instructions($df_county);
+  $instructionsObj = new NlpInstructions();
+  $df_instuctions = $instructionsObj->getInstructions($df_county);
+  //$df_instuctions = voterdb_get_instructions($df_county);
   //voterdb_debug_msg('instructions', $df_instuctions);
-  if (empty($df_instuctions[NE_CANVASS][NI_FILENAME] )) {
+  if (empty($df_instuctions['canvass']['fileName'] )) {
     drupal_set_message('Opps, you need to upload the canvass instructions first.', 'error');
     return;
   }
@@ -268,8 +254,8 @@ function voterdb_turf_deliver_form_submit($form, &$form_state) {
   $df_path = $pathsObj->getPath('INST',$df_county);
   //voterdb_debug_msg('path', $df_path);
   
-  $df_curl = file_create_url($df_path . $df_instuctions[NE_CANVASS][NI_FILENAME]);
-  $df_purl = file_create_url($df_path . $df_instuctions[NE_POSTCARD][NI_FILENAME]);
+  $df_curl = file_create_url($df_path . $df_instuctions['canvass']['fileName']);
+  $df_purl = file_create_url($df_path . $df_instuctions['postcard']['fileName']);
   // Get the info about the NL for the email.
   
   
@@ -345,15 +331,15 @@ function voterdb_turf_deliver_form_submit($form, &$form_state) {
   // Add the link to the instructions.
   $df_message .= t('<p><a href="@c-url" target="_blank">Neighborhood Leader Instructions - canvass</a></p>', array('@c-url' => $df_curl));
   // Also add instructions for the postcard if the NL signed up to send cards.
-  if (!empty($df_instuctions[NE_POSTCARD][NI_FILENAME]) AND $df_mail) {  // Display the postcard option only for those that need it.
+  if (!empty($df_instuctions['postcard']['fileName']) AND $df_mail) {  // Display the postcard option only for those that need it.
     $df_message .= t('The next link describes the process for sending a postcard.  This is optional and may only apply to rural neighborhoods.&nbsp;  ' . '</p>');
     $df_message .= t('<p><a href="@p-url" target="_blank">Neighborhood Leader Instructions - postcard</a></p>', array('@p-url' => $df_purl));
   }
   
-  if (!empty($df_instuctions[NE_ABSENTEE][NI_FILENAME])) {  // Display the registration or absentee option.
-    $df_aurl = file_create_url($df_path . $df_instuctions[NE_ABSENTEE][NI_FILENAME]);
-    $df_blurb = $df_instuctions[NE_ABSENTEE][NI_BLURB];
-    $df_title = $df_instuctions[NE_ABSENTEE][NI_TITLE];
+  if (!empty($df_instuctions['absentee']['fileName'])) {  // Display the registration or absentee option.
+    $df_aurl = file_create_url($df_path . $df_instuctions['absentee']['fileName']);
+    $df_blurb = $df_instuctions['absentee']['blurb'];
+    $df_title = $df_instuctions['absentee']['title'];
     $df_message .= t('<p>  ' . $df_blurb .'</p>');
     $df_message .= t('<p><a href="@a-url" target="_blank"> '.$df_title.' Form</a></p>', array('@a-url' => $df_aurl));
   }

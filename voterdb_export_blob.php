@@ -3,13 +3,9 @@
  * Name: voterdb_export_blob.php   V4.2 7/16/18
  *
  */
-//require_once "voterdb_constants_rr_tbl.php";
-//require_once "voterdb_constants_log_tbl.php";
-//require_once "voterdb_constants_nls_tbl.php";
+
 require_once "voterdb_constants_voter_tbl.php";
-//require_once "voterdb_constants_mb_tbl.php";
 require_once "voterdb_group.php";
-//require_once "voterdb_path.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_class_button.php";
