@@ -9,6 +9,10 @@
 
 namespace Drupal\voterdb;
 
+use Drupal\voterdb\NlpMatchback;
+use Drupal\voterdb\NlpReports;
+
+
 class NlpVoters {
   
   const VOTERTBL = 'voter';
@@ -116,6 +120,67 @@ class NlpVoters {
   }
   
   
+  public function getVoterCount($county) {
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::VOTERGRPTBL, 'g');
+      $query->addField('g','VANID');
+      $query->condition('County',$county);
+      $voterCount = $query->countQuery()->execute()->fetchField();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return 0;
+    }
+    db_set_active('default');
+    return $voterCount;
+  }
+  
+  public function getVoted($county,$matchbackObj) {
+
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::VOTERGRPTBL, 'g');
+      $query->join($matchbackObj::MATCHBACKTBL, 'm', 'g.VANID = m.VANID');
+      $query->condition('g.County',$county);
+      $query->isNotNull($matchbackObj::DATEINDEX);
+      $votedCount = $query->countQuery()->execute()->fetchField();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return 0;
+    }
+    db_set_active('default');
+    return $votedCount;
+  }
+  
+  public function getVotedAndContacted($county,$matchbackObj,$reportsObj) {
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::VOTERGRPTBL, 'g');
+      $query->join($matchbackObj::MATCHBACKTBL, 'm', 'g.VANID = m.VANID AND g.County = :county',
+              array(':county' => $county));
+      $query->addField('g','VANID');
+      $query->isNotNull('m.'.$matchbackObj::DATEINDEX);
+      $voted = $query->execute();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return 0;
+    }
+    db_set_active('default');
+    $contactedCount = 0;
+    do {
+      $voter = $voted->fetchAssoc();
+      if(empty($voter)) {break;}
+      $voterContacted = $reportsObj->voterContacted($voter['VANID']);
+      if($voterContacted) {$contactedCount++;}
+    } while (TRUE);
+    return $contactedCount;
+  }
   
   public function getVoterStatus($vanid) {
     $keys = array_keys($this->statusList);
@@ -172,5 +237,27 @@ class NlpVoters {
     return TRUE;
   }
   
+  public function getParticipatingCounties() {
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::VOTERGRPTBL, 'g');
+      $query->addField('g', 'County');
+      $query->distinct();
+      $result = $query->execute();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return FALSE;
+    }
+    db_set_active('default');
+    $countyNames = array();
+    do {
+      $record = $result->fetchAssoc();
+      if(empty($record)) {break;}
+      $countyNames[] = $record['County'];
+    } while (TRUE);
+    return $countyNames;
+  }
   
 }

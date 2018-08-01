@@ -3,7 +3,7 @@
  * Name: voterdb_nlp_instructions.php    V4.3  7/30/18
  * 
 */
-//require_once "voterdb_constants_nlp_instructions_tbl.php";
+
 require_once "voterdb_group.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_debug.php";

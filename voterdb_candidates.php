@@ -1,9 +1,8 @@
 <?php
 /*
- * Name:  voterdb_candidates.php               V4.2 6/21/18
+ * Name:  voterdb_candidates.php               V4.3 7/31/18
  */
 
-require_once "voterdb_constants_candidates_tbl.php";
 require_once "voterdb_get_county_names.php";
 require_once "voterdb_group.php";
 require_once "voterdb_debug.php";

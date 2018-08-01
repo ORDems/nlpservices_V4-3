@@ -351,9 +351,8 @@ class NlpReports {
       $query->addField('r','VANID');
       $query->condition('VANID',$vanid);
       $query->condition('Cycle',$cycle);
-      $query->condition('Value',self::F2F);
-      $query->condition('Type',self::CONTACT);
-      $cnt = $query->countQuery()->execute()->fetchField();
+      $query->condition('Type',self::SURVEY);
+      $contactCount = $query->countQuery()->execute()->fetchField();
     }
     catch (Exception $e) {
       db_set_active('default');
@@ -361,22 +360,21 @@ class NlpReports {
       return FALSE;
     }
     db_set_active('default');
-    $f2f = $cnt>0;
-    return $f2f;
+    $voterContacted = $contactCount>0;
+    return $voterContacted;
   }
   
   function countyContacted($county) {
     $cycle = variable_get('voterdb_ecycle', 'xxxx-mm-G');
     db_set_active('nlp_voterdb');
     try {
-      $co_query = db_select(self::NLPRESULTSTBL, 'r');
-      $co_query->addField('r','VANID');
-      $co_query->distinct();
-      $co_query->condition('Cycle',$cycle);
-      $co_query->condition('County',$county);
-      $co_query->condition('Type',self::CONTACT);
-      $co_query->condition('Value',self::F2F);
-      $co_rr = $co_query->countQuery()->execute()->fetchField();
+      $query = db_select(self::NLPRESULTSTBL, 'r');
+      $query->addField('r','VANID');
+      $query->distinct();
+      $query->condition('Cycle',$cycle);
+      $query->condition('County',$county);
+      $query->condition('Type',self::SURVEY);
+      $contactedCount = $query->countQuery()->execute()->fetchField();
     }
     catch (Exception $e) {
       db_set_active('default');
@@ -384,7 +382,7 @@ class NlpReports {
       return 0;
     }
     db_set_active('default');
-    return $co_rr;
+    return $contactedCount;
   }
   
   public function getCountyReportCounts($county) {

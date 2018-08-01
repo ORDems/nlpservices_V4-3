@@ -5,7 +5,6 @@
  */
 require_once "voterdb_get_county_names.php";
 require_once "voterdb_debug.php";
-require_once "voterdb_path.php";
 require_once "voterdb_nlpconfig_func.php";
 require_once "voterdb_nlpconfig_func2.php";
 require_once "voterdb_class_counties.php";
