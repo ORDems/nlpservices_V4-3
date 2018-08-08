@@ -16,6 +16,8 @@ class NlpMatchback {
   
   const MULTIINSERT = 100;
   const BATCH = 100;
+  
+  const DATEINDEX = 'DateIndex';
 
   public $dates = array();
   public $lastIndex = 0;
