@@ -6,8 +6,6 @@
 
 namespace Drupal\voterdb;
 
-//require_once "voterdb_constants_van_api_tbl.php";
-
 class ApiSavedLists {
   
   function __construct($AuthenticationObj) {

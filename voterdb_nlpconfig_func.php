@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_nlpconfig_func.php   V4.2 5/31/18
+ * Name: voterdb_nlpconfig_func.php   V4.3 8/8/18
  * Sets the global variables for an election cycle.
  */
 
@@ -10,6 +10,7 @@ use Drupal\voterdb\ApiAuthentication;
 use Drupal\voterdb\NlpResponseCodes;
 use Drupal\voterdb\ApiSurveyQuestions;
 use Drupal\voterdb\NlpSurveyQuestion;
+use Drupal\voterdb\NlpCounties;
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_create_folders
@@ -28,7 +29,8 @@ function voterdb_create_folders() {
   $cf_voterdb_dir = 'public://'.VO_DIR;
   file_prepare_directory($cf_voterdb_dir, FILE_MODIFY_PERMISSIONS | FILE_CREATE_DIRECTORY);
   
-  $cf_county_array = voterdb_get_county_names();   // county_names.
+  $countyNamesObj = new NlpCounties();
+  $cf_county_array = $countyNamesObj->getCountyNames();
   
   foreach ($cf_county_array as $cf_county) {
     // Create the county folder.

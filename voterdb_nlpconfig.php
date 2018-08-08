@@ -3,7 +3,7 @@
  * Name: voterdb_nlpconfig.php   V4.2 5/29/18
  * Sets the global variables for an election cycle.
  */
-require_once "voterdb_get_county_names.php";
+
 require_once "voterdb_debug.php";
 require_once "voterdb_nlpconfig_func.php";
 require_once "voterdb_nlpconfig_func2.php";
@@ -17,8 +17,6 @@ require_once "voterdb_class_survey_response_nlp.php";
 require_once "voterdb_class_activist_codes_api.php";
 require_once "voterdb_class_activist_codes_nlp.php";
 
-
-//use Drupal\voterdb\NlpCounties;
 use Drupal\voterdb\ApiAuthentication;
 
 define('SQ_TITLE_LEN','16');
