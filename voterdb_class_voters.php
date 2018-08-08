@@ -4,7 +4,7 @@
  * Contains Drupal\voterdb\NlpVoters.
  */
 /*
- * Name: voterdb_class_voters.php   V4.2  6/17/18
+ * Name: voterdb_class_voters.php   V4.3  8/8/18
  */
 
 namespace Drupal\voterdb;
@@ -18,7 +18,7 @@ class NlpVoters {
   const VOTERTBL = 'voter';
   const VOTERGRPTBL = 'voter_grp';
   const VOTERSTATUSTBL = 'voter_status';
-  
+
 
   private $grpList = array(
     'indx' => 'indx',
@@ -26,7 +26,8 @@ class NlpVoters {
     'grpType' => 'Grp_Type',
     'mcid' => 'MCID',
     'vanid' => 'VANID',
-    'turfIdnex' => 'NLTurfIndex',
+    'turfIndex' => 'NLTurfIndex',
+    'voterStatus' => 'Status',
   );
   private $statusList = array(  
     'vanid' => 'VANID',
@@ -125,7 +126,9 @@ class NlpVoters {
     try {
       $query = db_select(self::VOTERGRPTBL, 'g');
       $query->addField('g','VANID');
-      $query->condition('County',$county);
+      if(!empty($county)) {
+        $query->condition('County',$county);
+      }
       $voterCount = $query->countQuery()->execute()->fetchField();
     }
     catch (Exception $e) {
@@ -259,6 +262,29 @@ class NlpVoters {
       $countyNames[] = $record['County'];
     } while (TRUE);
     return $countyNames;
+  }
+  
+  function getVotersInTurf($turfIndex) {
+    db_set_active('nlp_voterdb');
+    try {
+      $tselect = "SELECT VANID FROM {".self::VOTERGRPTBL."} WHERE  ".
+        "NLTurfIndex = :index AND Status <> 'M'";
+      $targs = array(':index' => $turfIndex,);
+      $result = db_query($tselect,$targs);   
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return NULL;
+    }
+    db_set_active('default');
+    $voters = $array();
+    do {
+      $voter = $result->fetchAssoc();
+      if(empty($voter)) {break;}
+      $voters[$voter['VANID']] = $voter['VANID'];
+    } while (TRUE);
+    return $voters;
   }
   
 }

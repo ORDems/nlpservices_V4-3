@@ -1,12 +1,11 @@
   <?php
 /*
- * Name: voterdb_export_turf_status.php   V4.2 7/14/18
+ * Name: voterdb_export_turf_status.php   V4.3 8/8/18
  *
  */
 
 require_once "voterdb_constants_log_tbl.php";
 require_once "voterdb_constants_voter_tbl.php";
-require_once "voterdb_constants_mb_tbl.php";
 require_once "voterdb_group.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_banner.php";
@@ -14,11 +13,15 @@ require_once "voterdb_class_button.php";
 require_once "voterdb_class_get_browser.php";
 require_once "voterdb_class_turfs.php";
 require_once "voterdb_class_nlreports_nlp.php";
+require_once "voterdb_class_voters.php";
+require_once "voterdb_class_matchback.php";
 
 use Drupal\voterdb\NlpButton;
 use Drupal\voterdb\GetBrowser;
 use Drupal\voterdb\NlpTurfs;
 use Drupal\voterdb\NlpReports;
+use Drupal\voterdb\NlpVoters;
+use Drupal\voterdb\NlpMatchback;
 
 
 define('DD_TURF_RESULTS_FILE','nl_turf_results');
@@ -36,35 +39,6 @@ define('DD_TURF_RESULTS_FILE','nl_turf_results');
 function voterdb_percent($pe_base,$pe_cnt) {
   $pe_percent = ($pe_base > 0)?round($pe_cnt/$pe_base*100,1).'%':'0%';
   return $pe_percent;
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_get_voters_in_turf
- * 
- * Get a list of the voters in a turf who have not been marked as having moved.
- * 
- * @param type $vt_turf_index
- * @return int
- */
-function voterdb_get_voters_in_turf($vt_turf_index) {
-  db_set_active('nlp_voterdb');
-  try {
-  $vt_tselect = "SELECT ".NV_VANID." FROM {".DB_NLPVOTER_GRP_TBL."} WHERE  ".
-    NV_NLTURFINDEX. " = :index AND ".
-    NV_VOTERSTATUS." <> 'M'";
-  $vt_targs = array(
-    ':index' => $vt_turf_index,
-    );
-  $vt_result = db_query($vt_tselect,$vt_targs);
-  $vt_voters = $vt_result->fetchAll(PDO::FETCH_ASSOC);
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return NULL;
-  }
-  db_set_active('default');
-  return $vt_voters;
 }
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -111,6 +85,8 @@ function voterdb_turf_results($tr_temp_name,$tr_county) {
   fwrite($tr_results_fh,$tr_hdrs);
   
   $reportsObj =  new NlpReports();
+  $votersObj = new NlpVoters();
+  $matchbackObj = new NlpMatchback();
   
   $turfObj = new NlpTurfs();
   $tr_turfs = $turfObj->getCountyTurfs($tr_county);
@@ -128,21 +104,23 @@ function voterdb_turf_results($tr_temp_name,$tr_county) {
   foreach ($tr_turfs as $tr_turf) {
     // Get the voters in the turf.
     $tr_turf_index = $tr_turf['turfIndex'];
-    $tr_voters = voterdb_get_voters_in_turf($tr_turf_index);
+    
+    $tr_voters = $votersObj->getVotersInTurf($tr_turf_index);
     if (empty($tr_voters)) {continue;}
     // For each voter determine if a vote was recorded and if there was a 
     // face-to-face contact.
     $tr_voter_cnt = $tr_voted_cnt = $tr_ftf = $tr_ftfvoted = 0;
-    foreach ($tr_voters as $tr_vtr) {
+    foreach ($tr_voters as $tr_vanid) {
       // Get the status of ballot returned (indicates voted).
-      $tr_vanid = $tr_vtr[NV_VANID];
       $tr_votedstart = voterdb_timer('start',0);
-      $tr_voted = voterdb_who_voted($tr_vanid);
+      
+      $tr_voted = $matchbackObj->getMatchbackExists($tr_vanid);
+      
       $tr_votedtime = voterdb_timer('end',$tr_votedstart);
       $tr_voted_acc += $tr_votedtime;
       // Add to the count of voters and the count of those who voted.
       $tr_voter_cnt++;
-      if ($tr_voted) {$tr_voted_cnt++;}
+      if (!empty($tr_voted)) {$tr_voted_cnt++;}
       // Now check if this voter was contaced face-to-face.
       $tr_contactstart = voterdb_timer('start',0);
       
@@ -154,7 +132,7 @@ function voterdb_turf_results($tr_temp_name,$tr_county) {
       // Add to the count of contacted voters.
       if ($tr_f2f_contact) {
         $tr_ftf++;
-        if ($tr_voted) {$tr_ftfvoted++;}
+        if (!empty($tr_voted)) {$tr_ftfvoted++;}
       }
     }
     // Create the display of counts for this turf.
