@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_nls_display_func2.php   V4.2   6/13/18
+ * Name: voterdb_nls_display_func2.php   V4.3   8/7/18
  *
  */
 /*
@@ -9,6 +9,8 @@
  */
 
 use Drupal\voterdb\NlpReports;
+use Drupal\voterdb\NlpNls;
+use Drupal\voterdb\NlpCounties;
 
 define('DD_CSV_FILE','nl_tbl_content');
 
@@ -167,7 +169,7 @@ function voterdb_create_csv($cc_county,$cc_hd,$nlRecords) {
       'lastName'=>'LastName',
       'nickname'=>'NickName',
       'address'=>'Address',
-      'city'=>'City',
+      //'city'=>'City',
       'email'=>'Email',
       'phone'=>'Phone',
       'asked'=>'NL',
@@ -190,55 +192,76 @@ function voterdb_create_csv($cc_county,$cc_hd,$nlRecords) {
   
   $cc_hdr_record = implode(',', $cc_hdr).",Voters\n";
   fwrite($cc_csv_fh,$cc_hdr_record);
-  //voterdb_debug_msg('hdr', $cc_hdr);
+  
+  $countiesObj = new NlpCounties();
+  $hdNames = $countiesObj->getHdNames($cc_county);
+  //voterdb_debug_msg('countynames', $hdNames);
+  
+  $nlObj = new NlpNls();
+  $reportsObj = new NlpReports();
+  
   $cc_keys = array_keys($cc_hdr);
-  foreach ($nlRecords as $nlRecord) {
-    foreach ($cc_keys as $cc_key) {
-      
-      switch ($cc_key) {
-        case 'atmps':
-        case 'conts':
-          $voterCnt = '';
-          if(!empty($nlRecord['results'])) {
-            $cnt = explode('/', $nlRecord['results'][$cc_key]);
-            $cc_ordered_fields[$cc_key] = $cnt[0];
-            if(!empty($cnt[1])) {
-              $voterCnt = $cnt[1];
+  
+  foreach ($hdNames as $hd) {
+    $nlObj->selectNls($cc_county,$hd);
+    
+    do  {
+
+      $nlRecord = $nlObj->fetchNls();
+      if(empty($nlRecord)) {break;}
+      $nlRecord['status'] = $nlObj->getNlsStatus($nlRecord['mcid'],$cc_county);
+      $nlRecord['progress']  = voterdb_get_progress($nlRecord,$reportsObj); 
+
+      foreach ($cc_keys as $cc_key) {
+
+        switch ($cc_key) {
+          case 'atmps':
+          case 'conts':
+            $voterCnt = '';
+            if(!empty($nlRecord['results'])) {
+              $cnt = explode('/', $nlRecord['results'][$cc_key]);
+              $cc_ordered_fields[$cc_key] = $cnt[0];
+              if(!empty($cnt[1])) {
+                $voterCnt = $cnt[1];
+              }
+            } else {
+              $cc_ordered_fields[$cc_key] = '';
             }
-          } else {
-            $cc_ordered_fields[$cc_key] = '';
-          }
-          break;
-        case 'asked':
-        case 'turfCut':
-        case 'turfDelivered':
-        case 'loginDate':
-          if(!empty($nlRecord['status'])) {
-            $cc_ordered_fields[$cc_key] = $nlRecord['status'][$cc_key];
-          } else {
-            $cc_ordered_fields[$cc_key] = '';
-          }
-          break;
-        case 'contact':
-          if(!empty($nlRecord['status'])) {
-            $newField = str_replace(',', ' ', $nlRecord['status'][$cc_key]);
+            break;
+          case 'asked':
+          case 'turfCut':
+          case 'turfDelivered':
+          case 'loginDate':
+            if(!empty($nlRecord['status'])) {
+              $cc_ordered_fields[$cc_key] = $nlRecord['status'][$cc_key];
+            } else {
+              $cc_ordered_fields[$cc_key] = '';
+            }
+            break;
+          case 'contact':
+            if(!empty($nlRecord['status'])) {
+              $newField = str_replace(',', ' ', $nlRecord['status'][$cc_key]);
+              $cc_ordered_fields[$cc_key] = $newField;
+            } else {
+              $cc_ordered_fields[$cc_key] = '';
+            }
+            break;
+          default:
+            $newField = str_replace(',', ' ', $nlRecord[$cc_key]);
             $cc_ordered_fields[$cc_key] = $newField;
-          } else {
-            $cc_ordered_fields[$cc_key] = '';
-          }
-          break;
-        default:
-          $newField = str_replace(',', ' ', $nlRecord[$cc_key]);
-          $cc_ordered_fields[$cc_key] = $newField;
-          break;
+            break;
+        }
       }
-    }
-       
-    $cc_ordered_fields[$cc_key+1] = $voterCnt;
-    $cc_string = '"'.implode('","',$cc_ordered_fields).'"'."\n";
-    $cc_record = str_replace("&#039;","'", $cc_string);
-    fwrite($cc_csv_fh,$cc_record);
+      $cc_ordered_fields[$cc_key+1] = $voterCnt;
+      $cc_string = '"'.implode('","',$cc_ordered_fields).'"'."\n";
+      $cc_record = str_replace("&#039;","'", $cc_string);
+      fwrite($cc_csv_fh,$cc_record);
+    } while (TRUE);
+      
+    
   }
+  
+  
   fclose($cc_csv_fh);
   $cc_csv_url = file_create_url($cc_csv_uri);
   

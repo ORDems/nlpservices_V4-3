@@ -1,54 +1,24 @@
   <?php
 /*
- * Name: voterdb_export_blob.php   V4.2 7/16/18
+ * Name: voterdb_export_blob.php   V4.3 8/2/18
  *
  */
 
-require_once "voterdb_constants_voter_tbl.php";
 require_once "voterdb_group.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_class_button.php";
 require_once "voterdb_class_nls.php";
+require_once "voterdb_class_get_browser.php";
+require_once "voterdb_class_voters.php";
 
 use Drupal\voterdb\NlpButton;
 use Drupal\voterdb\GetBrowser;
 use Drupal\voterdb\NlpNls;
+use Drupal\voterdb\NlpVoters;
 
 define('DD_BLOB_FILE','email-blob');
 
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_get_participating_counties  
- * 
- * Get a list of county names for which there are turfs assigned.  This is
- * the list of active counties for this cycle.
- * 
- * @return array - array of county names.
- */
-function voterdb_get_participating_counties() {
-  // Get the list of county names with turfs.
-  db_set_active('nlp_voterdb');
-  try {
-    $pc_query = db_select(DB_NLPVOTER_GRP_TBL, 'r');
-    $pc_query->addField('r', NV_COUNTY) ; 
-    $pc_query->distinct();
-    $pc_query->orderBy(NV_COUNTY);
-    $pc_result = $pc_query->execute();
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return NULL;
-  }
-  $pc_county_list = $pc_result->fetchAll(PDO::FETCH_ASSOC);
-  db_set_active('default');
-  $pc_names = array();
-  foreach ($pc_county_list as $pc_name) {
-    $pc_names[] = $pc_name[NV_COUNTY];
-  } 
-  return $pc_names;
-}
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_create_blob
@@ -65,10 +35,11 @@ function voterdb_create_blob($an_all,$an_county,$dd_blob_uri) {
   // Open the results file.
   $an_blob_fh = fopen($dd_blob_uri,"w");
   // Check if the export is for all conunties or just one.
+  $votersObj = new NlpVoters();
   if ($an_all) {
-    $an_grp_array = voterdb_get_participating_counties();
+    $counties = $votersObj->getParticipatingCounties();
   } else {
-    $an_grp_array = array($an_county);  // Just one group.
+    $counties = array($an_county);  // Just one group.
   }
   $nlObj = new NlpNls();
   // Create a report for each requested county.
@@ -77,15 +48,12 @@ function voterdb_create_blob($an_all,$an_county,$dd_blob_uri) {
   $an_email_blob = '';
   $an_starttime = voterdb_timer('start',0);
   set_time_limit(60);
-  foreach ($an_grp_array as $an_county) {
+  foreach ($counties as $an_county) {
     $an_email_c = 'County: '.$an_county."\n";  // start blob with county name.
     fwrite($an_blob_fh,$an_email_c);
     // Get the needed info about each NL.
     
     $an_nl_list = $nlObj->getCountyNls($an_county);
-    
-    
-
     // For each NL, add the email to.
     $an_delimit = FALSE;
     foreach ($an_nl_list as $an_nl) {
