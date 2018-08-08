@@ -1,47 +1,60 @@
 <?php
 /*
- * Name: voterdb_class_counties.php   V4.0 2/16/18
+ * Name: voterdb_class_counties.php   V4.3 8/7/18
  *
  */
 namespace Drupal\voterdb;
 
-require_once "voterdb_constants_hd_tbl.php";  
-require_once "voterdb_debug.php";
 
 class NlpCounties {
   
+  const HDTBL = 'hd_def';
+  
 
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-  * getCountyNames
-  * 
-  * 
-  * @return string - array of county names.
-  */
   function getCountyNames() {
     db_set_active('nlp_voterdb');
     try {
-      $ch_hdselect = "SELECT * FROM {".DB_HD_TBL."} WHERE 1";
-      $ch_hdquery = db_query($ch_hdselect);
+      $select = "SELECT * FROM {".self::HDTBL."} WHERE 1";
+      $query = db_query($select);
     }
     catch (Exception $e) {
       db_set_active('default');
       voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
-
-    // Create an array of county names.
-
-    do {
-      $ch_hd_rec = $ch_hdquery->fetchAssoc();
-      if(!$ch_hd_rec) {break;}
-      $ch_county_names[$ch_hd_rec[HD_COUNTY]] = $ch_hd_rec[HD_COUNTY];
-    } while (TRUE);
     db_set_active('default');
-    if(empty($ch_county_names)) {return FALSE;}
-
-    ksort($ch_county_names);
-    //voterdb_debug_msg('County Array: ', $ch_county_names );
-    // Return the array of HD numbers and the county index.
-    return $ch_county_names;
+    do {
+      $hdRecord = $query->fetchAssoc();
+      if(!$hdRecord) {break;}
+      $countyNames[$hdRecord['County']] = $hdRecord['County'];
+    } while (TRUE);
+    if(empty($countyNames)) {return FALSE;}
+    ksort($countyNames);
+    return $countyNames;
   }
+  
+  public function getHdNames($county) {
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::HDTBL, 'h');
+      $query->fields('h');
+      $query->condition('County',$county);
+      $result = $query->execute();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return FALSE;
+    }
+    db_set_active('default');
+    do {
+      $hdRecord = $result->fetchAssoc();
+      if(!$hdRecord) {break;}
+      $hdNames[$hdRecord['Number']] = $hdRecord['Number'];
+    } while (TRUE);
+    if(empty($hdNames)) {return FALSE;}
+    ksort($hdNames);
+    return $hdNames;
+  }
+  
 }

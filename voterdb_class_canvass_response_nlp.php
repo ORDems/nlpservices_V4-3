@@ -5,34 +5,16 @@
  */
 namespace Drupal\voterdb;
 
-//require_once "voterdb_constants_hd_tbl.php";  
-require_once "voterdb_debug.php";
-
 class NlpCanvassResponse {
-  
-
   
   function __construct() {
     $this->result = NULL;
   }
   
-  
-  
-  
- /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * getApiSurveyQuestions
- * 
- * 
- */
   public function getCanvassResponse() {
   
   }
   
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-  * setCanvassResponse
-  * 
-  * 
-  */
   public function setCanvassResponse($canvassResult) {
     // Insert the reported information into the results table.
     db_set_active('nlp_voterdb');

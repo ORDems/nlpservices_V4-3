@@ -1,6 +1,6 @@
 <?php
 /*
- * Name:  voterdb_candidates_func.php               V4.2 6/21/18
+ * Name:  voterdb_candidates_func.php               V4.3 8/8/18
  */
 
 /** * * * * * functions supported * * * * * *
@@ -9,6 +9,8 @@
  * voterdb_get_candidates, voterdb_display_candidates, 
  * voterdb_build_candidate_list
  */
+
+use Drupal\voterdb\NlpCounties;
 
 define('CU_EDIT', '50');
 define('CU_DELETE', '50');
@@ -105,7 +107,9 @@ function voterdb_cscope_callback ($form,$form_state) {
  * @return type
  */
 function voterdb_build_county_entry(&$form,&$form_state) {
-  $ce_county_array = voterdb_get_county_names();
+  $countyNamesObj = new NlpCounties();
+  $ce_county_array = $countyNamesObj->getCountyNames();
+
   foreach ($ce_county_array as $ce_county) {
     //$ce_hd_array = unserialize($ce_hd_string);
     $ce_counties[] = $ce_county;

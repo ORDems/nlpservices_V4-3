@@ -1,10 +1,8 @@
 <?php
 /*
- * Name:  voterdb_candidates.php               V4.2 6/21/18
+ * Name:  voterdb_candidates.php               V4.3 8/8/18
  */
 
-require_once "voterdb_constants_candidates_tbl.php";
-require_once "voterdb_get_county_names.php";
 require_once "voterdb_group.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_banner.php";
@@ -14,6 +12,7 @@ require_once "voterdb_class_survey_question_nlp.php";
 require_once "voterdb_class_api_authentication.php";
 require_once "voterdb_class_candidates_nlp.php";
 require_once "voterdb_class_survey_response_nlp.php";
+require_once "voterdb_class_counties.php";
 
 require_once "voterdb_candidates_func.php";
 require_once "voterdb_candidates_func2.php";
