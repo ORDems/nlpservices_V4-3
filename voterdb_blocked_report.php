@@ -7,8 +7,10 @@ require_once "voterdb_group.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_class_button.php";
+require_once "voterdb_class_bounce.php";
 
 use Drupal\voterdb\NlpButton;
+use Drupal\voterdb\NlpBounce;
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_delete_notification
@@ -90,16 +92,12 @@ function voterdb_blocked_report() {
   $br_banner = voterdb_build_banner ($br_county);
   $output = $br_banner;
   // get the reported non-delivery emails.
-  try {
-    $br_rquery = db_select(DB_BOUNCE_REPORT_NOTIFY_TBL, 'n');
-    $br_rquery->orderBy(BA_COUNTY)->orderBy(BA_NLEMAIL);
-    $br_rquery->fields('n');
-    $br_bresult = $br_rquery->execute();
-    }
-  catch (Exception $e) {
-    voterdb_debug_msg('e', $e->getMessage() );
-    return $output;
-  }
+  
+  $bounceObj = new NlpBounce();
+  $bounceList = $bounceObj->getBounces();
+  if(empty($bounceList)) {return $output;}
+  
+
   $cd_out = '<table style="white-space: nowrap; width:600px;">';
   $cd_out .= '<thead><tr>
     <th style="text-align: left; width:150px;">County</th>
@@ -111,42 +109,37 @@ function voterdb_blocked_report() {
     <th style="width:100px;">Description</th>
     </tr></thead><tbody>';
   $br_cnt = 0;
-  do {
-    $br_bouncer = $br_bresult->fetchAssoc();
-    if (!$br_bouncer) {break;}
-    $br_scounty = $br_bouncer[BA_COUNTY];
-    $br_report_id = $br_bouncer[BA_REPORT_ID];
-    $br_desc = $br_bouncer[BA_DESCRIPTION];
-    $br_code = $br_bouncer[BA_CODE];
-    $br_rfn = $br_bouncer[BA_NLFNAME];
-    $br_rln = $br_bouncer[BA_NLLNAME]; 
-    $br_remail = $br_bouncer[BA_NLEMAIL]; 
-    $br_sfn = $br_bouncer[BA_SFNAME];
-    $br_sln = $br_bouncer[BA_SLNAME];
-    $br_semail = $br_bouncer[BA_SEMAIL];
+  
+  
+  foreach ($bounceList as $reportId => $br_bouncer) {
+    
+
+    $br_remail = $br_bouncer['recipientEmail']; 
+
     $br_bstat = voterdb_blocked_status($br_remail);
-    $br_brpt = voterdb_bounced_status($br_report_id);
+    $br_brpt = voterdb_bounced_status($reportId);
     // If both the bounced status and the blocked status exist, then the admin
     // has deleted them to restore the email.
     if ($br_bstat != '' AND !$br_brpt) {
       // Delete the notification record and stop reporting this email.
-      voterdb_delete_notification($br_report_id);
+      voterdb_delete_notification($reportId);
     } else {
       // Report this eamil as having delivery problems.
       $br_cnt++;
-      $cd_nl = $br_remail.'<br>'.$br_rfn.' '.$br_rln;
-      $cd_coodinator = $br_semail.'<br>'.$br_sfn.' '.$br_sln;
+      $cd_nl = $br_remail.'<br>'.$br_bouncer['recipientFirstName'].' '.$br_bouncer['recipientLastName'];
+      $cd_coodinator = $br_semail.'<br>'.$br_bouncer['senderFirstName'].' '.$br_bouncer['senderLastName'];
       $cd_out .= '<tr>
         <td style="text-align: left;">'.$br_bouncer['county'].'</td>'.
         '<td>'.$cd_coodinator.'</td>'.
         '<td>'.$cd_nl.'</td>'.
         '<td>'.$br_bstat.'</td>'.
-        '<td>'.$br_bouncer[BA_DATE].'</td>'.
-        '<td>'.$br_bouncer[BA_CODE].'</td>'.
-        '<td>'.$br_bouncer[BA_DESCRIPTION].'</td>'.
+        '<td>'.$br_bouncer['date'].'</td>'.
+        '<td>'.$br_bouncer['code'].'</td>'.
+        '<td>'.$br_bouncer['description'].'</td>'.
         '</tr>';
     }
-  } while (TRUE);
+  }
+
   $cd_out .= '</tbody></table>';
   $output .= $cd_out;
   $output .= '<a href="nlpadmin?County='.$br_county.'" class="button ">Return to Admin page >></a>';

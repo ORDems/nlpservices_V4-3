@@ -1,8 +1,8 @@
 <?php
 /*
- * Name: voterdb_banner.php   V4.2  6/20/18
+ * Name: voterdb_banner.php   V4.3  8/2/18
  */
-define('NLP_VERSION','4.2');
+define('NLP_VERSION','4.3');
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_build_banner

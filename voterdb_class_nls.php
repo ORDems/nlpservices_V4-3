@@ -4,7 +4,7 @@
  * Contains Drupal\voterdb\NlpNls.
  */
 /*
- * Name: voterdb_class_nls.php   V4.2  6/17/18
+ * Name: voterdb_class_nls.php   V4.3  8/7/18
  */
 
 namespace Drupal\voterdb;
@@ -55,7 +55,8 @@ class NlpNls {
 
 
   private $grpList = array(
-      
+    'mcid'=>'MCID',
+    'county'=>'County',
   );
   private $statusList = array(
     'mcid'=>'MCID',
@@ -119,6 +120,7 @@ class NlpNls {
       'cellPhone' => array('name'=>'Cell Phone','err'=>'Cell Phone'),  
   );
   
+  private $nlsResultObj;
   
 
   public function decodeNlHdr($fileHdr) {
@@ -238,7 +240,8 @@ class NlpNls {
     return $nlRecord;  //return the MCID and HD.
   }
   
-  function getNls($county,$hd) {
+  public function selectNls($county,$hd) {
+    //voterdb_debug_msg('county: '.$county.', HD: '.$hd, '');
     db_set_active('nlp_voterdb');
     try {
       $query = db_select(self::NLSTBL, 'n');
@@ -248,10 +251,10 @@ class NlpNls {
       $query->orderBy('HD');
       $query->orderBy('LastName');
       $query->orderBy('Nickname');
-      if ($hd != 'All') {
+      if ($hd != 'ALL') {
         $query->condition('HD',$hd);
       }
-      $results =  $query->execute();
+      $this->nlsResultObj =  $query->execute();
     }
     catch (Exception $e) {
       db_set_active('default');
@@ -259,20 +262,32 @@ class NlpNls {
       return NULL;
     }
     db_set_active('default');
+  }
+  
+  public function fetchNls() {
+    $nlRecord = array();
+    $fields = $this->nlsResultObj->fetchAssoc();
+    if(empty($fields)) {return $nlRecord;}
+    foreach ($this->nlList  as $nlpKey => $dbKey) {
+      if(isset($fields[$dbKey])) {
+        $nlRecord[$nlpKey] = $fields[$dbKey];
+      } else {
+        $nlRecord[$nlpKey] = NULL;
+      }
+    }
+    //voterdb_debug_msg('nlrecord ', $nlRecord);
+    return $nlRecord;
+  }
+  
+  
+  function getNls($county,$hd) {
+    $this->selectNls($county,$hd);
     // Fetch each NL record and build the array of information about each NL
     // needed to build the display table.
     $nlRecords = array();
     do {
-      $fields = $results->fetchAssoc();
-      if(empty($fields)) {break;}
-      $nlRecord = array();
-      foreach ($this->nlList  as $nlpKey => $dbKey) {
-        if(isset($fields[$dbKey])) {
-          $nlRecord[$nlpKey] = $fields[$dbKey];
-        } else {
-          $nlRecord[$nlpKey] = NULL;
-        }
-      }
+      $nlRecord = $this->fetchNls();
+      if(empty($nlRecord)) {break;}
       $mcid = $nlRecord['mcid'];
       $nlRecord['status'] = $this->getNlsStatus($mcid,$county);
       $nlRecords[$mcid] = $nlRecord;
@@ -306,12 +321,13 @@ class NlpNls {
     catch (Exception $e) {
       db_set_active('default');
       voterdb_debug_msg('e', $e->getMessage() );
-      return NULL;
+      return array();
     }
-    
+    db_set_active('default');
     $mergedList = array_merge($this->nlList,$this->statusList,$this->grpList);
+    //voterdb_debug_msg('mergedlist', $mergedList);
     $mergeListFlip = array_flip($mergedList);
-    
+    $nlRecords = array();
     do {
       $fields = $result->fetchAssoc();
       if(empty($fields)) {break;}
@@ -324,10 +340,6 @@ class NlpNls {
     return $nlRecords;
 
   }
-  
-  
-  
-  
 
   
   public function countNls($county) {

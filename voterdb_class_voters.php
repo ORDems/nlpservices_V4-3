@@ -243,6 +243,7 @@ class NlpVoters {
       $query = db_select(self::VOTERGRPTBL, 'g');
       $query->addField('g', 'County');
       $query->distinct();
+      $query->orderBy('County');
       $result = $query->execute();
     }
     catch (Exception $e) {
