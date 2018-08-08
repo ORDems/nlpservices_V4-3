@@ -20,15 +20,16 @@ class NlpCounties {
     catch (Exception $e) {
       db_set_active('default');
       voterdb_debug_msg('e', $e->getMessage() );
-      return FALSE;
+      return array();
     }
     db_set_active('default');
+    $countyNames = array();
     do {
       $hdRecord = $query->fetchAssoc();
       if(!$hdRecord) {break;}
       $countyNames[$hdRecord['County']] = $hdRecord['County'];
     } while (TRUE);
-    if(empty($countyNames)) {return FALSE;}
+    if(empty($countyNames)) {return $countyNames;}
     ksort($countyNames);
     return $countyNames;
   }
@@ -44,15 +45,16 @@ class NlpCounties {
     catch (Exception $e) {
       db_set_active('default');
       voterdb_debug_msg('e', $e->getMessage() );
-      return FALSE;
+      return array();
     }
     db_set_active('default');
+    $hdNames = array();
     do {
       $hdRecord = $result->fetchAssoc();
       if(!$hdRecord) {break;}
       $hdNames[$hdRecord['Number']] = $hdRecord['Number'];
     } while (TRUE);
-    if(empty($hdNames)) {return FALSE;}
+    if(empty($hdNames)) {return $hdNames;}
     ksort($hdNames);
     return $hdNames;
   }
