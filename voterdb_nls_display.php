@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_nls_display.php     V4.2  6/13/18
+ * Name: voterdb_nls_display.php     V4.3  8/7/18
  * Display the list of Prospective NLs for a county.
  *
  */
@@ -11,6 +11,7 @@ require_once "voterdb_banner.php";
 require_once "voterdb_track.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_class_button.php";
+require_once "voterdb_class_counties.php";
 require_once "voterdb_class_get_browser.php";
 require_once "voterdb_class_turfs.php";
 require_once "voterdb_class_nls.php";
@@ -23,6 +24,9 @@ use Drupal\voterdb\NlpTurfs;
 use Drupal\voterdb\NlpNls;
 use Drupal\voterdb\NlpReports;
 use Drupal\voterdb\GetBrowser;
+
+define("NLS_COUNTY_MAX","151");
+define("NLS_ALL_MAX","500");
 
 
 // Constants for building the goals table.
@@ -105,7 +109,7 @@ function voterdb_display_nls_form($form_id, &$form_state) {
     // Show all NLs if the number is small.
     $dn_county = $form_state['voterdb']['county'];
     $dn_nlcnt = $nlsObj->countNls($dn_county);
-    if($dn_nlcnt < 51) {
+    if($dn_nlcnt < NLS_COUNTY_MAX) {
       $form_state['voterdb']['hd-new'] = 0;
     }
   } 
@@ -166,7 +170,7 @@ function voterdb_display_nls_form($form_id, &$form_state) {
   $dn_hd_array = $form_state['voterdb']['hd_array'];
   // Provide a list of HD numbers for the user selection.
   $dn_hdoptions = array();
-  $dn_hdoptions[] = 'All';
+  $dn_hdoptions[] = 'ALL';
   foreach ($dn_hd_array as $dn_hd) {
     $dn_hdoptions[] = $dn_hd;
   }

@@ -188,17 +188,24 @@ function voterdb_menu() {
   );
   /*
   $items ['nlpdataentry'] = array (
-    'title' => 'NLP data entry',
-    'description' => 'Allow the NL to enter canvass results',
-    'access arguments' => array('administer voterdb'),
-    'access callback' => TRUE,
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('voterdb_dataentry_form'),
-    'file' => 'voterdb_dataentry.php',
+    'title' => 'NLP data entry (legacy)',
+    'description' => 'Redirect to main page for login',
+    'page callback' => 'voterdb_dataentry_redirect',
+    'file' => 'voterdb_dataentry_redirect.php',
     'type' => MENU_CALLBACK,
   );
    * 
    */
+  $items ['nlpdataentry'] = array (
+    'title' => 'NLP data entry',
+    'description' => 'Allow the NL to enter canvass results',
+    'access callback' => TRUE,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_dataentry_redirect'),
+    'file' => 'voterdb_dataentry_redirect.php',
+    'type' => MENU_CALLBACK,
+  );
+  
   $items ['nlpcanvassresults'] = array (
     'title' => 'Report Canvass Results',
     'description' => 'NL report canvass results.',
