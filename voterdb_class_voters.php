@@ -278,7 +278,7 @@ class NlpVoters {
       return NULL;
     }
     db_set_active('default');
-    $voters = $array();
+    $voters = array();
     do {
       $voter = $result->fetchAssoc();
       if(empty($voter)) {break;}

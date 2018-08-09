@@ -27,6 +27,8 @@ require_once "voterdb_class_nls.php";
 require_once "voterdb_class_drupal_users.php";
 require_once "voterdb_class_button.php";
 require_once "voterdb_class_coordinators_nlp.php";
+require_once "voterdb_class_matchback.php";
+require_once "voterdb_class_instructions_nlp.php";
 
 use Drupal\voterdb\GetBrowser;
 use Drupal\voterdb\NlpCandidates;
@@ -114,9 +116,6 @@ function voterdb_dataentry_form($form, &$form_state) {
   $userObj = new NlpDrupalUser(NULL);
   $nlsObj = new NlpNls();
 
-  //$form_state['voterdb']['turfObj'] = $turfObj;
-  //$form_state['voterdb']['userObj'] = $userObj;
-  //$form_state['voterdb']['pathsObj'] = new NlpPaths();
   $nlpUser = $userObj->getCurrentUser();
 
   $form_state['voterdb']['nlpUser'] = $nlpUser;
@@ -166,6 +165,8 @@ function voterdb_dataentry_form($form, &$form_state) {
     '#type' => 'markup',
     '#markup' => $dv_banner
   ); 
+  
+  
   // If the first pass, check if we have a turf.
   if($form_state['voterdb']['page'] == 'start') {
     $form['announcement'] = voterdb_build_announcement();

@@ -10,7 +10,7 @@ use Drupal\voterdb\ApiAuthentication;
 use Drupal\voterdb\NlpResponseCodes;
 use Drupal\voterdb\ApiSurveyQuestions;
 use Drupal\voterdb\NlpSurveyQuestion;
-use Drupal\voterdb\NlpCounties;
+
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_create_folders

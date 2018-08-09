@@ -1,15 +1,16 @@
 <?php
 /*
- * Name: voterdb_dataentry_func3.php    V4.2  6/18/18
+ * Name: voterdb_dataentry_func3.php    V4.3  8/9/18
  */
 /** * * * * * functions supported * * * * * *
- * voterdb_canvass_date, voterdb_turf_select, voterdb_display_goals, 
+ * voterdb_canvass_date, voterdb_turf_select,  
  * voterdb_history_option, voterdb_lists, voterdb_instruct_disp,
  * voterdb_coordinator_disp
  */
 
 use Drupal\voterdb\NlpPaths;
 use Drupal\voterdb\NlpCoordinators;
+use Drupal\voterdb\NlpInstructions;
 
 define('VO_CALLLIST_PAGE', 'nlp_call_list');
 define('VO_MAILLIST_PAGE', 'nlp_mail_list');
@@ -115,67 +116,6 @@ function voterdb_turf_select($form_state) {
 }
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_display_goals
- *
- * Create the goals form.  Create one line for the county goal and one line
- * for the HD associated with this NL.  The rows will be the NL recruitment
- * goal, the progress with recruitment, and the progress for reporting by
- * the recuited NLs.  The hope is to encourage NLs to help recruitment and 
- * to encourage reporting.  The information is stored in a table and left 
- * adjusted by being encapsulated in an aside.
- * 
- * @param type &$form_state - group name, HD
- * @return string - form element for display of goals in a left aside.
- */
-function voterdb_display_goals($form_state) {
-  $dg_county = $form_state['voterdb']['county'];
-  $dg_hd = $form_state['voterdb']['HD'];
-  // Get the recruitment goal and progress in reporting results for the county.
-  $dg_cogoal = voterdb_get_goals($dg_county,'ALL');  // func4.
-  $dg_nl_recruited = voterdb_get_nlscount($dg_county,'ALL',NN_NLSIGNUP);//func4.
-  $dg_rpt = voterdb_get_nlscount($dg_county,'ALL',NN_RESULTSREPORTED);//func4.
-  // Get the goal and progress for the house district for this NL.
-  $dg_hdgoal = voterdb_get_goals($dg_county,$dg_hd);
-  $dg_hd_recruited = voterdb_get_nlscount($dg_county,$dg_hd,NN_NLSIGNUP);//func4.
-  $dg_hd_rpt = voterdb_get_nlscount($dg_county,$dg_hd,NN_RESULTSREPORTED);//func4.
-  // Build the styles for the form generator entry for the display of the goals
-  // and for the display of the links for walk sheet PDF and call sheet.  Also,
-  // Create the header for the columns in the table.
-  $form_element['goals-tbl'] = array (
-    '#markup' => " \n  ".'<!-- Goals table -->'." \n  ".'<table style="width:315px;" class="noborder nowhite">'.
-    " \n  ".'<tbody style="border-collapse: collapse; border-style: hidden;">'.
-    " \n  ".'<tr>'.
-    " \n   ".'<td class="nowhite" style="width:120px;font-weight: bold;">NL Recruitment</td>'.
-    " \n   ".'<td class="goal-hdr nowhite" style="margin-top:0px;">Goal</td>'.
-    " \n   ".'<td class="goal-hdr">Recruited</td>'.
-    " \n   ".'<td class="goal-hdr nowhite" style="margin-top:0px;">Reporting</td>'.
-    " \n  ".'</tr>'
-      );
-  // Create the form generator entry for the county goal (one line).
-   $form_element['goals-co'] = array (
-     '#markup' => " \n  ".'<tr>'.
-     " \n   ".'<td>County</td>'.
-     " \n   ".'<td class="goal-tx" style="margin-top:0;">'.$dg_cogoal.'</td>'.
-     " \n   ".'<td class="goal-tx nowhite" style="margin-top:0px;">'.$dg_nl_recruited.'</td>'.
-     " \n   ".'<td class="goal-tx nowhite" style="margin-top:0px;">'.$dg_rpt.'</td>'.
-     " \n  ".'</tr>'
-      );
-   // Create the form generator entry for the HD goal (one line) and terminate
-   // the table.
-   $form_element['goals-hd'] = array (
-      '#markup' => " \n  ".'<tr>'.
-     " \n   ".'<td style="margin-top:0px;">HD'.$dg_hd.'</td>'.
-     " \n   ".'<td class="goal-tx nowhite" style="margin-top:0px;">'.$dg_hdgoal.'</td>'.
-     " \n   ".'<td class="goal-tx nowhite" style="margin-top:0px;">'.$dg_hd_recruited.'</td>'.
-     " \n   ".'<td class="goal-tx nowhite" style="margin-top:0px;">'.$dg_hd_rpt.'</td>'.
-     " \n  ".'</tr>'.
-     " \n  ".'</tbody>'.
-     " \n  ".'</table>'." \n  ".'<!-- End of Goals table -->'
-      );
-   return $form_element;
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_history_option
  * 
  * Create a small box to sit between the goals and the right aside.  This will
@@ -273,27 +213,10 @@ function voterdb_lists($form_state) {
       '#prefix' => " \n   ".'<section class="rt" style="margin-top:5px;">',
       '#suffix' => " \n   ".'</section>'." \n  "
   );
-  /*
-  // See if the NL wants to see if there are others.
-  $form_element['other-note'] = array (
-      '#type' => 'markup',
-      '#markup' => 'See who else is a Neighborhood Leader: ',
-      '#prefix' => " \n   ".'<section class="nowhite">',
-  );
-  // Insert a submit button for the NL to select the list of other NLs.
-  $form_element['other-submit'] = array (
-      '#type' => 'submit',
-      '#id' => 'show-list',
-      '#value' => 'Show List',
-  );
-   * 
-   */
   $form_element['other-end'] = array (
       '#type' => 'markup',
       '#markup' => " \n   ".'</section>',
   );
-  
-  
   return $form_element;
 }
 
@@ -321,15 +244,19 @@ function voterdb_instruct_disp($form_state) {
   $form['inst-box-c2'] = array('#markup'=>" \n ".'</th></tr><tbody><tr>'.
         " \n ".'<td style="width:100px; margin:0px; padding:0px 2px">',);
   // Create the URL to the instructions for this canvass (or postcard).
-  $id_instructions = voterdb_get_instructions($id_county);
+  
+  $instructionsObj = new NlpInstructions();
+  $id_instructions = $instructionsObj->getInstructions($id_county);
+  
+  
   //voterdb_debug_msg('instructions', $id_instructions);
   
   $pathsObj = new NlpPaths();
   $id_path = $pathsObj->getPath('INST',$id_county);
   
-  $id_canvass = $id_instructions[NE_CANVASS][NI_FILENAME];
+  $id_canvass = $id_instructions['canvass']['fileName'];
   if(!empty($id_canvass)) {
-    $id_curl = file_create_url($id_path.$id_instructions[NE_CANVASS][NI_FILENAME]);
+    $id_curl = file_create_url($id_path.$id_instructions['canvass']['fileName']);
     $id_cmessage = t('<a href="@c-url" target="_blank">Canvass</a>',
       array('@c-url' => $id_curl));
     $form['inst-box-c3'] = array(
@@ -337,9 +264,9 @@ function voterdb_instruct_disp($form_state) {
       );
     }
     
-  $id_postcard = $id_instructions[NE_POSTCARD][NI_FILENAME];
+  $id_postcard = $id_instructions['postcard']['fileName'];
   if(!empty($id_postcard)) {
-    $id_purl = file_create_url($id_path.$id_instructions[NE_POSTCARD][NI_FILENAME]);
+    $id_purl = file_create_url($id_path.$id_instructions['postcard']['fileName']);
     $id_pmessage = t('<a href="@p-url" target="_blank">Postcard</a>',
       array('@p-url' => $id_purl));
     $form['inst-box-c4'] = array('#markup'=>" \n ".'</td></tr><tr>'.
@@ -349,10 +276,10 @@ function voterdb_instruct_disp($form_state) {
       );
   }
   
-  $id_absentee = $id_instructions[NE_ABSENTEE][NI_FILENAME];
+  $id_absentee = $id_instructions['absentee']['fileName'];
   if(!empty($id_absentee) AND $id_absentee != 'not uploaded yet') {
-    $id_aurl = file_create_url($id_path.$id_instructions[NE_ABSENTEE][NI_FILENAME]);
-    $id_title = $id_instructions[NE_ABSENTEE][NI_TITLE];
+    $id_aurl = file_create_url($id_path.$id_instructions['absentee']['fileName']);
+    $id_title = $id_instructions['absentee']['title'];
     $id_amessage = t('<a href="@a-url" target="_blank">'.$id_title.'</a>',
       array('@a-url' => $id_aurl));
     $form['inst-box-c4'] = array('#markup'=>" \n ".'</td></tr><tr>'.
@@ -388,10 +315,10 @@ function voterdb_coordinator_disp($form_state) {
     'county'=>$form_state['voterdb']['county'],
   );
   $cd_region['coordinators'] = $coordinatorsObj->getAllCoordinators();
-  voterdb_debug_msg('region', $cd_region);
+  //voterdb_debug_msg('region', $cd_region);
   
   $cd_co = $coordinatorsObj->getCoordinator($cd_region);
-  voterdb_debug_msg('coordinator', $cd_co);
+  //voterdb_debug_msg('coordinator', $cd_co);
 
   if(empty($cd_co)) {return NULL;}
   $cd_fname = $cd_co['firstName'];

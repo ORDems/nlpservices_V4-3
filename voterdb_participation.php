@@ -177,8 +177,7 @@ function voterdb_participation() {
   $gc_count_array = array();
   if(!voterdb_participation_cnts($gc_participation_uri,$gc_count_array)) {return $output;}
   
-  $nlObj = new NlpNls();
-  $voterObj = new NlpNlpVoters();
+  $voterObj = new NlpVoters();
 
   $gc_contactattempts = $gc_nlcnt = $gc_nlreporting = $gc_nllogincnt = 0;
   

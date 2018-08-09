@@ -170,7 +170,8 @@ function voterdb_import_matchbacks_finished($br_success, $br_results, $br_operat
     ksort($br_date_indexes);
     end($br_date_indexes);  
     $bu_date = key($br_date_indexes);
-    variable_set('voterdb_br_date',$bu_date);
+    $matchbackObj->setLatestMatchbackDate($bu_date);
+
   }
   else {
     drupal_set_message(t('Opps, an error occurred.'),'error');

@@ -4,7 +4,7 @@
  * Contains Drupal\voterdb\NlpMatchback.
  */
 /*
- * Name: voterdb_class_matchback.php   V4.3  7/27/18
+ * Name: voterdb_class_matchback.php   V4.3  8/9/18
  */
 
 namespace Drupal\voterdb;
@@ -105,8 +105,6 @@ class NlpMatchback {
     $this->records = array();
   }
   
-  
-  
   public function getMatchbackExists($vanid) {
     db_set_active('nlp_voterdb');
     $exists = db_query('SELECT 1 FROM {'.self::MATCHBACKTBL.'} WHERE VANID = '.$vanid)
@@ -118,9 +116,9 @@ class NlpMatchback {
   public function getBrDates() {
     //voterdb_debug_msg('brdates: ', ''); 
     db_set_active('nlp_voterdb');
-    $select = "SELECT * FROM {".self::DATESTBL."} WHERE  1";
+    $select = "SELECT * FROM {".self::DATESTBL."} WHERE  BRIndex<>0";
     $result = db_query($select);
-    $this->lastIndex = 0;
+    $this->lastIndex = 1;
     $this->dates = array();
     do {
       $dateRec = $result->fetchAssoc();
@@ -152,6 +150,27 @@ class NlpMatchback {
       db_set_active('default');
     }
     return $dateIndex;
+  }
+  
+  public function getLatestMatchbackDate() {
+    db_set_active('nlp_voterdb');
+    $select = "SELECT * FROM {".self::DATESTBL."} WHERE  BRIndex=0";
+    $result = db_query($select);
+    db_set_active('default');
+    $lastDate = $result->fetchAssoc();
+    if(!$lastDate) {return NULL;}
+    return $lastDate['BRDate'];
+  }
+  
+  public function setLatestMatchbackDate($date) {
+    db_set_active('nlp_voterdb');
+    db_insert(self::DATESTBL)
+      ->fields(array(
+        'BRDate' => $date,
+        'BRIndex' => 0,
+      ))
+      ->execute();
+    db_set_active('default');
   }
 
 }
