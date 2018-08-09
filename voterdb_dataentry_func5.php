@@ -4,12 +4,8 @@
  *
  */
 
-//use Drupal\voterdb\NlpCanvassResponse;
 use Drupal\voterdb\NlpReports;
-use Drupal\voterdb\NlpActivistCodes;
-
-//define('RD_CC','0');  // Current election cyle index.
-//define('RD_HC','1');  // Index for historical election cycles.
+use Drupal\voterdb\NlpMatchback;
 
 /** * * * * * functions supported * * * * * *
  * voterdb_fetch_voters, 
@@ -64,7 +60,10 @@ function voterdb_fetch_voters(&$form_state) {
     return NULL;
   }
   db_set_active('default');
-  $fv_brdates = voterdb_get_brdates();  // matchback dates.
+  
+  $matchbackObj = new NlpMatchback();
+  $fv_brdates = $matchbackObj->getBrDates();
+  //$fv_brdates = voterdb_get_brdates();  // matchback dates.
   //voterdb_debug_msg('brdates', $fv_brdates);
   // Now build the array from the records.
   $fv_voters = array();
@@ -77,7 +76,9 @@ function voterdb_fetch_voters(&$form_state) {
     // Check if the NL reported that this voter has moved, is deceased or is hostile.
     $fv_voter_info['status'] = $fv_voter_status; 
     $fv_date = ''; // Hasn't voted yet.
-    $fv_mbindex = voterdb_voted($fv_vanid);  // func 4.
+
+    $fv_mbindex = $matchbackObj->getMatchbackExists($fv_vanid);
+    //voterdb_debug_msg('mbindx', $fv_mbindex);
     if ($fv_mbindex) {  // Voted!
       // Display a gold star and the ballot retured date.
       $fv_module_path = drupal_get_path('module','voterdb');

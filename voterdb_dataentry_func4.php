@@ -5,106 +5,10 @@
  */
 
 /** * * * * * functions supported * * * * * *
- * voterdb_display_voting, voterdb_get_goals, voterdb_get_nlscount,
+ * voterdb_get_goals, voterdb_get_nlscount,
  * voterdb_set_voter_status,voterdb_get_mbdates,voterdb_voted, 
  * voterdb_results_reported
  */
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_display_voting
- * 
- * Display a line with the total vote return for the county, the return for 
- * the Rs and Ds, the total NLP return, and the return for this NL.
- *
- * @param type $di_link - database link.
- * @param type $di_county - This group name.
- * @param type $di_mcid - The MCID of the NL.
-
- * @return $di_output - text string of voting results for display.
- */
-function voterdb_display_voting($di_link,$di_county,$di_mcid) {
-  // Get the counts of voting from the upload of the matchbacks.
-  db_set_active('nlp_voterdb');
-  $di_select = "SELECT * FROM {".DB_BALLOTCOUNT_TBL."} WHERE  ".
-    BC_COUNTY. " = :county ";
-  $di_args = array(
-    ':county' => $di_county);
-  $di_result = db_query($di_select,$di_args);
-  $di_tccnt_array = $di_result->fetchAssoc();
-  // Percentage of the registered voters that have voted.
-  $di_reg=$di_tccnt_array[1];
-  $di_reg_br=$di_tccnt_array[2];
-  $di_tvpercent = ($di_reg > 0)?round($di_reg_br/$di_reg*100,1).'%':'0%';
-  $di_output ="<br>County voting: $di_tvpercent, ";
-  // Percent for Democrats voting.
-  $di_dem=$di_tccnt_array[3];
-  $di_dem_br=$di_tccnt_array[4];
-  $di_dpercent = ($di_dem > 0)?round($di_dem_br/$di_dem*100,1).'%':'0%';
-  $di_output .="Dem: $di_dpercent, ";
-  // Percent of Republicans voting.
-  $di_rep=$di_tccnt_array[5];
-  $di_rep_br=$di_tccnt_array[6];
-  $di_rpercent = ($di_rep > 0)?round($di_rep_br/$di_rep*100,1).'%':'0%';
-  $di_output .="Rep: $di_rpercent, ";
-  // Count the number of voters assigned to NLs for this group.
-  db_set_active('nlp_voterdb');
-  try {
-  $di_query = db_select(DB_NLPVOTER_GRP_TBL, 'g');
-  $di_query->fields('g');
-  $di_query->condition(NK_COUNTY,$di_county);
-  $di_nvtr = $di_query->countQuery()->execute()->fetchField();
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return '';
-  }
-  // Count the number of voters who returned ballots.
-  try {
-    $bn_query = db_select(DB_NLPVOTER_GRP_TBL, 'g');
-    $bn_query->join(DB_MATCHBACK_TBL, 'm', 'm.'.MT_VANID.' = g.'.VN_VANID );
-    $bn_query->condition(NK_COUNTY,$di_county);
-    $bn_query->condition(MT_DATE,'','<>');
-    $di_rbvtd = $bn_query->countQuery()->execute()->fetchField();
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return '';
-  }
-  $di_npercent = ($di_nvtr > 0)?round($di_rbvtd/$di_nvtr*100,1).'%':'0%';
-  $di_output .="NLP: $di_npercent, ";
-  // Count the number of voters assigned to this NLs.
-  try {
-    $bn_query = db_select(DB_NLPVOTER_GRP_TBL, 'g');
-    $bn_query->condition(NK_COUNTY,$di_county);
-    $bn_query->condition(NK_MCID,$di_mcid);
-    $di_vtr = $bn_query->countQuery()->execute()->fetchField();
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return '';
-  }
-  // Count the number of this NLs voters who returned ballots.
-  try {
-    $bn_query = db_select(DB_NLPVOTER_GRP_TBL, 'g');
-    $bn_query->join(DB_MATCHBACK_TBL, 'm', 'm.'.MT_VANID.' = g.'.VN_VANID );
-    $bn_query->condition(NK_COUNTY,$di_county);
-    $bn_query->condition(VN_MCID,$di_mcid);
-    $bn_query->condition(MT_DATE,'','<>');
-    $di_vtd = $bn_query->countQuery()->execute()->fetchField();
-  }
-  catch (Exception $e) {
-    db_set_active('default');
-    voterdb_debug_msg('e', $e->getMessage() );
-    return '';
-  }
-  $di_vpercent = ($di_vtr > 0)?round($di_vtd/$di_vtr*100,1).'%':'0%';
-  $di_output .="Your voters: $di_vpercent ";
-  db_set_active('default');
-  return $di_output;
-}
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_get_nlscount
@@ -224,30 +128,6 @@ function voterdb_get_mbdates() {
     $vd_date_array[$vd_date[DA_INDEX]] = $vd_date[DA_DATE];
   }
   return $vd_date_array;
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_voted
- * 
- * Check if this voter has turned in a ballot.
- * 
- * @param type $vd_link - database link.
- * @param type $vd_vanid - VANID of this voter.
- * @return string - Image of a star and the date the ballot was recieved or 
- *                  a null string.
- */
-function voterdb_voted($vd_vanid) {
-  db_set_active('nlp_voterdb');
-  $vd_tselect = "SELECT * FROM {".DB_MATCHBACK_TBL."} WHERE  ".
-    MT_VANID." = :vanid";
-  $vd_targs = array(':vanid' => $vd_vanid);
-  $vd_result = db_query($vd_tselect,$vd_targs);
-  $vd_date = $vd_result->fetchAssoc();
-  db_set_active('default');
-  // If the voter has sent in a ballot, display the date it was received.
-  if(empty($vd_date)){return FALSE;}
-  $vd_mbdate_index = $vd_date[MT_DATE_INDEX];
-  return $vd_mbdate_index;
 }
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

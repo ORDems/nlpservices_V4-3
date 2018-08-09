@@ -9,6 +9,7 @@
  */
 
 use Drupal\voterdb\NlpTurfs;
+use Drupal\voterdb\NlpMatchback;
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_build_announcement
@@ -40,7 +41,10 @@ function voterdb_build_announcement() {
       '#markup' => $bl_note,
     );
   }
-  $bl_br_date = variable_get('voterdb_br_date', NULL);
+  
+  $matchbackObj = new NlpMatchback();
+  $bl_br_date = $matchbackObj->getLatestMatchbackDate();
+
   if(!empty($bl_br_date)) {
     $form_element['br_date'] = array (
     '#type' => 'markup',

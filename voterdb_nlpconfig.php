@@ -37,7 +37,6 @@ function voterdb_config_form($form, &$form_state) {
     $form_state['voterdb']['pass'] = 'config';
   } 
   
-  //$form_state['voterdb']['county'] = 'Washington';
   //voterdb_debug_msg('pass', $form_state['voterdb']['pass']);
   switch ($form_state['voterdb']['pass']) {
     case 'config':

@@ -91,7 +91,7 @@ function voterdb_candidates_form($form, &$form_state) {
       }
     }
     $form_state['voterdb']['availableCandidates'] = $availableCandidates;
-    voterdb_debug_msg('voterdb', $form_state['voterdb']);
+    //voterdb_debug_msg('voterdb', $form_state['voterdb']);
   }
   switch ($fv_func) {
     case 'add':
@@ -107,7 +107,7 @@ function voterdb_candidates_form($form, &$form_state) {
       
       $candidatesArray = $form_state['voterdb']['candidatesArray'];
       $scopeArray = voterdb_build_candidate_list($candidatesArray);  // func.
-      voterdb_debug_msg('scope array', $scopeArray );
+      //voterdb_debug_msg('scope array', $scopeArray );
       $all = $form_state['voterdb']['ALL'];
       foreach ($scopeArray as $cat => $candidateList) {
         $form['candidates'][$cat] = voterdb_display_candidates($cat,$candidateList,$all); // func.
