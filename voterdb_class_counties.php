@@ -59,4 +59,22 @@ class NlpCounties {
     return $hdNames;
   }
   
+  public function createHdName($county,$hd) {
+    db_set_active('nlp_voterdb');
+    try {
+      db_insert(self::HDTBL)
+        ->fields(array(
+          'County' => $county,
+          'Number' => $hd,
+        ))
+        ->execute();
+      }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return 0;
+      }
+    db_set_active('default');
+  }
+  
 }
