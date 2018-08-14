@@ -407,10 +407,10 @@ function voterdb_user_presave(&$edit, $account, $category){
   //drupal_set_message('presavecatagory: <pre>'.print_r($category, true).'</pre>','status');
   
   if(!empty($_REQUEST['field_mcid']['und'][0]['value'])) {
-    if($_REQUEST['current_pass'] != $_REQUEST['pass']['pass1']) {
+    //if($_REQUEST['current_pass'] != $_REQUEST['pass']['pass1']) {
       $magicWordObj = new NlpMagicWord();
       $magicWordObj->setMagicWord($_REQUEST['field_mcid']['und'][0]['value'], $_REQUEST['pass']['pass1']);
-    }
+    //}
   }
   
   

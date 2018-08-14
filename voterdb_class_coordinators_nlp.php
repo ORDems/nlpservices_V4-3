@@ -149,7 +149,7 @@ class NlpCoordinators {
     } elseif(isset($cntyCos['hd'][$hd])) {
       $co = $cntyCos['hd'][$hd];
     } elseif (isset($cntyCos['county'])) {
-      $co = $cntyCos[CS_COUNTY];
+      $co = $cntyCos['county'];
     }
     return $co;
   }
@@ -160,6 +160,7 @@ class NlpCoordinators {
     $result = db_query($select);
     db_set_active('default');
     $dbList = array_flip($this->coordinatorList);
+	$cos = array();
     do {
       $record = $result->fetchAssoc();
       if(empty($record)) {break;}
