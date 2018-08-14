@@ -10,6 +10,7 @@ use Drupal\voterdb\ApiAuthentication;
 use Drupal\voterdb\NlpResponseCodes;
 use Drupal\voterdb\ApiSurveyQuestions;
 use Drupal\voterdb\NlpSurveyQuestion;
+use Drupal\voterdb\NlpPaths;
 
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -18,27 +19,19 @@ use Drupal\voterdb\NlpSurveyQuestion;
  * 
  */
 function voterdb_create_folders() {
-  $cf_sub_folders = array(VO_TURFPDF_DIR,VO_CALLLIST_DIR,VO_MAILLIST_DIR,VO_INSTRUCTIONS_DIR);
-  // Create a temp folder for files that have a timed existence.
-
-  $cf_temp_dir = 'public://temp';
-
-  file_prepare_directory($cf_temp_dir, FILE_MODIFY_PERMISSIONS | FILE_CREATE_DIRECTORY);
-
-  // Create a folder for more permanent files for NLP Services.
-  $cf_voterdb_dir = 'public://'.VO_DIR;
-  file_prepare_directory($cf_voterdb_dir, FILE_MODIFY_PERMISSIONS | FILE_CREATE_DIRECTORY);
-  
+  $pathsObj = new NlpPaths();
+  $pathsObj->createDir('TEMP',NULL);
+  $pathsObj->createDir('NLP',NULL); 
   $countyNamesObj = new NlpCounties();
   $cf_county_array = $countyNamesObj->getCountyNames();
-  
+  //voterdb_debug_msg(' countynames: ',$cf_county_array);
+  $cf_sub_folders = array('INST','PDF','MAIL','CALL');
   foreach ($cf_county_array as $cf_county) {
-    // Create the county folder.
-    $cf_county_dir = $cf_voterdb_dir.'/'.$cf_county;
-    file_prepare_directory($cf_county_dir, FILE_MODIFY_PERMISSIONS | FILE_CREATE_DIRECTORY);
+    //voterdb_debug_msg(' county: '.$cf_county, '');
+    $pathsObj->createDir('COUNTY',$cf_county); 
     foreach ($cf_sub_folders as $cf_sub_folder) {
-      $cf_sub_dir = $cf_county_dir.'/'.$cf_sub_folder;
-      file_prepare_directory($cf_sub_dir, FILE_MODIFY_PERMISSIONS | FILE_CREATE_DIRECTORY);
+	  //voterdb_debug_msg('   sub: '.$cf_sub_folder, '');
+      $pathsObj->createDir($cf_sub_folder,$cf_county); 
     }
   }
 }

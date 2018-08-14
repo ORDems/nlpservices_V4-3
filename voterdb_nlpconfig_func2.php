@@ -44,7 +44,7 @@ function voterdb_process_vbverify(&$form_state) {
     $surveyQuestionId = $form_state['values']['questionChoice'];
     drupal_set_message('The survey question is selected.','status');
     $questionsArray = $form_state['voterdb']['questionsArray'];
-    voterdb_debug_msg('question: '.$surveyQuestionId,$questionsArray[$surveyQuestionId]);
+    //voterdb_debug_msg('question: '.$surveyQuestionId,$questionsArray[$surveyQuestionId]);
     $questionObj->setSurveyQuestion($questionsArray[$surveyQuestionId],$surveyQuestionId);
   }
   
@@ -77,11 +77,11 @@ function voterdb_process_vbverify(&$form_state) {
   
   if($form_state['values']['voterActivistCode'] > 1) {
     $activistCodes = $form_state['voterdb']['activistCodes'];
-    voterdb_debug_msg('activist codes',$activistCodes);
+    //voterdb_debug_msg('activist codes',$activistCodes);
     //$nlpActivistCodeObj = new NlpActivistCodes();
     $activistCode = $activistCodes[$form_state['values']['voterActivistCode']];
     $activistCode['functionName'] = 'NLPVoter';
-    voterdb_debug_msg('activist code',$activistCode);
+    //voterdb_debug_msg('activist code',$activistCode);
     $nlpActivistCodeObj->setActivistCode($activistCode);
   }
   

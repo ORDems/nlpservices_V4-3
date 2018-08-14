@@ -109,6 +109,7 @@ function voterdb_display_nls_form($form_id, &$form_state) {
     // Show all NLs if the number is small.
     $dn_county = $form_state['voterdb']['county'];
     $dn_nlcnt = $nlsObj->countNls($dn_county);
+    $form_state['voterdb']['nlsCount'] = $dn_nlcnt;
     if($dn_nlcnt < NLS_COUNTY_MAX) {
       $form_state['voterdb']['hd-new'] = 0;
     }
@@ -218,6 +219,7 @@ function voterdb_display_nls_form($form_id, &$form_state) {
   
   return $form;
 }
+
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_display_nls_form_validate
  *
@@ -235,103 +237,115 @@ function voterdb_display_nls_form_validate($form, &$form_state) {
   // No validation needed for the HD selection.
   $nv_element_clicked = $form_state['triggering_element']['#name'];
   //voterdb_debug_msg('element clicked', $nv_element_clicked);
-  if ($nv_element_clicked == 'hd-submit' OR 
-      $nv_element_clicked == 'download-csv' OR 
-      $nv_element_clicked == 'sort-submit' OR 
-      $nv_element_clicked == 'csv-done') 
-    {return;}
-  // The triggering element names have the form type-mcid.
-  $nv_id_array = explode('-', $nv_element_clicked);
-  $nv_mcid = $nv_id_array[1];  // MCID of affected NL.
-  $nv_status = $nlsObj->getNlsStatus($nv_mcid,$nv_county);
-  //
-  $nv_value = $form_state['triggering_element']['#value'];
-  //voterdb_debug_msg('value', $nv_value);
+  //voterdb_debug_msg('values', $form_state['values']['hdselect']);
   
-  //$nv_history = array(DZ_NL=>NY_SIGNEDUP,DZ_TC=>NY_TURFCHECKEDIN,DZ_TD=>NY_DELIVEREDTURF);
-  // Process the checkbox, select or textbox for this NL.
-  switch ($nv_id_array[0]) {
-    case 'TD':  // Turf Delivered.
-      // If the turf delivered status is set, update the date the turf was delivered.
-      if($nv_value) {
-        $turfsObj = new NlpTurfs();
-        $turfsObj->setAllTurfsDelivered($nv_mcid,$nv_county);
+  switch ($nv_element_clicked) {
+    case 'hd-submit':   
+      if($form_state['values']['hdselect'] == 0 AND $form_state['voterdb']['nlsCount'] > NLS_ALL_MAX) {
+        form_set_error('hdselect','There are too many NLs to display them all.');
       }
-      
-      $nv_cell_display = ($nv_value)?'Y':'';
-      $nv_status['turfDelivered'] = $nv_cell_display;
-      
-      $nlsObj->setNlsStatus($nv_status);
-      //
-      
-      $form_state['voterdb']['nl-list'][$nv_mcid]['status']['turfDelivered'] = $nv_cell_display;
-      
-      $statusHistory['mcid'] = $nv_mcid;
-      $statusHistory['county'] = $nv_county;
-      $statusHistory['status'] = $nlsObj::HISTORYDELIVEREDTURF;
-      $statusHistory['nlFirstName'] = $form_state['voterdb']['nlRecords'][$nv_mcid]['firstName'];
-      $statusHistory['nlLastName'] = $form_state['voterdb']['nlRecords'][$nv_mcid]['lastName'];
-      
-      $nlsObj->setStatusHistory($statusHistory);
-      //voterdb_nl_status_history($nv_county,$nv_mcid,NY_DELIVEREDTURF);
-      
-      
-      break;
 
-    case 'TC':  // Turf cut.
+      return;
+    case 'ownload-csv':
+    case 'sort-submit':
+    case 'csv-done':
+      return;
+    default:
+      // The triggering element names have the form type-mcid.
+      $nv_id_array = explode('-', $nv_element_clicked);
+      $nv_mcid = $nv_id_array[1];  // MCID of affected NL.
+      $nv_status = $nlsObj->getNlsStatus($nv_mcid,$nv_county);
+      //
+      $nv_value = $form_state['triggering_element']['#value'];
+      //voterdb_debug_msg('value', $nv_value);
 
-      $nv_cell_display = ($nv_value)?'Y':'';
-      $nv_status['turfCut'] = $nv_cell_display;
-      
-      $nlsObj->setNlsStatus($nv_status);
-      //
-      
-      $form_state['voterdb']['nl-list'][$nv_mcid]['status']['turfCut'] = $nv_cell_display;
-      
-      $statusHistory['mcid'] = $nv_mcid;
-      $statusHistory['county'] = $nv_county;
-      $statusHistory['status'] = $nlsObj::HISTORYTURFCHECKEDIN;
-      $statusHistory['nlFirstName'] = $form_state['voterdb']['nlRecords'][$nv_mcid]['firstName'];
-      $statusHistory['nlLastName'] = $form_state['voterdb']['nlRecords'][$nv_mcid]['lastName'];
-      $nlsObj->setStatusHistory($statusHistory);
-      //voterdb_nl_status_history($nv_county,$nv_mcid,NY_TURFCHECKEDIN);
-      break;
-    
-    case 'TB':  // Notes (text box).
-      $nv_trunc = substr($nv_value,0,$nlsObj::NOTESMAX);
-      $nv_status['notes'] = $nv_trunc;
-      
-      $nlsObj->setNlsStatus($nv_status);
-      
-      //
-      $form_state['voterdb']['nlRecords'][$nv_mcid]['status']['notes'] = $nv_trunc;
-      break;
-    
-    case 'CO':  // Contact type (select); canvass, post card, phone.
-      $nv_status['contact'] = $nv_value;
-      $nlsObj->setNlsStatus($nv_status);
-      $form_state['voterdb']['nl-list'][$nv_mcid]['status']['contact'] = $nv_value;
-      break;
-    
-    case 'AS':  // Ask type (select); Default(NULL), Asked, Yes, No, Quit.
-      $nv_status['nlSignup'] = '';
-      if($nv_value == 'yes') {
-        $nv_status['nlSignup'] = 'Y';
+      //$nv_history = array(DZ_NL=>NY_SIGNEDUP,DZ_TC=>NY_TURFCHECKEDIN,DZ_TD=>NY_DELIVEREDTURF);
+      // Process the checkbox, select or textbox for this NL.
+      switch ($nv_id_array[0]) {
+        case 'TD':  // Turf Delivered.
+          // If the turf delivered status is set, update the date the turf was delivered.
+          if($nv_value) {
+            $turfsObj = new NlpTurfs();
+            $turfsObj->setAllTurfsDelivered($nv_mcid,$nv_county);
+          }
+
+          $nv_cell_display = ($nv_value)?'Y':'';
+          $nv_status['turfDelivered'] = $nv_cell_display;
+
+          $nlsObj->setNlsStatus($nv_status);
+          //
+
+          $form_state['voterdb']['nl-list'][$nv_mcid]['status']['turfDelivered'] = $nv_cell_display;
+
+          $statusHistory['mcid'] = $nv_mcid;
+          $statusHistory['county'] = $nv_county;
+          $statusHistory['status'] = $nlsObj::HISTORYDELIVEREDTURF;
+          $statusHistory['nlFirstName'] = $form_state['voterdb']['nlRecords'][$nv_mcid]['firstName'];
+          $statusHistory['nlLastName'] = $form_state['voterdb']['nlRecords'][$nv_mcid]['lastName'];
+
+          $nlsObj->setStatusHistory($statusHistory);
+          //voterdb_nl_status_history($nv_county,$nv_mcid,NY_DELIVEREDTURF);
+
+
+          break;
+
+        case 'TC':  // Turf cut.
+
+          $nv_cell_display = ($nv_value)?'Y':'';
+          $nv_status['turfCut'] = $nv_cell_display;
+
+          $nlsObj->setNlsStatus($nv_status);
+          //
+
+          $form_state['voterdb']['nl-list'][$nv_mcid]['status']['turfCut'] = $nv_cell_display;
+
+          $statusHistory['mcid'] = $nv_mcid;
+          $statusHistory['county'] = $nv_county;
+          $statusHistory['status'] = $nlsObj::HISTORYTURFCHECKEDIN;
+          $statusHistory['nlFirstName'] = $form_state['voterdb']['nlRecords'][$nv_mcid]['firstName'];
+          $statusHistory['nlLastName'] = $form_state['voterdb']['nlRecords'][$nv_mcid]['lastName'];
+          $nlsObj->setStatusHistory($statusHistory);
+          //voterdb_nl_status_history($nv_county,$nv_mcid,NY_TURFCHECKEDIN);
+          break;
+
+        case 'TB':  // Notes (text box).
+          $nv_trunc = substr($nv_value,0,$nlsObj::NOTESMAX);
+          $nv_status['notes'] = $nv_trunc;
+
+          $nlsObj->setNlsStatus($nv_status);
+
+          //
+          $form_state['voterdb']['nlRecords'][$nv_mcid]['status']['notes'] = $nv_trunc;
+          break;
+
+        case 'CO':  // Contact type (select); canvass, post card, phone.
+          $nv_status['contact'] = $nv_value;
+          $nlsObj->setNlsStatus($nv_status);
+          $form_state['voterdb']['nl-list'][$nv_mcid]['status']['contact'] = $nv_value;
+          break;
+
+        case 'AS':  // Ask type (select); Default(NULL), Asked, Yes, No, Quit.
+          $nv_status['nlSignup'] = '';
+          if($nv_value == 'yes') {
+            $nv_status['nlSignup'] = 'Y';
+          }
+          $nv_status['asked'] = $nv_value;
+          $form_state['voterdb']['nl-list'][$nv_mcid]['status']['asked'] = $nv_value;
+          //
+          $nlsObj->setNlsStatus($nv_status);
+
+          $statusHistory['mcid'] = $nv_mcid;
+          $statusHistory['county'] = $nv_county;
+          $statusHistory['status'] = $nlsObj->askHistory[$nv_value];
+          $statusHistory['nlFirstName'] = $form_state['voterdb']['nlRecords'][$nv_mcid]['firstName'];
+          $statusHistory['nlLastName'] = $form_state['voterdb']['nlRecords'][$nv_mcid]['lastName'];
+          $nlsObj->setStatusHistory($statusHistory);
+          //voterdb_nl_status_history($nv_county,$nv_mcid,$nv_ask_status);
+          break;
       }
-      $nv_status['asked'] = $nv_value;
-      $form_state['voterdb']['nl-list'][$nv_mcid]['status']['asked'] = $nv_value;
-      //
-      $nlsObj->setNlsStatus($nv_status);
-      
-      $statusHistory['mcid'] = $nv_mcid;
-      $statusHistory['county'] = $nv_county;
-      $statusHistory['status'] = $nlsObj->askHistory[$nv_value];
-      $statusHistory['nlFirstName'] = $form_state['voterdb']['nlRecords'][$nv_mcid]['firstName'];
-      $statusHistory['nlLastName'] = $form_state['voterdb']['nlRecords'][$nv_mcid]['lastName'];
-      $nlsObj->setStatusHistory($statusHistory);
-      //voterdb_nl_status_history($nv_county,$nv_mcid,$nv_ask_status);
       break;
-  }
+    }
+
   return;
 }
 

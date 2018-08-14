@@ -16,6 +16,7 @@ require_once "voterdb_class_survey_question_nlp.php";
 require_once "voterdb_class_survey_response_nlp.php";
 require_once "voterdb_class_activist_codes_api.php";
 require_once "voterdb_class_activist_codes_nlp.php";
+require_once "voterdb_class_paths.php";
 
 use Drupal\voterdb\ApiAuthentication;
 
@@ -233,6 +234,7 @@ function voterdb_config_form_submit($form, &$form_state) {
       
       if ($fv_trigger == 'configsubmit') {
         // Make sure all the folders are available.
+		//voterdb_debug_msg('createfolders', '');
         voterdb_create_folders();
 
         // Set (or reset) all the application variables.

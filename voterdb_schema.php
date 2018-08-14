@@ -120,6 +120,16 @@
     'primary key' => array( 'MCID', ),
   );
   
+
+  $schema['magic_word'] = array( 
+    'description' => 'Magic word chosen by NL.', 
+    'fields' => array(
+      'MCID' => array( 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, 'not null' => TRUE, ),
+      'MagicWord' => array( 'type' => 'varchar', 'length' => 128, 'not null' => TRUE, ),
+    ),
+    'primary key' => array( 'MCID', ),
+  );
+
   
   $schema['magic_words'] = array( 
     'description' => 'List of 6-letter scrabble words.', 
@@ -227,7 +237,7 @@
     'description' => 'Response codes available in VoteBuilder.', 
     'fields' => array(
       'ContactType' => array( 'type' => 'varchar', 'length' => 16, 'not null' => TRUE, ),
-      'Name' => array( 'type' => 'varchar', 'length' => 16, 'not null' => TRUE, ),
+      'Name' => array( 'type' => 'varchar', 'length' => 16, ),
       'Code' => array( 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, 'not null' => TRUE, ),
     ),
     'indexes' => array( 
@@ -307,7 +317,7 @@
       'County' => array( 'mysql_type' => 'enum('.$counties.')', 'not null' => TRUE, ),
       'MCID' => array( 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, 'not null' => TRUE, ),
       'NLlname' => array( 'type' => 'varchar', 'length' => 32, 'not null' => TRUE, ),
-      'NLfame' => array( 'type' => 'varchar', 'length' => 32, 'not null' => TRUE, ),
+      'NLfname' => array( 'type' => 'varchar', 'length' => 32, 'not null' => TRUE, ),
       'Delivered' => array( 'mysql_type' => 'date', ),
       'LastAccess' => array( 'mysql_type' => 'date',  ),
       'ReminderNeeded' => array( 'type' => 'char', 'length' => 1, ),
@@ -361,10 +371,10 @@
       'CellPhone' => array( 'type' => 'varchar', 'length' => 32, ),
       'mAddress' => array( 'type' => 'varchar', 'length' => 60, ),
       'mCity' => array( 'type' => 'varchar', 'length' => 20, ),
-      'mStsate' => array( 'type' => 'char', 'length' => 3, ),
+      'mState' => array( 'type' => 'char', 'length' => 3, ),
       'mZip' => array( 'type' => 'char', 'length' => 6, ),
       'Voting' => array( 'type' => 'varchar', 'length' => 40, ),
-      'DateReq' => array( 'mysql_type' => 'date', ),
+      'DateReg' => array( 'mysql_type' => 'date', ),
       'DORCurrent' => array( 'mysql_type' => 'date', ),
       'Party' => array( 'type' => 'char', 'length' => 2, ),
     ),
@@ -379,7 +389,7 @@
       'VANID' => array( 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, 'not null' => TRUE, ),
       'County' => array( 'mysql_type' => 'enum('.$counties.')', 'not null' => TRUE, ),
       'MCID' => array( 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, 'not null' => TRUE, ),
-      'TurfIndex' => array( 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, 'not null' => TRUE, ),
+      'NLTurfIndex' => array( 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, 'not null' => TRUE, ),
       'Status' => array( 'type' => 'char', 'length' => 1, ),
     ),
     'primary key' => array( 'indx', ),

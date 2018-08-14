@@ -34,44 +34,6 @@ function voterdb_hd_build($hb_county_defs) {
 }
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * voterdb_create_front_page
- *  
- *
- */
-function voterdb_create_front_page($fp_name,$fp_counties) {
-  $fp_county_names = array_keys($fp_counties);
-  $fp_module_path = drupal_get_path('module','voterdb');
-  $fp_front_page = $fp_module_path."/voterdb_".$fp_name.'.txt';
-  $fp_front_page_fh = fopen($fp_front_page,"w");
-  $fp_tbl_start = '<p>Please click the your county name below to take you to the appropriate Neighborhood Leader Login.</p>
-     <table style="width: 550px;"><tbody>';
-  fwrite($fp_front_page_fh, $fp_tbl_start);
-
-  $fp_col = 0;
-  foreach ($fp_county_names as $fp_county_name) {
-    if($fp_col == 0) {
-      fwrite($fp_front_page_fh, '<tr>');
-    } 
-    $fp_td = '<td style="width: 100px;"><a href="/nlpdataentry?County='.
-      $fp_county_name.'">'.$fp_county_name.'</a></td>';
-    fwrite($fp_front_page_fh, $fp_td);
-    if ($fp_col == 5) {
-      fwrite($fp_front_page_fh, '</tr>');
-      $fp_col = -1;
-    }
-    $fp_col++;
-  }
-  if($fp_col != 0) {
-    for ($i = $fp_col; $i < 5; $i++) {
-      fwrite($fp_front_page_fh, '<td></td>');
-    }
-  }
-  $fp_tbl_end = '</tbody></table><!--break-->';
-  fwrite($fp_front_page_fh, $fp_tbl_end);
-  fclose($fp_front_page_fh);
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_create_node
  * 
  * Create a standard Drupal page for display of some content that the user
@@ -182,6 +144,7 @@ function voterdb_prepare_county($pc_file_name){
  */
 function voterdb_county_enum($ce_county_defs) {
   //$ce_enum = "ENUM(";
+  $ce_enum = "";
   $ce_counties = array_keys($ce_county_defs);
   $ce_first = TRUE;
   foreach ($ce_counties as $ce_county) {
@@ -213,7 +176,7 @@ function voterdb_setup_form($form_id, &$form_state) {
     '#markup' => '<b>** WARNING **</b> This procedure rebuilds the database
       for the NLP program.
       All data associated with a prior election will be lost.  If you want
-      to retain any data, please use the <b>voterdb_download_data</b> page to
+      to retain any data, please use the <b>"Export NL status report "</b> page to
       export and save the NL entered canvas results.'
   );
   $form['deletedatabase'] = array(
@@ -308,7 +271,7 @@ function voterdb_setup_form_submit($form, &$form_state) {
   voterdb_create_node($pathsObj::CALLLIST_PAGE,'GOTV Call List','php',FALSE);
   voterdb_create_node($pathsObj::MAILLIST_PAGE,'Post Card Mailing List','php',FALSE);
   voterdb_create_node($pathsObj::ERROR_PAGE,'NLP Login','txt',FALSE);
-  voterdb_create_front_page($pathsObj::FRONT_PAGE, $fs_counties);
+  //voterdb_create_front_page($pathsObj::FRONT_PAGE, $fs_counties);
   voterdb_create_node($pathsObj::FRONT_PAGE,'Neighborhood Leader Login','txt',TRUE);
   return $output;
 }
