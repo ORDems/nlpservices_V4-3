@@ -4,7 +4,7 @@
  * Contains Drupal\voterdb\NlpLegFix.
  */
 /*
- * Name: voterdb_class_legislative_fixes.php   V4.2  6/5/18
+ * Name: voterdb_class_legislative_fixes.php   V4.3  8/20/18
  */
 
 namespace Drupal\voterdb;
@@ -27,9 +27,9 @@ class NlpLegFix{
     $fields = array();
     foreach ($fix as $nlpKey => $dbField) {
       if(isset($fix[$nlpKey])) {
-        $fields[$dbField] = $fix[$nlpKey];
+        $fields[$this->legList[$nlpKey]] = $dbField;
       } else {
-        $fields[$dbField] = NULL;
+        $fields[$this->legList[$nlpKey]] = NULL;
       }
     }
     try {
