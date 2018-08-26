@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_class_drupl_user.php   V4.1.1 6/23/18
+ * Name: voterdb_class_drupal_user.php   V4.3 8/21/18
  *
  */
 namespace Drupal\voterdb;
@@ -40,6 +40,7 @@ class NlpDrupalUser {
   public function getCurrentUser() {
     $accountObj = user_uid_optional_load();
     $user = $this->extractUserInfo($accountObj);
+    $user['roles'] = $accountObj->roles;
   return $user;
   }
   
@@ -58,10 +59,44 @@ class NlpDrupalUser {
         $accountObj = user_load($uid);
         //voterdb_debug_msg('accountobj', $accountObj, __FILE__, __LINE__);
         $userArray[$uid] = $this->extractUserInfo($accountObj);
+        $userArray[$uid]['roles'] = $accountObj->roles;
         //voterdb_debug_msg('userarray', $userArray, __FILE__, __LINE__);
       }
     }
     return $userArray;
+  }
+  
+  public function getCounties($queryObj) {
+    //$query = new EntityFieldQuery();
+    //voterdb_debug_msg('entityquery', $this->entityFieldQueryObj);
+    $queryObj->entityCondition('entity_type', 'user')
+      ->addMetaData('account', user_load(1));       
+    $result = $queryObj->execute();
+    //voterdb_debug_msg('result', $result, __FILE__, __LINE__);
+    $counties = array();
+    if(!empty($result)) {
+      foreach ($result['user'] as $countyUserObj) {
+        $uid = $countyUserObj->uid;
+        $accountObj = user_load($uid);
+        //voterdb_debug_msg('accountobj', $accountObj);
+        
+        if(!empty($accountObj->field_county)) {
+          $countyField = $accountObj->field_county; 
+          $county = $countyField['und'][0]['value'];
+          //voterdb_debug_msg('county: '.$county, '');
+          if(!empty($county)) {
+            if(empty($counties['names'][$county])) {
+              $counties['names'][$county] = $county;
+              $counties['counts'][$county] = 1;
+            } else {
+              $counties['counts'][$county]++;
+            }
+          }
+        }
+        //voterdb_debug_msg('userarray', $counties
+      }
+    }
+    return $counties;
   }
   
   public function getUserByMcid($queryObj,$mcid) {
@@ -75,7 +110,7 @@ class NlpDrupalUser {
       ->fieldCondition('field_mcid', 'value', $mcid)
       ->addMetaData('account', user_load(1));       
     $result = $queryObj->execute();
-    //voterdb_debug_msg('result', $result, __FILE__, __LINE__);
+    //voterdb_debug_msg('result', $result);
     if(empty($result)) {return NULL;}
     $countyUserObj = current($result['user']);
     $uid = $countyUserObj->uid;

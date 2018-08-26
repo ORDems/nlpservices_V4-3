@@ -4,7 +4,7 @@
  * Contains Drupal\voterdb\NlpNls.
  */
 /*
- * Name: voterdb_class_nls.php   V4.3  8/7/18
+ * Name: voterdb_class_nls.php   V4.3  8/26/18
  */
 
 namespace Drupal\voterdb;
@@ -440,7 +440,11 @@ class NlpNls {
       //voterdb_debug_msg('nlstatus', $nlStaus);
       $askListFlip = array_flip($this->askList);
       //voterdb_debug_msg('asklistflipped', $askListFlip);
-      $nlStaus['asked'] = $askListFlip[$nlStaus['asked']];
+      if(empty($nlStaus['asked'])) {
+        $nlStaus['asked'] = '-';
+      } else {
+        $nlStaus['asked'] = $askListFlip[$nlStaus['asked']];
+      }
     }
     db_set_active('default');
     return $nlStaus;

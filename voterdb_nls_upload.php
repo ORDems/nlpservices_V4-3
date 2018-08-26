@@ -1,6 +1,6 @@
 <?php
 /**
- * Name: voterdb_nls_upload.php    V4.2 6/5/18
+ * Name: voterdb_nls_upload.php    V4.3 8/26/18
  * 
  * This include file contains the code to upload a list of potential NLs from
  * MyCampaign into a MySQL database.  We use this data to verify spelling and
@@ -93,6 +93,15 @@ function voterdb_prepare_NL_database($form_state){
       } else {
         drupal_set_message("Opps, HD or Pct is missing for ".$pn_NLnickname." ".$pn_NLlname,"warning");
         $pn_NLHD = $pn_pct = 0;
+      }
+    } else {
+      if(variable_get('voterdb_state', 'Select') == 'Oregon') {
+        $pn_pct_no = explode('-',$pn_pct);
+        if(isset($pn_pct_no[1])) {
+          $pn_pct = $pn_pct_no[1];  // Discard the county name.
+        } else {
+          $pn_pct = 0; // Probably someone altering the export file!
+        }
       }
     }
         
