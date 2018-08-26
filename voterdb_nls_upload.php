@@ -1,6 +1,6 @@
 <?php
 /**
- * Name: voterdb_nls_upload.php    V4.2 6/5/18
+ * Name: voterdb_nls_upload.php    V4.3 8/26/18
  * 
  * This include file contains the code to upload a list of potential NLs from
  * MyCampaign into a MySQL database.  We use this data to verify spelling and
