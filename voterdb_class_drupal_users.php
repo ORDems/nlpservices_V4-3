@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_class_drupl_user.php   V4.3 8/21/18
+ * Name: voterdb_class_drupal_user.php   V4.3 8/21/18
  *
  */
 namespace Drupal\voterdb;
