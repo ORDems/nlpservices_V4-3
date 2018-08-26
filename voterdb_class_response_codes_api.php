@@ -4,7 +4,7 @@
  * Contains Drupal\voterdb\ApiResponseCodes.
  */
 /*
- * Name: voterdb_class_resonse_codes_api.php   V4.2 6/20/18
+ * Name: voterdb_class_resonse_codes_api.php   V4.3 8/25/18
  */
 
 namespace Drupal\voterdb;
@@ -14,6 +14,7 @@ class ApiResponseCodes {
   private $expectedContactTypes = array(
     'Walk' => array(
       array('text'=>'Left Message/Lit','weight'=>1),
+      array('text'=>'Not Home','weight'=>2),
       array('text'=>'Refused','weight'=>2),
       array('text'=>'Inaccessible','weight'=>3),
       array('text'=>'Deceased','weight'=>7),

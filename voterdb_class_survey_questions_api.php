@@ -106,6 +106,7 @@ class ApiSurveyQuestions {
         $this->responses[0]->action = ($surveyResponse['action']==1)?'Apply':'Remove';
         $this->canvassContext->dateCanvassed = $surveyResponse['dateCanvassed'];
         //$this->responses = NULL;
+        //watchdog('voterdb_surveyquesitonsapi', 'reponses: @rec', array('@rec' =>  print_r($this->responses, true)),WATCHDOG_DEBUG);
         break;
       case 'Contact':
         //$this->responses[0]->type = self::SURVEYRESPONSE;

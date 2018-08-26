@@ -80,7 +80,7 @@ class NlpMagicWord {
     db_set_active('default');
     $magicWord = $result->fetchAssoc();
     if(empty($magicWord)) {return NULL;}
-    return $magicWord['magicWord'];
+    return $magicWord['MagicWord'];
   }
   
 }

@@ -120,6 +120,7 @@ function voterdb_cron_results_notify($item) {
           break;
         case 'Activist':
           //watchdog('voterdb_results_notify', 'survey obj: @rec', array('@rec' =>  print_r($apiSurveyQuestionObj, true)),WATCHDOG_DEBUG);
+          //watchdog('voterdb_results_notify', 'voterreport: @rec', array('@rec' =>  print_r($voterReport, true)),WATCHDOG_DEBUG);
           $surveyResponse['contactType'] = $apiSurveyQuestionObj::CONTACTTYPEWALK;
           $surveyResponse['dateCanvassed'] = NULL;
           $surveyResponse['vanid'] = $vanid;
