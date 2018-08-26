@@ -94,6 +94,15 @@ function voterdb_prepare_NL_database($form_state){
         drupal_set_message("Opps, HD or Pct is missing for ".$pn_NLnickname." ".$pn_NLlname,"warning");
         $pn_NLHD = $pn_pct = 0;
       }
+    } else {
+      if(variable_get('voterdb_state', 'Select') == 'Oregon') {
+        $pn_pct_no = explode('-',$pn_pct);
+        if(isset($pn_pct_no[1])) {
+          $pn_pct = $pn_pct_no[1];  // Discard the county name.
+        } else {
+          $pn_pct = 0; // Probably someone altering the export file!
+        }
+      }
     }
         
     $nlRecord['mcid'] = $pn_MCID;

@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Name:  voterdb_turf_deliver.php               V4.3 7/30/18
+ * Name:  voterdb_turf_deliver.php               V4.3 8/25/18
  */
 require_once "voterdb_constants_voter_tbl.php";
 require_once "voterdb_constants_nls_tbl.php";
@@ -16,6 +16,7 @@ require_once "voterdb_class_nls.php";
 require_once "voterdb_class_drupal_users.php";
 require_once "voterdb_class_coordinators_nlp.php";
 require_once "voterdb_class_instructions_nlp.php";
+require_once "voterdb_class_magic_word.php";
 
 use Drupal\voterdb\NlpButton;
 use Drupal\voterdb\NlpTurfs;
@@ -24,6 +25,7 @@ use Drupal\voterdb\NlpNls;
 use Drupal\voterdb\NlpDrupalUser;
 use Drupal\voterdb\NlpCoordinators;
 use Drupal\voterdb\NlpInstructions;
+use Drupal\voterdb\NlpMagicWord;
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_hd_selected_callback
@@ -312,10 +314,10 @@ function voterdb_turf_deliver_form_submit($form, &$form_state) {
   );
   $coordinatorsObj = new NlpCoordinators();
   $df_region['coordinators'] = $coordinatorsObj->getAllCoordinators();
-  voterdb_debug_msg('region', $df_region);
+  //voterdb_debug_msg('region', $df_region);
   
   $df_coordinator = $coordinatorsObj->getCoordinator($df_region);
-  voterdb_debug_msg('coordinator', $df_coordinator);
+  //voterdb_debug_msg('coordinator', $df_coordinator);
 
   if (!empty($df_coordinator)) {
     $df_cofname = $df_coordinator['firstName'];
@@ -323,6 +325,13 @@ function voterdb_turf_deliver_form_submit($form, &$form_state) {
     $df_phone = $df_coordinator['phone'];
     $df_semail = $df_coordinator['email'];
   }
+  
+  $magicWordObj = new NlpMagicWord();
+  $magicWord = $magicWordObj->getMagicWord($df_mcid);
+  if(empty($magicWord)) {
+    $magicWord = 'Your Password';
+  }
+  
   // Construct the message.
   $df_message = "<p>" . $df_nl['nickname'] . ",</p>";
   $df_message .= t("<p>" . 'Thanks for helping establish the Neighborhood Leader Program in @grp County.&nbsp; ', array('@grp' => $df_county));
@@ -350,7 +359,7 @@ function voterdb_turf_deliver_form_submit($form, &$form_state) {
           'Click that link and print the list.' . '</p>');
   $df_message .= t('<p><a href="' . $base_url . '" target="_blank">Neighborhood Leader Login</a></p>');
   $df_message .= t('<p>' . 'Your login name is: @name ' . '</p>', array('@name' => $user['userName']));
-  $df_message .= t('<p>' . 'The password is: your password' . '</p>');
+  $df_message .= t('<p>' . 'The password is: @pass' . '</p>', array('@pass' => $magicWord));
   // Add the optional note.
   if (!empty($df_plain_note)) {
     $df_message .= '<p>' . $df_plain_note . '</p>';
