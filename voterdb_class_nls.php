@@ -4,7 +4,7 @@
  * Contains Drupal\voterdb\NlpNls.
  */
 /*
- * Name: voterdb_class_nls.php   V4.3  8/7/18
+ * Name: voterdb_class_nls.php   V4.3  8/26/18
  */
 
 namespace Drupal\voterdb;

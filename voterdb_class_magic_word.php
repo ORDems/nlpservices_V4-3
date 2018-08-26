@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_class_magic_word.php   V4.2 7/13/18
+ * Name: voterdb_class_magic_word.php   V4.3 8/26/18
  *
  */
 namespace Drupal\voterdb;
