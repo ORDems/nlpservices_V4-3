@@ -89,13 +89,24 @@ function voterdb_build_count_display ($cd_county,$cd_cnts) {
       <th style="width:100px;">Participation</th></tr></thead><tbody>';
 
   $cd_hdr = ($cd_county == "NLP")?"All NLP Counties":"County";
-  $cd_out .= '<tr><td style="text-align: left;">'.$cd_hdr.'</td>
-              <td>'.$cd_cnts['all'].'</td>
-              <td>'.$cd_cnts['all-br'].'</td><td>'.$cd_cnts['all-pc'].'</td></tr>';
-  $cd_out .= '<tr><td style="text-align: left;">Rep</td><td>'.$cd_cnts['rep'].'</td>
-              <td>'.$cd_cnts['rep-br'].'</td><td>'.$cd_cnts['rep-pc'].'</td></tr>';
-  $cd_out .= '<tr><td style="text-align: left;">Dem</td><td>'.$cd_cnts['dem'].'</td>
-              <td>'.$cd_cnts['dem-br'].'</td><td>'.$cd_cnts['dem-pc'].'</td></tr>';
+    
+  if(!isset($cd_cnts['all'])) {
+     $cd_out .= '<tr><td style="text-align: left;">'.$cd_hdr.'</td>
+          <td></td>
+          <td></td><td></td></tr>';
+    $cd_out .= '<tr><td style="text-align: left;">Rep</td><td></td>
+          <td></td><td></td></tr>';
+    $cd_out .= '<tr><td style="text-align: left;">Dem</td><td></td>
+          <td></td><td></td></tr>';
+  } else {
+    $cd_out .= '<tr><td style="text-align: left;">'.$cd_hdr.'</td>
+          <td>'.$cd_cnts['all'].'</td>
+          <td>'.$cd_cnts['all-br'].'</td><td>'.$cd_cnts['all-pc'].'</td></tr>';
+    $cd_out .= '<tr><td style="text-align: left;">Rep</td><td>'.$cd_cnts['rep'].'</td>
+          <td>'.$cd_cnts['rep-br'].'</td><td>'.$cd_cnts['rep-pc'].'</td></tr>';
+    $cd_out .= '<tr><td style="text-align: left;">Dem</td><td>'.$cd_cnts['dem'].'</td>
+          <td>'.$cd_cnts['dem-br'].'</td><td>'.$cd_cnts['dem-pc'].'</td></tr>';
+  }
 
   $cd_out .= '<tr><td style="text-align: left;">NLP</td><td>'.$cd_cnts['vtr'].'</td>
               <td>'.$cd_cnts['vtr-br'].'</td><td>'.$cd_cnts['vtr-pc'].'</td></tr>';
