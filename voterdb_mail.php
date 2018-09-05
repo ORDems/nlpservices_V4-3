@@ -1,6 +1,6 @@
 <?php
 /**
- * Name:  voteredb_mail.php     V4.2  7/17/18
+ * Name:  voteredb_mail.php     V4.3  9/1/18
  * @file
  */
 
@@ -20,7 +20,7 @@ function voterdb_mail_alter(&$message) {
       'langcode' => $message['language']->language,
     );
     $ma_from = variable_get('voterdb_email', 'notifications@nlpservices.org');
-    $signature = t('<br>If you recieved this email in error, please forward it to '
+    $signature = t('<br>If you received this email in error, please forward it to '
       . $ma_from . " and we will remove you from future emails.", array(), $options);
     if (is_array($message['body'])) {
       $message['body'][] = $signature;
