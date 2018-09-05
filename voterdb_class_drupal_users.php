@@ -9,12 +9,14 @@ require_once "voterdb_debug.php";
 class NlpDrupalUser {
   
   const NLPROLE = 'neighborhood leader';
-  /*
-  public function __construct($entityFieldQueryObj) {
-    $this->entityFieldQueryObj = empty($entityFieldQueryObj)?NULL:$entityFieldQueryObj;
-  }
-   * 
-   */
+  
+  private $searchFields = array(
+    'mcid'=>'field_mcid',
+    'firstName'=>'field_firstname',
+    'lastName'=>'field_lastname',
+    'userName'=>'name',
+    'email'=>'mail',
+  );
   
   private function extractUserInfo($accountObj) {
     //voterdb_debug_msg('extract accountobj', $accountObj, __FILE__, __LINE__);
@@ -28,9 +30,9 @@ class NlpDrupalUser {
     $user['email'] = $accountObj->mail;
     $user['userName'] = $accountObj->name;
     $user['uid'] = $uid;
-    $user['firstName'] = $firstName['und'][0]['value'];
-    $user['lastName'] = $lastName['und'][0]['value'];
-    $user['phone'] = $phone['und'][0]['value'];
+    $user['firstName'] = (empty($mcid))?NULL:$firstName['und'][0]['value'];
+    $user['lastName'] = (empty($mcid))?NULL:$lastName['und'][0]['value'];
+    $user['phone'] = (empty($mcid))?NULL:$phone['und'][0]['value'];
     $user['mcid'] = (empty($mcid))?NULL:$mcid['und'][0]['value'];
     $user['county'] = (empty($county))?NULL:$county['und'][0]['value'];
     $user['sharedEmail'] = (empty($sharedEmail))?NULL:$sharedEmail['und'][0]['value'];
@@ -49,6 +51,31 @@ class NlpDrupalUser {
     //voterdb_debug_msg('entityquery', $this->entityFieldQueryObj, __FILE__, __LINE__);
     $queryObj->entityCondition('entity_type', 'user')
       ->fieldCondition('field_county', 'value', $county)
+      ->addMetaData('account', user_load(1));       
+    $result = $queryObj->execute();
+    //voterdb_debug_msg('result', $result, __FILE__, __LINE__);
+    $userArray = array();
+    if(!empty($result)) {
+      foreach ($result['user'] as $countyUserObj) {
+        $uid = $countyUserObj->uid;
+        $accountObj = user_load($uid);
+        //voterdb_debug_msg('accountobj', $accountObj, __FILE__, __LINE__);
+        $userArray[$uid] = $this->extractUserInfo($accountObj);
+        $userArray[$uid]['roles'] = $accountObj->roles;
+        //voterdb_debug_msg('userarray', $userArray, __FILE__, __LINE__);
+      }
+    }
+    return $userArray;
+  }
+  
+  
+  public function searchUsers($queryObj,$field,$value) {
+    if(empty($this->searchFields[$field])) {return NULL;}
+    $drupalField = $this->searchFields[$field];
+    //$query = new EntityFieldQuery();
+    //voterdb_debug_msg('entityquery', $this->entityFieldQueryObj, __FILE__, __LINE__);
+    $queryObj->entityCondition('entity_type', 'user')
+      ->fieldCondition($drupalField, 'value', $value,'CONTAINS')
       ->addMetaData('account', user_load(1));       
     $result = $queryObj->execute();
     //voterdb_debug_msg('result', $result, __FILE__, __LINE__);

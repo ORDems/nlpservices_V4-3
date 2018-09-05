@@ -4,7 +4,7 @@
  * Contains Drupal\voterdb\NlpVoters.
  */
 /*
- * Name: voterdb_class_voters.php   V4.3  8/8/18
+ * Name: voterdb_class_voters.php   V4.3  8/29/18
  */
 
 namespace Drupal\voterdb;
@@ -68,7 +68,38 @@ class NlpVoters {
     'party' => 'Party',
   );
   
+  public function lockVoters() {
+    $locked = FALSE;
+    do {
+      if (lock_acquire('voterdb_turf_commit')) {
+        $locked = TRUE;
+      } else {
+        lock_wait();
+      }
+    } while (!$locked);
+
+    /*
+    db_set_active('nlp_voterdb');
+    $status = db_query('SHOW STATUS');
+    db_set_active('default');
+    watchdog('voterdb_turf_checkin', 'status: @rec', 
+            array('@rec' =>  print_r($status, true)),WATCHDOG_DEBUG);
+    db_set_active('nlp_voterdb');
+    db_query('LOCK TABLES {'.self::VOTERGRPTBL.'} AS g WRITE');
+    db_set_active('default');
+     * 
+     */
+  }
   
+  public function unlockVoters() {
+    lock_release('voterdb_turf_commit');
+    /*
+    db_set_active('nlp_voterdb');
+    db_query('UNLOCK TABLES');
+    db_set_active('default');
+     * 
+     */
+  }
   
   public function getNewNlpVoterIds($limit) {
     db_set_active('nlp_voterdb');
@@ -285,6 +316,26 @@ class NlpVoters {
       $voters[$voter['VANID']] = $voter['VANID'];
     } while (TRUE);
     return $voters;
+  }
+  
+  
+  function getNlId($vanid) {
+    db_set_active('nlp_voterdb');
+    try {
+      $tselect = "SELECT MCID FROM {".self::VOTERGRPTBL."} WHERE VANID=:vanid ";
+      $targs = array(':vanid' => $vanid,);
+      $result = db_query($tselect,$targs);   
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return NULL;
+    }
+    db_set_active('default');
+    $nl = $result->fetchAssoc();
+    if(empty($nl)) {return NULL;}
+    $mcid = $nl['MCID'];
+    return $mcid;
   }
   
 }

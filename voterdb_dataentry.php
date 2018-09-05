@@ -117,6 +117,13 @@ function voterdb_dataentry_form($form, &$form_state) {
   $nlsObj = new NlpNls();
 
   $nlpUser = $userObj->getCurrentUser();
+  if(empty($nlpUser['mcid'])) {
+    drupal_set_message('Something went wrong, please login again.','warning');
+    global $base_url;
+    $form['done'] = array(
+      '#markup' => '<p><a href="'.$base_url.'/" class="button ">Return to Home page >></a></p>',);
+    return $form;
+  }
 
   $form_state['voterdb']['nlpUser'] = $nlpUser;
   $form_state['voterdb']['county'] = $nlpUser['county'];

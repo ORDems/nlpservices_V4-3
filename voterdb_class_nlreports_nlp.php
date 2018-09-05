@@ -4,7 +4,7 @@
  * Contains Drupal\voterdb\NlpReports.
  */
 /*
- * Name: voterdb_class_nlreports.php   V4.2  7/16/18
+ * Name: voterdb_class_nlreports_nlp.php   V4.3  8/31/18
  */
 
 namespace Drupal\voterdb;
@@ -279,11 +279,16 @@ class NlpReports {
   
   public function setNlReport($canvassResult) {
     // Insert the reported information into the results table.
+    $recorded = NULL;
+    if(!empty($canvassResult['recorded'])) {
+      $recorded = $canvassResult['recorded'];
+    }
     db_set_active('nlp_voterdb');
     db_insert(self::NLPRESULTSTBL)
       ->fields(array(
         'Cycle' => $canvassResult['cycle'],
         'County' => $canvassResult['county'],
+        'Recorded' => $recorded,
         'Active' => TRUE,
         'MCID' => $canvassResult['mcid'],
         'VANID' => $canvassResult['vanid'],
@@ -320,6 +325,29 @@ class NlpReports {
     $acName = $report['Text'];
     $voterReport[$acName] = $report;
     return $voterReport;
+  }
+  
+  public function getAcRindex($mcid,$activistCodeName) {
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::NLPRESULTSTBL, 'v');
+      $query->addField('v','Rindex');
+      $query->condition('MCID',$mcid);
+      $query->condition('Active',TRUE);
+      $query->condition('Type','Activist');
+      $query->condition('Text',$activistCodeName);
+      $result = $query->execute();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return '';
+    }
+    db_set_active('default');
+    $report = $result->fetchAssoc();
+    if(!$report) {return NULL;}
+    $rindex= $report['Rindex'];
+    return $rindex;
   }
   
   public function setNlAcReport($canvassResult) {

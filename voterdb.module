@@ -1,6 +1,6 @@
 <?php
 /**
- * Name:  voteredb_module     V4.3  7/27/18
+ * Name:  voteredb_module     V4.3  9/5/18
  * @file
  * Implements the nlp voter database
  */
@@ -317,6 +317,14 @@ function voterdb_menu() {
       'page callback' => 'voterdb_nls_status_history',
       'file' => 'voterdb_nls_status_history.php',
       'type' => MENU_CALLBACK,
+  );
+  $items ['nlpminivan'] = array (
+    'title' => 'MiniVAN Update',
+    'description' => 'Update the NL reports from CSVJOB email.',
+    'access callback' => TRUE,
+    'page callback' => 'voterdb_minivan',
+    'file' => 'voterdb_minivan.php',
+    'type' => MENU_CALLBACK,
   );
 return $items;
 };
