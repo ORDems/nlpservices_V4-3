@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_turf_checkin.php     V4.2  7/20/18
+ * Name: voterdb_turf_checkin.php     V4.3  9/1/18
  * This include file contains the code to upload a turf exported from the
  * VAN and add it to the voter database.
  */
@@ -36,6 +36,7 @@ use Drupal\voterdb\NlpTurfs;
 use Drupal\voterdb\NlpPaths;
 use Drupal\voterdb\NlpNls;
 use Drupal\voterdb\NlpMagicWord;
+use Drupal\voterdb\NlpVoters;
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_turf_checkin_form
@@ -356,12 +357,18 @@ function voterdb_turf_checkin_form_submit($form,&$form_state) {
   $tc_tname = $tc_turfbase;
   $form_state['voterdb']['tname'] = $tc_tname;
   // Now check if there is any overlap of voter assignment to NLs.
+  
+  $votersObj = new NlpVoters();
+  $votersObj->lockVoters();
+  
   $tc_turf_overlap = voterdb_turf_overlap($form_state);  // func2.
   if(isset($form_state['voterdb']['Debug'])) {
     //voterdb_debug_msg("Form state:",$form_state);
+    $votersObj->unlockVoters();
     return FALSE;
   }
   if ($tc_turf_overlap == 'err') {
+    $votersObj->unlockVoters();
     // There is an overlap of one or more voters with another NL's turf or
     // with multiple turfs.  
     $lt_info = $form_state['voterdb']['fname']." ". 
@@ -402,6 +409,7 @@ function voterdb_turf_checkin_form_submit($form,&$form_state) {
         . $form_state['voterdb']['lname']." ".$tc_turf_oarray['TurfName'];
     voterdb_login_tracking('turf',$tc_county,'Deleted overlapped turf',$lt_info);
   }
+  
   // Save the PDF where we can find it.
   $tc_pdf_tmp = $form_state['voterdb']['pdf_tmp'];
   $tc_turf_pdf_name = '';
@@ -415,10 +423,16 @@ function voterdb_turf_checkin_form_submit($form,&$form_state) {
     drupal_move_uploaded_file($tc_pdf_tmp, $tc_uri);
     $form_state['voterdb']['pdf_file'] = $tc_turf_pdf_name;
   } 
+  
   // We have a good turf so insert in database.
   if(!voterdb_insert_turf($form_state)) { //func.
+    $votersObj->unlockVoters();
     return FALSE;
   } 
+  $votersObj->unlockVoters();
+  
+  
+  
   //voterdb_debug_msg('turfinserted', '' );
   // Build the mailing address file.
   $tc_mail_file = voterdb_mailing_list($form_state); //func4.
