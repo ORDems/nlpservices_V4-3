@@ -451,11 +451,11 @@ function voterdb_display_candidates($cat,$candidateList,$all) {
  * @return type
  */
 function voterdb_build_candidate_list($candidatesArray) { 
-  $scopeArray['State'] = $scopeArray['CD'] = $scopeArray['County'] = 
-       $scopeArray['HD'] = $scopeArray['Precinct'] = NULL;
+  $scopeArray['state'] = $scopeArray['cd'] = $scopeArray['county'] = 
+       $scopeArray['hd'] = $scopeArray['precinct'] = NULL;
   if(empty($candidatesArray)) {return $scopeArray;}
   foreach ($candidatesArray as $qid=>$candidateArray) {
-    $scope = $candidateArray['Scope'];
+    $scope = $candidateArray['scope'];
     $scopeArray[$scope][$qid] = $candidateArray;
   }
   return $scopeArray;

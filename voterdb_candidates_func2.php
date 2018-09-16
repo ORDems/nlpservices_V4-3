@@ -189,7 +189,7 @@ function voterdb_save_candidate($form_state) {
       break;
   }
   
-  voterdb_debug_msg('form state ', $form_state);
+  //voterdb_debug_msg('form state ', $form_state);
   
   $fv_qid = $form_state['values']['qid'];
   $fv_weight = $form_state['values']['weight'];
@@ -214,8 +214,8 @@ function voterdb_save_candidate($form_state) {
   //$apiAuthenticationObj = new ApiAuthentication();
   //$countyAuthenticationObj = $apiAuthenticationObj->getApiAuthentication($stateCommittee);
   
- 
-  $questionObj = new NlpSurveyQuestion();
+  $responseObj = new NlpSurveyResponse();
+  $questionObj = new NlpSurveyQuestion($responseObj);
   
   $questionObj->setSurveyQuestion($availableCandidates[$fv_qid],$fv_qid);
   

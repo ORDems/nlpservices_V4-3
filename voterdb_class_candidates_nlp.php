@@ -4,7 +4,7 @@
  * Contains Drupal\voterdb\NlpCandidates.
  */
 /*
- * Name: voterdb_class_candidates_nlp.php   V4.2 6/20/18
+ * Name: voterdb_class_candidates_nlp.php   V4.3 9/12/18
  *
  */
 namespace Drupal\voterdb;
@@ -69,8 +69,12 @@ class NlpCandidates {
     }
     db_set_active('default');
     if(!$resultCandidates) {return NULL;}
+    $candidateFlip = array_flip($this->candidateList);
     $candidates = array();
-    while ($candidate = $resultCandidates->fetchAssoc()) {
+    while ($dbCandidate = $resultCandidates->fetchAssoc()) {
+      foreach ($dbCandidate as $dbKey => $value) {
+        $candidate[$candidateFlip[$dbKey]] = $value;
+      }
       $candidates[] = $candidate;
     }
     return $candidates;
@@ -104,7 +108,7 @@ class NlpCandidates {
     $candidatesArray = $this->fetchCandidates();
     if(empty($candidatesArray)) {return NULL;}
     foreach ($candidatesArray as $candidate) {
-      $candidateIndexArray[$candidate['Qid']] = $candidate;
+      $candidateIndexArray[$candidate['qid']] = $candidate;
     }
     return $candidateIndexArray;
   }

@@ -326,6 +326,15 @@ function voterdb_menu() {
     'file' => 'voterdb_minivan.php',
     'type' => MENU_CALLBACK,
   );
+  $items ['nlpuseraccounts'] = array (
+    'title' => 'List of user accounts',
+    'description' => 'Display a list of users for a county.',
+    'access arguments' => array('access voterdb tools'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_user_accounts'),
+    'file' => 'voterdb_user_accounts.php',
+    'type' => MENU_CALLBACK,
+  );
 return $items;
 };
 

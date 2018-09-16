@@ -29,9 +29,9 @@ class NlpDrupalUser {
     $user['email'] = $accountObj->mail;
     $user['userName'] = $accountObj->name;
     $user['uid'] = $uid;
-    $user['firstName'] = (empty($mcid))?NULL:$firstName['und'][0]['value'];
-    $user['lastName'] = (empty($mcid))?NULL:$lastName['und'][0]['value'];
-    $user['phone'] = (empty($mcid))?NULL:$phone['und'][0]['value'];
+    $user['firstName'] = (empty($firstName))?NULL:$firstName['und'][0]['value'];
+    $user['lastName'] = (empty($lastName))?NULL:$lastName['und'][0]['value'];
+    $user['phone'] = (empty($phone))?NULL:$phone['und'][0]['value'];
     $user['mcid'] = (empty($mcid))?NULL:$mcid['und'][0]['value'];
     $user['county'] = (empty($county))?NULL:$county['und'][0]['value'];
     $user['sharedEmail'] = (empty($sharedEmail))?NULL:$sharedEmail['und'][0]['value'];
