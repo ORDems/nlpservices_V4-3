@@ -1,6 +1,6 @@
 <?php
 /**
- * Name:  voteredb_mail.php     V4.3  9/1/18
+ * Name:  voteredb_mail.php     V4.3  9/17/18
  * @file
  */
 
@@ -14,65 +14,71 @@
 function voterdb_mail_alter(&$message) {
   global $base_url;
   //drupal_set_message('alter '.'<pre>'.print_r($message, true).'</pre>','status');
-  if($message['module'] == 'voterdb') {
-    //drupal_set_message('<pre>'.print_r($message, true).'</pre>','status');
-    $options = array(
-      'langcode' => $message['language']->language,
-    );
-    $ma_from = variable_get('voterdb_email', 'notifications@nlpservices.org');
-    $signature = t('<br>If you received this email in error, please forward it to '
-      . $ma_from . " and we will remove you from future emails.", array(), $options);
-    if (is_array($message['body'])) {
-      $message['body'][] = $signature;
-    }
-    else {
-      // Some modules use the body as a string, erroneously.
-      $message['body'] .= $signature;
-    }
-  if (isset($message['params']['func'])) { 
-      if($message['params']['func'] == 'turf-deliver')  {
-        $params = $message['params'];
-        $ma_notify = array();
-        $ma_notify['sender']['county'] = $params['county'];
-        $ma_notify['sender']['s-fn'] = $params['s-fn'];
-        $ma_notify['sender']['s-ln'] = $params['s-ln'];
-        $ma_notify['sender']['s-email'] = $params['s-email'];
-
-        $ma_notify['recipient']['r-fn'] = $params['r-fn'];
-        $ma_notify['recipient']['r-ln'] = $params['r-ln'];
-        $ma_notify['recipient']['r-email'] = $params['r-email'];
-
-        $ma_notify_str = json_encode($ma_notify).'<eor>';
-
-        $message['headers']['x-voterdb-notify'] = $ma_notify_str;
-      } 
-    }
-  } elseif($message['module'] == 'user') {
-    $accountObj = $message['params']['account'];
-    if($message['key']=='register_admin_created' AND isset($accountObj->func)) {
-      //$from = variable_get('voterdb_email', 'notifications@nlpservices.org');
-      //$from = $message['from'];
-      //$message['from'] = 'NLP Admin <'.$from.'>';
-      
-      $firstName = $accountObj->firstName;
-      $func = $accountObj->func;
-      if($func=='shared') {
-        $message['to'] = $accountObj->sharedEmail;
+  switch ($message['module']) {
+    case 'voterdb':
+      //drupal_set_message('<pre>'.print_r($message, true).'</pre>','status');
+      $options = array(
+        'langcode' => $message['language']->language,
+      );
+      $ma_from = variable_get('voterdb_email', 'notifications@nlpservices.org');
+      $signature = t('<br>If you received this email in error, please forward it to '
+        . $ma_from . " and we will remove you from future emails.", array(), $options);
+      if (is_array($message['body'])) {
+        $message['body'][] = $signature;
       }
-      $message['subject'] = 'Neighborhood Leader account login: access to your turf';
-      //$body = $message['body'][0];
-      //$content = strstr($body, ':');
-      //$message['body'][0] = $message['params']['account']['field_firstname']['und'][0]['value'].',';
-      $message['body'][0] = $firstName.',';
-      $message['body'][1] = 'Thanks for being a Neighborhood Leader in '.$accountObj->County.' County.';
-      $message['body'][2] = 'The administrator at [site:name] has created an account for you. 
-        You may now log in to get your turf by clicking this link or copying and pasting it to your browser: ';
-      $message['body'][3] = 'http//:'.$base_url;
-      $message['body'][4] = 'Username: '.$accountObj->Name;
-      $message['body'][5] = 'Password: '.$accountObj->Pass;
-    }
-    
+      else {
+        // Some modules use the body as a string, erroneously.
+        $message['body'] .= $signature;
+      }
+      if (isset($message['params']['func'])) { 
+        if($message['params']['func'] == 'turf-deliver')  {
+          $params = $message['params'];
+          $ma_notify = array();
+          $ma_notify['sender']['county'] = $params['county'];
+          $ma_notify['sender']['s-fn'] = $params['s-fn'];
+          $ma_notify['sender']['s-ln'] = $params['s-ln'];
+          $ma_notify['sender']['s-email'] = $params['s-email'];
+          $ma_notify['recipient']['r-fn'] = $params['r-fn'];
+          $ma_notify['recipient']['r-ln'] = $params['r-ln'];
+          $ma_notify['recipient']['r-email'] = $params['r-email'];
+          $ma_notify_str = json_encode($ma_notify).'<eor>';
+          $message['headers']['x-voterdb-notify'] = $ma_notify_str;
+        } 
+      }
+      break;
+      
+    case 'user':
+      $accountObj = $message['params']['account'];
+      //drupal_set_message('accountobj '.'<pre>'.print_r($accountObj, true).'</pre>','status');
+      switch ($message['key']) {
+        case 'register_admin_created':
+          if(isset($accountObj->func)) {
+            $firstName = $accountObj->firstName;
+            $func = $accountObj->func;
+            if($func=='shared') {
+              $message['to'] = $accountObj->field_shared_email['und'][0]['value'];
+            }
+            $message['subject'] = 'Neighborhood Leader account login: access to your turf';
+            $message['body'][0] = $firstName.',';
+            $message['body'][1] = 'Thanks for being a Neighborhood Leader in '.$accountObj->County.' County.';
+            $message['body'][2] = 'The administrator at [site:name] has created an account for you. 
+              You may now log in to get your turf by clicking this link or copying and pasting it to your browser: ';
+            $message['body'][3] = 'http//:'.$base_url;
+            $message['body'][4] = 'Username: '.$accountObj->Name;
+            $message['body'][5] = 'Password: '.$accountObj->Pass;
+          }
+          break;
+          
+        case 'password_reset':
+          //drupal_set_message('shared email '.'<pre>'.print_r($accountObj->sharedEmail, true).'</pre>','status');
+          if(!empty($accountObj->field_shared_email)) {
+            $message['to'] = $accountObj->field_shared_email['und'][0]['value'];
+          }
+          break;
+      }
+      break;
   }
+  //drupal_set_message('alter '.'<pre>'.print_r($message, true).'</pre>','status');
 }
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
