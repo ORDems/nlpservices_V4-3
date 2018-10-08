@@ -49,7 +49,7 @@ function voterdb_header_validate($fileType,$fileName) {
   //voterdb_debug_msg('nlObj', $nlObj);
   $fieldPos['ok'] = FALSE;
   $fieldPos['err'] = 'Bad file type';
-  $fileType = $fileType;
+  //$fileType = $fileType;
   switch ($fileType) {
     case 'survey':
       $fieldPos = $minivanObj->decodeMinivanSurveyHdr($columnHeader);
@@ -63,20 +63,17 @@ function voterdb_header_validate($fileType,$fileName) {
   }
 
   fclose($fileHandle);
-
   if(!$fieldPos['ok']) {
     foreach ($fieldPos['err'] as $errMsg) {
       drupal_set_message($errMsg,'warning');
     }
     return FALSE;
   }
-  
-  return $fieldPos['pos'];
-     
+  return $fieldPos['pos'];   
 }
 
 
-function voterdb_get_minivan_results($fileName, $fieldPos) {
+function voterdb_get_minivan_results($fileName, $fieldPos, $fileType, $activistCode) {
   $fileHandle = fopen($fileName, "r");
   if ($fileHandle == FALSE) {
     voterdb_debug_msg("Failed to open file",'');
@@ -88,6 +85,7 @@ function voterdb_get_minivan_results($fileName, $fieldPos) {
   do {
     // Get the raw nl record in the upload file.
     $recordRaw = fgets($fileHandle);
+    //voterdb_debug_msg('recordraw', $recordRaw);
     if (!$recordRaw) {break;}  // Break out of DO loop at end of file.
     // Remove any stuff that might be a security risk.
     $record = array();
@@ -96,9 +94,26 @@ function voterdb_get_minivan_results($fileName, $fieldPos) {
       $record[] = sanitize_string($fieldRaw);
     }
     $report = $minivanObj->extractMinivanFields($record,$fieldPos);
-    if($report['inputTypeId'] == 14)  { // MiniVAN report.
-      $reports[] = $report;
+    //voterdb_debug_msg('report '.$fileType, $report);
+    switch ($fileType) {
+      case 'survey':
+      case 'canvass':
+        if(!empty($report['inputTypeId']) AND $report['inputTypeId'] == 14)  { // MiniVAN report.
+          $reports[] = $report;
+        }
+        break;
+      case 'activist':
+        //voterdb_debug_msg('reportac: ['.$report['activistCodeId'].'] ac: ['.$activistCode.']', '');
+        if($report['activistCodeId'] == $activistCode) {
+          $reports[] = $report;
+        }
+        break;
     }
+    
+    
+    //if(!empty($report['inputTypeId']) AND $report['inputTypeId'] == 14)  { // MiniVAN report.
+    //  $reports[] = $report;
+    //}
   } while (TRUE);  // Keep looping to read records until the break at EOF.
   db_set_active('default');
   fclose($fileHandle);
@@ -113,12 +128,25 @@ function voterdb_record_minivan_reports($reports) {
   $result['firstName'] = NULL;
   $result['lastName'] = NULL;
   $result['cycle'] = variable_get('voterdb_ecycle', 'xxxx-mm-G');
+  $result['source'] = 'MiniVAN';
   
   $nlpVotersObj = new NlpVoters();
   $activistCodesObj = new NlpActivistCodes();
+  $stickyStatus = array('Moved'=>'moved','Deceased'=>'deceased','Hostile'=>'hostile');
   
-  foreach ($reports as $report) {
-    
+  $altSurveyQuestion = array(
+    'qid' => 305923,
+    'rid' => array(
+      '1266087' => 1218788,
+      '1266088' => 1218789,
+      '1266089' => 1218790,
+    ),
+  );
+  
+  
+  //voterdb_debug_msg('reports', $reports);
+  foreach ($reports as $report) {  
+    //voterdb_debug_msg('report', $report);
     $vanid = $report['vanid'];
     $mcid = $nlpVotersObj->getNlId($vanid);
     if (!empty($mcid)) {
@@ -129,7 +157,6 @@ function voterdb_record_minivan_reports($reports) {
         $result['county'] = $nl['county'];
       }
     }
-    
     $result['mcid'] = $mcid;
 
     $cdate = $report['dateCreated'];
@@ -147,84 +174,119 @@ function voterdb_record_minivan_reports($reports) {
     $result['vanid'] = $report['vanid'];
     
     $reportType = $report['fileType'];
+    //voterdb_debug_msg('reporttype', $reportType);
+    $processReport = TRUE;
+    $setStatus = FALSE;
     switch ($reportType) {
       case 'survey':
+        $qid = $report['surveyQuestionId'];
         $rid = $report['surveyResponseId'];
-        
-        
         $surveyResponseObj = new NlpSurveyResponse();
         $surveyQuestionObj = new NlpSurveyQuestion($surveyResponseObj);
         $questionArray = $surveyQuestionObj->getSurveyQuestion();
-        if(!empty($questionArray)) {
+        if(!empty($questionArray) AND $qid != $questionArray['qid']) {
           $title = $questionArray['questionName'];
           $surveyResponseList = $questionArray['responses'];
         } else {
-          $surveyResponseList = NULL;
-          $title = NULL;
+          $processReport = FALSE;
+          break;
+        }
+        
+        if(empty($questionArray)) {
+          $processReport = FALSE;
+          break;
+        }
+        
+        if($qid == $questionArray['qid']) {
+          $title = $questionArray['questionName'];
+          $surveyResponseList = $questionArray['responses'];
+        } elseif ($qid == $altSurveyQuestion['qid']) {
+          $title = $questionArray['questionName'];
+          $surveyResponseList = $questionArray['responses'];
+          $qid = $questionArray['qid'];
+          $rid = $altSurveyQuestion['rid'][$rid];
+        } else {
+          $processReport = FALSE;
+          break;
         }
         
         $response = '';
         if(!empty($surveyResponseList)) {
-          $response = $surveyResponseList[$rid];
-          //$response = 'test';
+          if(!empty($surveyResponseList[$rid])) {
+            $response = $surveyResponseList[$rid];
+          }
         }
-
         $result['type'] = 'Survey';
         $result['value'] = $response;
         $result['text'] = $title;
-
-        
-
-        $result['qid'] = $report['surveyQuestionId'];
+        $result['qid'] = $qid;
         $result['rid'] = $rid;
         break;
+        
       case 'canvass':
         $rid = $report['resultid'];
-        
         $canvassResponsesObj = new NlpResponseCodes();
         $canvassResponseList = $canvassResponsesObj->getNlpResponseCodesList();
-
-        if(!empty($canvassResponseList)) {
-          $response = $canvassResponseList[$rid];
-          //$response = 'test';
+        //voterdb_debug_msg('canvassresponselist', $canvassResponseList);
+        
+        if(empty($canvassResponseList) OR empty($canvassResponseList[$rid])) {
+          $processReport = FALSE;
+          break;
         }
-
+        $response = $canvassResponseList[$rid];
+        
+        if(isset($stickyStatus[$response])) {
+          $setStatus = TRUE;
+        }
+        
+        
         $result['type'] = 'Contact';
         $result['value'] = $response;
         $result['text'] = '';
-
         $result['qid'] = NULL;
         $result['rid'] = $rid;
         break;
+        
       case 'activist':
+        //voterdb_debug_msg('activist', '');
         $rid = $report['activistCodeId'];
         $activistCode = $activistCodesObj->getActivistCode('NotADem');
-        if($activistCode!=$rid) {continue;}
-        
+        //voterdb_debug_msg('activistcode', $activistCode);
+        //voterdb_debug_msg('activistcode:'.$activistCode.' rid: '.$rid, '');
+        if($activistCode['activistCodeId'] != $rid) {
+          $processReport = FALSE;
+          break;
+        }
         $result['rindex'] = $nlpReportsObj->getAcRindex($mcid,'NotADem');
-        
         $result['rid'] = $rid;
-        
-        
-        
+        $result['qid'] = NULL;
         $result['type'] = 'Activist';
-        $result['value'] = 'apply';
+        $result['value'] = 0;
         $result['text'] = 'NotADem';
         break;
     }
     
-    
-    //$nlpReportsObj->setNlReport($result);
-    voterdb_debug_msg('result', $result);
+    if($processReport) {
+      //$nlpReportsObj->setNlReport($result);
+      if($setStatus) {
+        $voterStatus = $nlpVotersObj->getVoterStatus($vanid);
+        //voterdb_debug_msg('voterstatus', $voterStatus);
+        if(empty($voterStatus['dorCurrent'])) {
+          $voter = $nlpVotersObj->getVoterById($vanid);
+          $voterStatus['dorCurrent'] = $voter['dorCurrent'];
+        }
+        //$nlpVotersObj->updateVoterStatus($vanid, $voterStatus['dorCurrent'], $stickyStatus[$response], TRUE);
+        voterdb_debug_msg('vanid: '.$vanid.' dorc: '.$voterStatus['dorCurrent'].' field: '.$stickyStatus[$response], '');
+      }
+      voterdb_debug_msg('result', $result);
+    }
 
   }
 }
 
 
 function voterdb_minivan() {
-
-
-  $output = "test started";
+  $output = "MiniVAN report update started";
   $hostname = '{imap.gmail.com:993/imap/ssl}INBOX';
   $username = 'oregonnlp@gmail.com';
   $password = 'chinook25';
@@ -234,38 +296,35 @@ function voterdb_minivan() {
     voterdb_debug_msg('imaperror',$error);
     return array('#markup' => $output);
   }
-
+  
+  $activistCodesObj = new NlpActivistCodes();
+  $activistCode = $activistCodesObj->getActivistCode('NotADem');
+  //voterdb_debug_msg('not a dem', $activistCode);
+  
   $emails = imap_search($connection,'ALL');
-
   if($emails) {
-
     $output = '';
     //rsort($emails);
-
     foreach($emails as $email_number) {
       $overview = imap_fetch_overview($connection,$email_number,0);
+      if($overview[0]->seen) {continue;}
       voterdb_debug_msg('overview', $overview);
       $subject = $overview[0]->subject;
       
-      $fileType = 'survey';
+      $fileType = 'canvass';
       $miniVan = strstr($subject, 'Neighborhood Leader Program'); 
       if(strstr($subject, '- AC')) {
         $fileType = 'activist';
       } elseif (strstr($subject, '- Responses')) {
-        $fileType = 'canvass';
+        $fileType = 'survey';
       }
-      
-      
       
       if($miniVan) {
         $structure = imap_fetchstructure($connection,$email_number);
         //voterdb_debug_msg('structure', $structure );
-
         $attachments = array();
         if(isset($structure->parts) && count($structure->parts)) {
-
           for($i = 0; $i < count($structure->parts); $i++) {
-
             $attachments[$i] = array(
               'is_attachment' => false,
               'filename' => '',
@@ -273,7 +332,6 @@ function voterdb_minivan() {
               'attachment' => '',
               'fileType' => $fileType
             );
-
             if($structure->parts[$i]->ifdparameters) {
               foreach($structure->parts[$i]->dparameters as $object) {
                 if(strtolower($object->attribute) == 'filename') {
@@ -285,7 +343,6 @@ function voterdb_minivan() {
                 }
               }
             }
-
             if($structure->parts[$i]->ifparameters) {
               foreach($structure->parts[$i]->parameters as $object) {
                 if(strtolower($object->attribute) == 'name') {
@@ -297,7 +354,6 @@ function voterdb_minivan() {
                 }
               }
             }
-
             if($attachments[$i]['is_attachment']) {
               $attachments[$i]['attachment'] = imap_fetchbody($connection, $email_number, $i+1);
               //voterdb_debug_msg('fetchbody', $attachments[$i]['attachment'] );
@@ -311,8 +367,7 @@ function voterdb_minivan() {
           }
         }
         
-
-        voterdb_debug_msg('attachments', $attachments);
+        //voterdb_debug_msg('attachments', $attachments);
         
         foreach ($attachments as $attachment) {
           if($attachment['is_attachment']) {
@@ -325,8 +380,6 @@ function voterdb_minivan() {
             $blob_fh = fopen($blob_uri,"w");
             fwrite($blob_fh,$attachment['attachment']);
             fclose($blob_fh); 
-            
-            
           }
         }
         
@@ -341,10 +394,8 @@ function voterdb_minivan() {
             if(!$fieldPos) {
               return array('#markup' => $output); 
             }
-
-            $reports = voterdb_get_minivan_results($fileUri, $fieldPos);
+            $reports = voterdb_get_minivan_results($fileUri, $fieldPos, $fileType, $activistCode['activistCodeId']);
             //voterdb_debug_msg('reports', $reports);
-
             $queueItem = array();
             $queCount = 0;
             foreach ($reports as $report) {
@@ -355,31 +406,26 @@ function voterdb_minivan() {
                 $queCount = 0;
                 //voterdb_debug_msg('queue', $queueItem);
                 voterdb_record_minivan_reports($queueItem);
-                
                 $queueItem = array();
               }
-
             }
             if($queCount>0) {
               //voterdb_debug_msg('queue', $queueItem);
               voterdb_record_minivan_reports($queueItem);
             }
             $emailNumber = $attachment['emailNumber'];
-            
+
             //imap_delete($connection, $emailNumber);
-            
+
           }
         }
 
       }
     }
-
-    //echo $output;
   } 
 
   imap_close($connection);
-  
-  $output .= "test complete";
+  $output .= "MiniVAN update complete";
   return array('#markup' => $output);   
 
 }
