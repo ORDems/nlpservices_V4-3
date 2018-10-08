@@ -168,11 +168,11 @@ class NlpDrupalUser {
     $sharedEmail = NULL;
     if(!empty($userByEmail)) {
       $sharedEmail = $email;
-      $urlParts = parse_url($base_url);
-      $domain = preg_replace('/^www\./', '', $urlParts['host']);
-      $firstName = preg_replace('/-|\s+|&#0*39;|\'/', '',strtolower($account['firstName']));
-      $lastName = preg_replace('/-|\s+|&#0*39;|\'/', '',strtolower($account['lastName']));
-      $email = 'shared_'.$firstName.'_'.$lastName.'@'.$domain;
+      //$urlParts = parse_url($base_url);
+      //$domain = preg_replace('/^www\./', '', $urlParts['host']);
+      //$firstName = preg_replace('/-|\s+|&#0*39;|\'/', '',strtolower($account['firstName']));
+      //$lastName = preg_replace('/-|\s+|&#0*39;|\'/', '',strtolower($account['lastName']));
+      $email = 'shared_'.$email;
       $func = 'shared';
     }
     $rid = $this->getNlpRoleId();
@@ -224,11 +224,12 @@ class NlpDrupalUser {
       $currentUser = $this->getCurrentUser();
       $df_thanks = '<p>Please contact me if you have any questions.<br>Thanks<br>@fname @lname<br>@phone<br>' .
               '<a href="mailto:@email?subject=NL%20Help%20Request">@email</a></p>';
+      $currentUserEmail =  (!empty($currentUser['sharedEmail']))?$currentUser['sharedEmail']:$currentUser['email'];
       $message .= t($df_thanks, array(
           '@fname' => $currentUser['firstName'],
           '@lname' => $currentUser['lastName'],
           '@phone' => $currentUser['phone'],
-          '@email' => $currentUser['email'],));
+          '@email' => $currentUserEmail,));
       $params['message'] = $message;
       $recipient = (empty($sharedEmail))?$email:$sharedEmail;
       $sender = 'NLP Admin<';

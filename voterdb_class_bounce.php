@@ -4,17 +4,17 @@
  * Contains Drupal\voterdb\NlpBounce.
  */
 /*
- * Name: voterdb_class_bounce.php   V4.3  7/27/18
+ * Name: voterdb_class_bounce.php   V4.3  9/20/18
  */
 
 namespace Drupal\voterdb;
 
 class NlpBounce {
   
-  const BOUNCEBLOCKTBL = 'bounceblocked';
-  const BOUNCENONDELIVERYTBL = 'bouncenondeliveryreport';
-  const BOUNCECODESCORETBL = 'bouncecodescore';
-  const BOUNCEREPORTNOTIFYTBL = 'bouncenotified';
+  const BOUNCEBLOCKTBL = 'bounce_blocked';
+  const BOUNCENONDELIVERYTBL = 'bounce_non_delivery_report';
+  const BOUNCECODESCORETBL = 'bounce_code_score';
+  const BOUNCEREPORTNOTIFYTBL = 'bounce_notified';
 
 
 

@@ -10,13 +10,9 @@
 namespace Drupal\voterdb;
 
 class NlpMinivan {
-  
-  const NLSTBL = 'nls';
 
-  
   private $minivanSurveyHdr = array(
     'vanid' => array('name'=>'vanid','err'=>'vanid'),
-    //'mcid' => array('name'=>'myc_vanid','err'=>'myc_vanid'),
     'dateCanvassed' => array('name'=>'datecanvassed','err'=>'datecanvassed'),
     'dateCreated' => array('name'=>'datecreated','err'=>'datecreated'),
     'inputTypeId' => array('name'=>'inputtypeid','err'=>'inputtypeid'),
@@ -26,7 +22,6 @@ class NlpMinivan {
   
   private $minivanCanvassHdr = array(
     'vanid' => array('name'=>'vanid','err'=>'vanid'),
-    //'mcid' => array('name'=>'myc_vanid','err'=>'myc_vanid'),
     'dateCanvassed' => array('name'=>'datecanvassed','err'=>'datecanvassed'),
     'dateCreated' => array('name'=>'datecreated','err'=>'datecreated'),
     'inputTypeId' => array('name'=>'inputtypeid','err'=>'inputtypeid'),
@@ -36,12 +31,9 @@ class NlpMinivan {
   
   private $minivanActivistHdr = array(
     'vanid' => array('name'=>'vanid','err'=>'vanid'),
-    //'mcid' => array('name'=>'myc_vanid','err'=>'myc_vanid'),
-    //'dateCanvassed' => array('name'=>'datecanvassed','err'=>'datecanvassed'),
     'dateCreated' => array('name'=>'datecreated','err'=>'datecreated'),
-    'inputTypeId' => array('name'=>'inputtypeid','err'=>'inputtypeid'),
+    //'inputTypeId' => array('name'=>'inputtypeid','err'=>'inputtypeid'),
     'activistCodeId' => array('name'=>'activistcodeid','err'=>'activistcodeid'),
-    //'activistCodeActionId' => array('name'=>'activistcodeactionid','err'=>'activistcodeactionid'), 
   );
   
   private $nlsResultObj;

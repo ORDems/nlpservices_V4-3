@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_blocked_report.php   V4.2  7/24/18
+ * Name: voterdb_blocked_report.php   V4.3  9/20/18
  */
 require_once "voterdb_constants_bounce_tbl.php";
 require_once "voterdb_group.php";
@@ -112,8 +112,9 @@ function voterdb_blocked_report() {
   
   
   foreach ($bounceList as $reportId => $br_bouncer) {
-    
-
+    //voterdb_debug_msg('bouncer', $br_bouncer);
+    //$br_semail = $br_bouncer['semail'];
+    $br_semail = '';
     $br_remail = $br_bouncer['recipientEmail']; 
 
     $br_bstat = voterdb_blocked_status($br_remail);

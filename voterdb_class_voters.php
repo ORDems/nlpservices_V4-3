@@ -4,7 +4,7 @@
  * Contains Drupal\voterdb\NlpVoters.
  */
 /*
- * Name: voterdb_class_voters.php   V4.3  8/29/18
+ * Name: voterdb_class_voters.php   V4.3  9/26/18
  */
 
 namespace Drupal\voterdb;
@@ -37,7 +37,7 @@ class NlpVoters {
     'hostile' => 'Hostile',
     'nlpVoter' => 'NLPVoter',
   );
-  public $nlList = array(
+  public $voterList = array(
     'vanid' => 'VANID',
     'lastName' => 'LastName',
     'firstName' => 'FirstName',
@@ -74,7 +74,7 @@ class NlpVoters {
       if (lock_acquire('voterdb_turf_commit')) {
         $locked = TRUE;
       } else {
-        lock_wait();
+        lock_wait('voterdb_turf_commit',5);
       }
     } while (!$locked);
 
@@ -238,7 +238,20 @@ class NlpVoters {
     db_set_active('default');
     //voterdb_debug_msg('result', $result);
     $statusFlip = array_flip($this->statusList);
-    $dbStatus = $result->fetchAssoc();
+    
+    $dbStatus = NULL;
+    do {
+      $statusRecord = $result->fetchAssoc();
+      //voterdb_debug_msg('statusrecord',$statusRecord);
+      if(empty($statusRecord)) {break;}
+      if(empty($dbStatus)) {
+        $dbStatus = $statusRecord;
+      } else {
+        if($statusRecord['DORCurrent'] > $dbStatus['DORCurrent']) {
+          $dbStatus = $statusRecord;
+        }
+      }
+    } while (TRUE);
     //voterdb_debug_msg('status', $dbStatus);
     if(empty($dbStatus)) {return $null;}
     foreach ($dbStatus as $dbKey => $value) {
@@ -258,7 +271,8 @@ class NlpVoters {
     try {
       db_merge(self::VOTERSTATUSTBL)
         ->key(array(
-          'VANID' => $vanid))
+          'VANID' => $vanid,
+          'DORCurrent' => $fields['dorCurrent']))
         ->fields($dbFields)
         ->execute();
     }
@@ -268,6 +282,27 @@ class NlpVoters {
       return FALSE;
     }
     db_set_active('default');
+    return TRUE;
+  }
+  
+  function updateVoterStatus($vanid, $dorCurrent, $field, $value) {
+    $dbField = $this->statusList[$field];
+    db_set_active('nlp_voterdb');
+    try {
+      db_merge(self::VOTERSTATUSTBL)
+        ->key(array(
+          'VANID' => $vanid,
+          'DORCurrent' => $dorCurrent))
+        ->fields(array(
+          $dbField => $value))
+        ->execute();
+      db_set_active('default');
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return FALSE;
+    }
     return TRUE;
   }
   
@@ -336,6 +371,30 @@ class NlpVoters {
     if(empty($nl)) {return NULL;}
     $mcid = $nl['MCID'];
     return $mcid;
+  }
+  
+  
+  function getVoterById($vanid) {
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::VOTERTBL, 'v');
+      $query->fields('v');
+      $query->condition('VANID',$vanid);
+      $result = $query->execute();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return NULL;
+    }
+    db_set_active('default');
+    $dbVoter = $result->fetchAssoc();
+    if(empty($dbVoter)) {return FALSE;}  // voter not known.
+    $voterListFlip = array_flip($this->voterList);
+    foreach ($dbVoter as $dbKey => $voterValue) {
+      $voter[$voterListFlip[$dbKey]] = $voterValue;
+    }
+    return $voter;
   }
   
 }
