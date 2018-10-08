@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_dataentry_func2.php     V4.2  7/11/18
+ * Name: voterdb_dataentry_func2.php     V4.3  9/12/18
  *
  */
 
@@ -153,8 +153,9 @@ function voterdb_build_voter_tbl(&$form_state) {
   $bv_header_row .= " \n ".'<th style="width:'.CW_PHONE.'px; font-size:small;"><p>Phone #s</p></th>';
   $bv_header_row .= " \n ".'<th style="width:'.CW_CONTACT.'px; color: blue; font-size:small;">'
       . '<div id="hintth"><p>Contact Attempt'
-      . '<span style="position: absolute; width: 300px; left: 10px; top: -70px; ">'
-          . 'Use this column to report an attempt to contact the voter where you did not have a conversation.</span>'
+      . '<span style="position: absolute; width: 450px; left: 10px; top: -70px; ">'
+          . 'Use this column to report an attempt to contact the voter where you did not have a conversation.  '
+          . 'The NLP Hostile check box indicates the voter should not be in the NLP program.</span>'
       . '</p></div></th>';
   $bv_header_row .= " \n ".'<th style="width:'.CW_SURVEY.'px; color: blue; font-size:small;">'
       . '<div id="hintth"><p>Personal Contact'
@@ -162,9 +163,9 @@ function voterdb_build_voter_tbl(&$form_state) {
           . 'Use this column to report personal contact and record their pledge to vote.</span>'
       . '</p></div></th>';
   $bv_header_row .= " \n ".'<th style="width:'.CW_CANDIDATE.'px; color: blue; font-size:small;">'
-      . '<div id="hintth"><p>Candidate ID'
+      . '<div id="hintth"><p>Contact Detail'
       . '<span style="position: absolute; width: 300px; left: 10px; top: -70px; ">'
-          . 'This column is used to report candidate preference if the campaign has requested our help.</span>'
+          . 'Optional report for additional information about a voter contact.</span>'
       . '</p></div></th>';
   $bv_header_row .= " \n ".'<th style="width:'.CW_COMMENT.'px; font-size:small;"><p>Comment</p></th>';
   $bv_header_row .= " \n ".'<th style="width:'.CW_VOTED.'px; font-size:small;"><p>Voted</p></th>';
@@ -301,6 +302,7 @@ function voterdb_build_voter_tbl(&$form_state) {
         '#markup' => " \n ".'<td class="td-de">N/A</td>',
       );
     } else {
+      $bv_candidates[0] = 'Select Survey Question';
       // There are candidates to ID, so show the option.
       $form_element['vform']["CN-".$bv_vanid] = array(
         '#type' => 'select',

@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_nls_display.php     V4.3  8/7/18
+ * Name: voterdb_nls_display.php     V4.3  10/3/18
  * Display the list of Prospective NLs for a county.
  *
  */
@@ -17,7 +17,7 @@ require_once "voterdb_class_turfs.php";
 require_once "voterdb_class_nls.php";
 require_once "voterdb_class_nlreports_nlp.php";
 require_once "voterdb_nls_display_func.php";
-require_once "voterdb_nls_display_func2.php";
+require_once "voterdb_nls_display_functions2.php";
 
 use Drupal\voterdb\NlpButton;
 use Drupal\voterdb\NlpTurfs;
@@ -196,9 +196,13 @@ function voterdb_display_nls_form($form_id, &$form_state) {
     //voterdb_debug_msg('nlrecords', $nlRecords);
     $nlKeys = array_keys($nlRecords);
     $reportsObj = new NlpReports();
+    if(!empty($form_state['voterdb']['Debug'])) {
+      $reportsObj->debug = TRUE;
+    }
     foreach ($nlKeys as $mcid) {
       //voterdb_debug_msg('mcid: '.$mcid, '');
       $nlRecords[$mcid]['progress']  = voterdb_get_progress($nlRecords[$mcid],$reportsObj);  // func2.
+      
       //voterdb_debug_msg('nlrecord', $nlRecords[$mcid]);
     } 
     $form_state['voterdb']['nlRecords'] = $nlRecords;
