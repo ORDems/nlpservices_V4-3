@@ -78,6 +78,11 @@ function voterdb_insert_turf(&$form_state) {
     }
     db_set_active('default');
     $voterStatus = $voterObj->getVoterStatus($it_vanid);
+    if(!empty($it_voter['DORCurrent'])) {
+      $voterStatus['dorCurrent'] = $it_voter['DORCurrent'];
+    } else {
+      $voterStatus['dorCurrent'] = $it_voter['DateReg'];
+    }
     if(empty($voterStatus['nlpVoter'])) {
       $voterStatus['nlpVoter'] = TRUE;
       

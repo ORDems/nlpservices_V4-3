@@ -22,7 +22,7 @@ function voterdb_login_tracking($lt_type,$lt_county,$lt_status, $lt_info) {
     return;
   }
   //voterdb_debug_msg('county', $lt_county, __FILE__, __LINE__);
-  return;
+  //return;
   date_default_timezone_set('America/Los_Angeles');
   $lt_name = 'anon';
   $lt_user = $GLOBALS['user'];  
