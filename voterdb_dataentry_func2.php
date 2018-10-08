@@ -153,8 +153,9 @@ function voterdb_build_voter_tbl(&$form_state) {
   $bv_header_row .= " \n ".'<th style="width:'.CW_PHONE.'px; font-size:small;"><p>Phone #s</p></th>';
   $bv_header_row .= " \n ".'<th style="width:'.CW_CONTACT.'px; color: blue; font-size:small;">'
       . '<div id="hintth"><p>Contact Attempt'
-      . '<span style="position: absolute; width: 300px; left: 10px; top: -70px; ">'
-          . 'Use this column to report an attempt to contact the voter where you did not have a conversation.</span>'
+      . '<span style="position: absolute; width: 450px; left: 10px; top: -70px; ">'
+          . 'Use this column to report an attempt to contact the voter where you did not have a conversation.  '
+          . 'The NLP Hostile check box indicates the voter should not be in the NLP program.</span>'
       . '</p></div></th>';
   $bv_header_row .= " \n ".'<th style="width:'.CW_SURVEY.'px; color: blue; font-size:small;">'
       . '<div id="hintth"><p>Personal Contact'
