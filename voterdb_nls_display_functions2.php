@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_nls_display_func2.php   V4.3   8/7/18
+ * Name: voterdb_nls_display_functions2.php   V4.3   8/7/18
  *
  */
 /*
@@ -109,7 +109,9 @@ function voterdb_get_progress($nlRecord,$reportsObj) {
   $gp_reports = $reportsObj->getNlReportsForVoters($gp_voter_array,$gp_cycle);
   //voterdb_debug_msg('reports', $gp_reports);
   if(!empty($reportsObj->debug)) {
-    voterdb_debug_msg('reports', $gp_reports);
+    if($gp_mcid=='102325487') {
+      voterdb_debug_msg('reports', $gp_reports);
+    }
   }
   // Flag the voters with whom the NL had a face-to-face contact.  (There 
   // could have been more than one.)
