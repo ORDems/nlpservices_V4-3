@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_track.php      V4.2   7/11/18
+ * Name: voterdb_track.php      V4.2   10/7/18
  *
  */
 require_once "voterdb_constants_log_tbl.php";
@@ -22,7 +22,7 @@ function voterdb_login_tracking($lt_type,$lt_county,$lt_status, $lt_info) {
     return;
   }
   //voterdb_debug_msg('county', $lt_county, __FILE__, __LINE__);
-  return;
+  //return;
   date_default_timezone_set('America/Los_Angeles');
   $lt_name = 'anon';
   $lt_user = $GLOBALS['user'];  

@@ -4,7 +4,7 @@
  * Contains Drupal\voterdb\NlpReports.
  */
 /*
- * Name: voterdb_class_nlreports_nlp.php   V4.3  8/31/18
+ * Name: voterdb_class_nlreports_nlp.php   V4.3  10/7/18
  */
 
 namespace Drupal\voterdb;
@@ -143,6 +143,7 @@ class NlpReports {
       $query->fields('v');
       $query->condition('VANID', $voterArray, 'IN');
       $query->condition('Active',TRUE);
+      $query->condition('Cycle',$cycle);
       $query->condition('Type','Activist','<>');
       $query->orderBy('Cdate', 'DESC');
       $result = $query->execute();
@@ -283,6 +284,11 @@ class NlpReports {
     if(!empty($canvassResult['recorded'])) {
       $recorded = $canvassResult['recorded'];
     }
+    if(!empty($canvassResult['source'])) {
+      $source = $canvassResult['source'];
+    } else {
+      $source = 'nlp';
+    }
     db_set_active('nlp_voterdb');
     db_insert(self::NLPRESULTSTBL)
       ->fields(array(
@@ -298,6 +304,7 @@ class NlpReports {
         'Text' => $canvassResult['text'],
         'Qid' => $canvassResult['qid'],
         'Rid' => $canvassResult['rid'],
+        'Source' => $source,
       ))
       ->execute();
     db_set_active('default');

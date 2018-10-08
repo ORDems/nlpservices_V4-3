@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_nls_display_func.php   V4.2  6/14/18
+ * Name: voterdb_nls_display_func.php   V4.2  10/7/18
  *
  */
 /*

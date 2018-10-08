@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_turf_checkin_func.php     V4.2  7/20/18
+ * Name: voterdb_turf_checkin_func.php     V4.3  10/7/18
  * This include file contains the code to upload a turf exported from the
  * VAN and add it to the voter database.
  */
@@ -78,6 +78,11 @@ function voterdb_insert_turf(&$form_state) {
     }
     db_set_active('default');
     $voterStatus = $voterObj->getVoterStatus($it_vanid);
+    if(!empty($it_voter['DORCurrent'])) {
+      $voterStatus['dorCurrent'] = $it_voter['DORCurrent'];
+    } else {
+      $voterStatus['dorCurrent'] = $it_voter['DateReg'];
+    }
     if(empty($voterStatus['nlpVoter'])) {
       $voterStatus['nlpVoter'] = TRUE;
       

@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_display_results.php   V4.3 7/31/18
+ * Name: voterdb_display_results.php   V4.3 10/7/18
  */
 
 require_once "voterdb_group.php";
