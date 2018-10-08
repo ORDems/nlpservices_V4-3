@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_dataentry.php      V4.3  7/30/18
+ * Name: voterdb_dataentry.php      V4.3  9/30/18
  */
 
 require_once "voterdb_constants_voter_tbl.php";
@@ -118,6 +118,10 @@ function voterdb_dataentry_form($form, &$form_state) {
 
   $nlpUser = $userObj->getCurrentUser();
   if(empty($nlpUser['mcid'])) {
+    voterdb_debug_msg('current user', $nlpUser);
+    $browserObj = new GetBrowser();
+    $dv_browser = $browserObj->getBrowser();
+    voterdb_debug_msg('browser', $dv_browser);
     drupal_set_message('Something went wrong, please login again.','warning');
     global $base_url;
     $form['done'] = array(
