@@ -114,6 +114,9 @@ function voterdb_build_verify_votebuilder(&$form, &$form_state) {
   //$apiContactTtpes = $apiResultCodesObj->getApiContactTypes($countyAuthenticationObj,$database);
   //voterdb_debug_msg('contact types', $apiContactTtpes);
   
+  //$available = $apiResultCodesObj->getApiResultCodes($countyAuthenticationObj,$database,'Walk');
+  //voterdb_debug_msg('availablewalktypes', $available);
+  
   $responseCodesObj = new NlpResponseCodes();
   $responseCodesObj->setNlpResponseCodes($apiKnownResultCodes);
   

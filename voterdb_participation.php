@@ -80,7 +80,9 @@ function voterdb_participation_cnts($pc_file_uri,&$pc_count_array) {
   
   //voterdb_debug_msg('counties', $pc_counties);
   $turfObj = new NlpTurfs();
+  $cty = 0;
   foreach ($pc_counties as $pc_county) {
+    $ctystart = voterdb_timer('start',NULL);
     //$pc_counts = voterdb_get_report_counts($pc_county);
     //voterdb_debug_msg('county counts', $pc_counts);
     // List of NLs with turfs.
@@ -95,10 +97,11 @@ function voterdb_participation_cnts($pc_file_uri,&$pc_count_array) {
       $pc_count_array['county'][$pc_county]['surveyResponses'][$rid] = 0;
     }
     
-     
+    $cnt = 0;
+    
     // Copy the results to a tab delimited file.
     foreach ($pc_nls as $pc_mcid) {
-
+      $nlstart = voterdb_timer('start',NULL);
       // Get the name and other information for the display.
       
       $pc_nl = $nlObj->getNlById($pc_mcid);
@@ -124,14 +127,24 @@ function voterdb_participation_cnts($pc_file_uri,&$pc_count_array) {
       
       //$reportsObj->getNlVoterContactAttempts($mcid);
       //$pc_atmps = (!empty($pc_counts[$pc_mcid]['attempts']))?$pc_counts[$pc_mcid]['attempts']:0;
+      
+      $atpstart = voterdb_timer('start',NULL);
       $pc_nl_stat['attempts'] = $reportsObj->getNlVoterContactAttempts($pc_mcid);
+      $atptime = voterdb_timer('end',$atpstart);
+      //voterdb_debug_msg('  attempts: '.$atptime, '');
+      
       $pc_count_array['county'][$pc_county]['attempts'] += $pc_nl_stat['attempts'];
       
       // If there is a survey question, include the title and the response columns.
       $pc_counts = NULL;
       if(!empty($surveyQuestion)) {
         $pc_nl_stat['title'] = $surveyQuestion['questionName'];
+        
+        $svystart = voterdb_timer('start',NULL);
         $surveyCounts = $reportsObj->getSurveyResponsesCountsById($pc_mcid,$surveyQuestion['qid']);
+        $svytime = voterdb_timer('end',$svystart);
+        //voterdb_debug_msg('  survey: '.$svytime, '');
+        
         foreach ($surveyQuestion['responses'] as $rid => $sq_response) {
           $pc_nl_stat[$sq_response] = (empty($surveyCounts[$rid]))?0:$surveyCounts[$rid];
           $pc_count_array['county'][$pc_county]['surveyResponses'][$rid] += $pc_nl_stat[$sq_response];
@@ -140,7 +153,22 @@ function voterdb_participation_cnts($pc_file_uri,&$pc_count_array) {
       $pc_string = implode("\t", $pc_nl_stat);
       $pc_string .= "\tEOR\n";
       fwrite($pc_file_fh,$pc_string);
+      $nltime = voterdb_timer('end',$nlstart);
+      $cnt++;
+      //voterdb_debug_msg('record: '.$cnt.' '.$nltime, '');
+
+      //if($cnt == 62) {
+      //  return TRUE;
+      //}
+
     }
+    $ctytime = voterdb_timer('end',$ctystart);
+    $cty++;
+    //voterdb_debug_msg($pc_county.' county counts: '.$cty.' '.$ctytime, '');
+
+    //if($cnt == 2) {
+    //  return TRUE;
+    //}
   }
   fclose($pc_file_fh);
   return TRUE;

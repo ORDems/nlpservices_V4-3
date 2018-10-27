@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_nls_display_func.php   V4.2  10/7/18
+ * Name: voterdb_nls_display_func.php   V4.3  10/17/18
  *
  */
 /*
@@ -92,8 +92,9 @@ function voterdb_build_nls_table(&$form,&$form_state) {
   $nf_hdr_row .= " \n  ".'<th class ="hborder cell-atmp cell-bold cell-color"><div id="hintth" ><p>Atmps'.$nf_hint.'</p></div></th>';
   
   $nf_hint = '<span style=" position: absolute; width: 200px; left: -175px; top: 20px; ">'
-              . 'Count of the actual face-to-face <u>contacts</u>.</span>';
-  $nf_hdr_row .= " \n  ".'<th class ="hborder cell-cont cell-bold cell-color"><div id="hintth" ><p>Conts'.$nf_hint.'</p></div></th>';
+              . 'Count of voters who have given and answer to the survey question.  '
+          . 'This will usually be a Pledge to Vote question.</u>.</span>';
+  $nf_hdr_row .= " \n  ".'<th class ="hborder cell-cont cell-bold cell-color"><div id="hintth" ><p>P2V'.$nf_hint.'</p></div></th>';
   
   
   //$nf_sortable = array();
