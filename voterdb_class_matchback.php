@@ -4,7 +4,7 @@
  * Contains Drupal\voterdb\NlpMatchback.
  */
 /*
- * Name: voterdb_class_matchback.php   V4.3  8/9/18
+ * Name: voterdb_class_matchback.php   V4.3  10/23/18
  */
 
 namespace Drupal\voterdb;
@@ -164,11 +164,13 @@ class NlpMatchback {
   
   public function setLatestMatchbackDate($date) {
     db_set_active('nlp_voterdb');
-    db_insert(self::DATESTBL)
+    db_merge(self::DATESTBL)
+      ->key(array(
+        'BRIndex' => 0,
+        ))
       ->fields(array(
         'BRDate' => $date,
-        'BRIndex' => 0,
-      ))
+        ))
       ->execute();
     db_set_active('default');
   }
