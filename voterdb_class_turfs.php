@@ -4,7 +4,7 @@
  * Contains Drupal\voterdb\NlpTurfs.
  */
 /*
- * Name: voterdb_class_turfs.php   V4.2  6/16/18
+ * Name: voterdb_class_turfs.php   V4.3  10/14/18
  */
 
 namespace Drupal\voterdb;
@@ -309,6 +309,9 @@ class NlpTurfs {
         break;
       case 'call':
         $file = 'TurfCall';
+        break;
+      case 'pdf':
+        $file = 'TurfPDF';
         break;
       default:
         return;
