@@ -70,9 +70,9 @@ function voterdb_get_progress($nlRecord,$reportsObj) {
   $gp_progress['attempts'] = '';  // Voter contact attempts.
   $gp_progress['contacts'] = ''; // Voter contacts.
   $gp_progress['done'] = '';  // Every voter contacted. 
-  if($nlRecord['status']['turfDelivered'] != 'Y') {
-    return $gp_progress;
-  }
+  //if($nlRecord['status']['turfDelivered'] != 'Y') {
+  //  return $gp_progress;
+  //}
   // Get the voters assigned to this NL for all the turfs.
   $gp_mcid = $nlRecord['mcid'];
   db_set_active('nlp_voterdb');

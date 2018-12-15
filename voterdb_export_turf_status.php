@@ -1,6 +1,6 @@
   <?php
 /*
- * Name: voterdb_export_turf_status.php   V4.3 8/8/18
+ * Name: voterdb_export_turf_status.php   V4.3 10/21/18
  *
  */
 
@@ -76,7 +76,8 @@ function voterdb_who_voted($wv_vanid) {
  * @return string
  */
 function voterdb_turf_results($tr_temp_name,$tr_county) {
-  $tr_hdr = array('HD','Pct','First Name','Last Name','Voters','Voted','Percent','F2F','Voted','Percent','Turf Name');
+  $tr_hdr = array('HD','Pct','First Name','Last Name','Voters','Voted','Percent',
+      'Pledge to Vote','Voted','Percent','Attempts','Turf Name');
   // Create the results file.
   $tr_results_fh = fopen($tr_temp_name,"w");
   // Write the header.
@@ -99,7 +100,7 @@ function voterdb_turf_results($tr_temp_name,$tr_county) {
   //  Keep track of the elapsed time in case we need to upgrade the server.
   $tr_starttime = voterdb_timer('start',0);
   set_time_limit(60);
-  $tr_contact_acc = $tr_voted_acc = 0;
+  $tr_contact_acc = $tr_voted_acc = $tr_attempt_acc = 0;
   // For each turf, calculate the counts and create a row for display.
   foreach ($tr_turfs as $tr_turf) {
     // Get the voters in the turf.
@@ -109,7 +110,7 @@ function voterdb_turf_results($tr_temp_name,$tr_county) {
     if (empty($tr_voters)) {continue;}
     // For each voter determine if a vote was recorded and if there was a 
     // face-to-face contact.
-    $tr_voter_cnt = $tr_voted_cnt = $tr_ftf = $tr_ftfvoted = 0;
+    $tr_voter_cnt = $tr_voted_cnt = $tr_ftf = $tr_ftfvoted = $tr_attempts = 0;
     foreach ($tr_voters as $tr_vanid) {
       // Get the status of ballot returned (indicates voted).
       $tr_votedstart = voterdb_timer('start',0);
@@ -134,6 +135,14 @@ function voterdb_turf_results($tr_temp_name,$tr_county) {
         $tr_ftf++;
         if (!empty($tr_voted)) {$tr_ftfvoted++;}
       }
+      $tr_attemptstart = voterdb_timer('start',0);
+      $tr_attempt = $reportsObj->voterContactAttempted($tr_vanid);
+      $tr_attempttime = voterdb_timer('end',$tr_attemptstart);
+      $tr_attempt_acc += $tr_attempttime;
+      if ($tr_attempt) {
+        $tr_attempts++;
+      }
+      
     }
     // Create the display of counts for this turf.
     $tr_fname =  str_replace("&#039;", "'", $tr_turf['firstName']); // fix the apostrophies.
@@ -150,6 +159,7 @@ function voterdb_turf_results($tr_temp_name,$tr_county) {
     $tr_turf_rec .= $tr_ftf."\t";
     $tr_turf_rec .= $tr_ftfvoted."\t";
     $tr_turf_rec .= $tr_ftf_pc."\t";
+    $tr_turf_rec .= $tr_attempts."\t";
     $tr_turf_rec .= $tr_turf['turfName']."\t\n";
     fwrite($tr_results_fh,$tr_turf_rec);
   }
@@ -160,6 +170,8 @@ function voterdb_turf_results($tr_temp_name,$tr_county) {
   drupal_set_message($msg,'status');
   $msg1 = 'Voted time: '.round($tr_voted_acc,1).' Contact time: '.round($tr_contact_acc,1);
   drupal_set_message($msg1,'status');
+  $msg2 = 'Attempt time: '.round($tr_attempt_acc,1);
+  drupal_set_message($msg2,'status');
   return TRUE;
 }
 

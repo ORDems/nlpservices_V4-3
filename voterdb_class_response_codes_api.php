@@ -14,13 +14,14 @@ class ApiResponseCodes {
   private $expectedContactTypes = array(
     'Walk' => array(
       array('text'=>'Left Message/Lit','weight'=>1),
-      array('text'=>'Not Home','weight'=>2),
+      array('text'=>'Not Home','weight'=>11),
       array('text'=>'Refused','weight'=>2),
       array('text'=>'Inaccessible','weight'=>3),
       array('text'=>'Deceased','weight'=>7),
       array('text'=>'No Such Address','weight'=>4),
       array('text'=>'Hostile','weight'=>6),
       array('text'=>'Moved','weight'=>5),
+      array('text'=>'Canvassed','weight'=>12),
     ),
     'Phone'=>array(
       array('text'=>'Left Message','weight'=>8), 

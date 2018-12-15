@@ -387,6 +387,7 @@ class NlpReports {
       $query->condition('VANID',$vanid);
       $query->condition('Cycle',$cycle);
       $query->condition('Type',self::SURVEY);
+      
       $contactCount = $query->countQuery()->execute()->fetchField();
     }
     catch (Exception $e) {
@@ -397,6 +398,30 @@ class NlpReports {
     db_set_active('default');
     $voterContacted = $contactCount>0;
     return $voterContacted;
+  }
+  
+  function voterContactAttempted($vanid) {
+    $cycle = variable_get('voterdb_ecycle', 'xxxx-mm-G');
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::NLPRESULTSTBL, 'r');
+      $query->addField('r','VANID');
+      $query->condition('VANID',$vanid);
+      $query->condition('Cycle',$cycle);
+      $query->condition(db_or()
+        ->condition ('r.Type', self::SURVEY )
+        ->condition ('r.Type', self::CONTACT ) 
+      );
+      $contactCount = $query->countQuery()->execute()->fetchField();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return FALSE;
+    }
+    db_set_active('default');
+    $voterContactAttempt = $contactCount>0;
+    return $voterContactAttempt;
   }
   
   function countyContacted($county) {
@@ -576,13 +601,16 @@ class NlpReports {
     db_set_active('nlp_voterdb');
     try {
       $query = db_select(self::NLPRESULTSTBL, 'r');
-      $query->addField('r','VANID');
-      $query->condition('Active',TRUE);
+      //$query->addField('r','VANID');
+      //$query->addField('r','Rid');
+      //$query->addField('r','Cdate');
+      $query->fields('r');
+      //$query->condition('Active',TRUE);
       $query->condition('Cycle',$cycle);
-      $query->condition('Type',self::SURVEY);
+      //$query->condition('Type',self::SURVEY);
       $query->condition('Qid',$qid);
       $query->condition('MCID',$mcid);
-      $query->distinct();
+      //$query->distinct();
       $result = $query->execute();
     }
     catch (Exception $e) {
@@ -591,47 +619,31 @@ class NlpReports {
       return NULL;
     }
     db_set_active('default');
+    
+    $vanIds = array();
     do {
-    $voter = $result->fetchAssoc();
-    if(empty($voter)) {break;}
+      $voter = $result->fetchAssoc();
+      //voterdb_debug_msg('voter', $voter);
+      if(empty($voter)) {break;}
       $vanid = $voter['VANID'];
-      
-      db_set_active('nlp_voterdb');
-      try {
-        $vtrQuery = db_select(self::NLPRESULTSTBL, 'r');
-        $vtrQuery->addField('r','Rid');
-        $vtrQuery->addField('r','Cdate');
-        $vtrQuery->condition('Active',TRUE);
-        $vtrQuery->condition('VANID',$vanid);
-        $vtrQuery->condition('Cycle',$cycle);
-        $vtrQuery->condition('Type',self::SURVEY);
-        $vtrQuery->condition('Qid',$qid);
-        $vtrResult = $vtrQuery->execute();
-      }
-      catch (Exception $e) {
-        db_set_active('default');
-        voterdb_debug_msg('e', $e->getMessage() );
-        return 0;
-      }
-      db_set_active('default');
-      
-      $newest = '';
-      $newestRid = 0;
-      do {
-      $responses = $vtrResult->fetchAssoc();
-      if(empty($responses)) {break;}
-        $rid = $responses['Rid'];
-        $cdate = $responses['Cdate'];
-        if($cdate>$newest) {
-          $newestRid = $rid;
-        }
-      } while (TRUE);
-      if($newestRid!=0 AND !isset($counts[$newestRid])) {
-        $counts[$newestRid] = 1;
+      if(empty($vanIds[$vanid])) {
+        $vanIds[$vanid] = array('vanid'=>$vanid,'cdate'=>$voter['Cdate'],'rid'=>$voter['Rid']);
       } else {
-        $counts[$newestRid]++;
+        if($voter['Cdate']>$vanIds[$vanid]['cdate']) {
+          $vanIds[$vanid] = array('vanid'=>$vanid,'cdate'=>$voter['Cdate'],'rid'=>$voter['Rid']);
+        }
       }
     } while (TRUE);
+    //voterdb_debug_msg('vanIds', $vanIds);
+    foreach ($vanIds as $response) {
+      $rid = $response['rid'];
+      if(!isset($counts[$rid])) {
+        $counts[$rid] = 1;
+      } else {
+        $counts[$rid]++;
+      }
+    }
+    //voterdb_debug_msg('counts', $counts);
     return $counts;
   }
   

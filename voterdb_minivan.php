@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_minivan.php     
+ * Name: voterdb_minivan.php     V4.3  10/8/18
  *
  */
 
@@ -278,7 +278,12 @@ function voterdb_record_minivan_reports($reports) {
         //$nlpVotersObj->updateVoterStatus($vanid, $voterStatus['dorCurrent'], $stickyStatus[$response], TRUE);
         voterdb_debug_msg('vanid: '.$vanid.' dorc: '.$voterStatus['dorCurrent'].' field: '.$stickyStatus[$response], '');
       }
-      voterdb_debug_msg('result', $result);
+      //voterdb_debug_msg('result', $result);
+      $msg1 = $result['county'].', '.$result['firstName'].', '.$result['lastName'].', '.$result['mcid'];
+      drupal_set_message($msg1,'status');
+      $msg2 = $result['vanid'].', '.$result['type'].', '.$result['value'].', '.$result['text'].' - ['.
+          '  '.$result['qid'].', '.$result['rid'].'] ';
+      drupal_set_message($msg2,'status');
     }
 
   }
@@ -308,7 +313,7 @@ function voterdb_minivan() {
     foreach($emails as $email_number) {
       $overview = imap_fetch_overview($connection,$email_number,0);
       if($overview[0]->seen) {continue;}
-      voterdb_debug_msg('overview', $overview);
+      //voterdb_debug_msg('overview', $overview);
       $subject = $overview[0]->subject;
       
       $fileType = 'canvass';
@@ -318,6 +323,8 @@ function voterdb_minivan() {
       } elseif (strstr($subject, '- Responses')) {
         $fileType = 'survey';
       }
+      
+      voterdb_debug_msg('processing email type: '.$fileType, $overview[0]->subject);
       
       if($miniVan) {
         $structure = imap_fetchstructure($connection,$email_number);
