@@ -4,7 +4,7 @@
  * Contains Drupal\voterdb\NlpReports.
  */
 /*
- * Name: voterdb_class_nlreports_nlp.php   V4.3  10/7/18
+ * Name: voterdb_class_nlreports_nlp.php   V4.3  12/14/18
  */
 
 namespace Drupal\voterdb;
@@ -45,7 +45,8 @@ class NlpReports {
   
   private $resultsList = array(
     'rindex'=>'Rindex',
-    'recorded'=>'Recorded',
+    'recorded'=>'RecordedVan',
+    'miniVanRecorded' => 'MiniVanRecorded',
     'cycle'=>'Cycle',
     'county'=>'County', 
     'active'=>'Active',
@@ -70,7 +71,7 @@ class NlpReports {
     'type'=>'Type', 
     'value'=>'Value', 
     'text'=>'Text');
-  private $reportFields = array('Recorded','Cycle','County','Active',
+  private $reportFields = array('RecordedVan','Cycle','County','Active',
     'VANID','MCID','Cdate','Type','Value','Text');
   
 
@@ -177,6 +178,7 @@ class NlpReports {
       $query->condition('Active',TRUE);
       $query->condition('Cycle',$cycle);
       $query->isNull('Recorded');
+      $query->range(0, 1000);
       $result = $query->execute();
     }
     catch (Exception $e) {
@@ -284,6 +286,10 @@ class NlpReports {
     if(!empty($canvassResult['recorded'])) {
       $recorded = $canvassResult['recorded'];
     }
+    $minivanRecorded = NULL;
+    if(!empty($canvassResult['miniVanRecorded'])) {
+      $minivanRecorded = $canvassResult['miniVanRecorded'];
+    }
     if(!empty($canvassResult['source'])) {
       $source = $canvassResult['source'];
     } else {
@@ -294,7 +300,8 @@ class NlpReports {
       ->fields(array(
         'Cycle' => $canvassResult['cycle'],
         'County' => $canvassResult['county'],
-        'Recorded' => $recorded,
+        'RecordedVan' => $recorded,
+        'MiniVanRecorded' => $minivanRecorded,
         'Active' => TRUE,
         'MCID' => $canvassResult['mcid'],
         'VANID' => $canvassResult['vanid'],
@@ -378,17 +385,18 @@ class NlpReports {
     $this->setNlReport($canvassResult);
   }
   
-  function voterContacted($vanid) {
+  function surveyResponse($vanid) {
     $cycle = variable_get('voterdb_ecycle', 'xxxx-mm-G');
     db_set_active('nlp_voterdb');
     try {
       $query = db_select(self::NLPRESULTSTBL, 'r');
-      $query->addField('r','VANID');
-      $query->condition('VANID',$vanid);
+      $query->fields('r');
       $query->condition('Cycle',$cycle);
+      $query->condition('VANID',$vanid);
       $query->condition('Type',self::SURVEY);
-      
-      $contactCount = $query->countQuery()->execute()->fetchField();
+      $query->range(0,1);
+      $result = $query->execute();
+      //$contactCount = $query->countQuery()->execute()->fetchField();
     }
     catch (Exception $e) {
       db_set_active('default');
@@ -396,8 +404,11 @@ class NlpReports {
       return FALSE;
     }
     db_set_active('default');
-    $voterContacted = $contactCount>0;
-    return $voterContacted;
+    $report = $result->fetchAssoc();
+    if(empty($report)) {return FALSE;}
+    //$voterContacted = $contactCount>0;
+    //return $voterContacted;
+    return TRUE;
   }
   
   function voterContactAttempted($vanid) {
@@ -405,14 +416,16 @@ class NlpReports {
     db_set_active('nlp_voterdb');
     try {
       $query = db_select(self::NLPRESULTSTBL, 'r');
-      $query->addField('r','VANID');
-      $query->condition('VANID',$vanid);
+      $query->fields('r');
       $query->condition('Cycle',$cycle);
+      $query->condition('VANID',$vanid);
       $query->condition(db_or()
         ->condition ('r.Type', self::SURVEY )
         ->condition ('r.Type', self::CONTACT ) 
       );
-      $contactCount = $query->countQuery()->execute()->fetchField();
+      $query->range(0,1);
+      //$contactCount = $query->countQuery()->execute()->fetchField();
+      $result = $query->execute();
     }
     catch (Exception $e) {
       db_set_active('default');
@@ -420,8 +433,43 @@ class NlpReports {
       return FALSE;
     }
     db_set_active('default');
-    $voterContactAttempt = $contactCount>0;
-    return $voterContactAttempt;
+    $report = $result->fetchAssoc();
+    if(empty($report)) {return FALSE;}
+    //$voterContactAttempt = $contactCount>0;
+    //return $voterContactAttempt;
+    return TRUE;
+  }
+  
+  function contactAttempt($vanid) {
+    $cycle = variable_get('nlp_ecycle', 'xxxx-mm-G');
+    $canvassResult['attempt'] = $canvassResult['survey'] = FALSE;
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::NLPRESULTSTBL, 'r');
+      $query->fields('r');
+      $query->condition('Cycle',$cycle);
+      $query->condition('VANID',$vanid);
+      $query->condition(db_or()
+        ->condition ('r.Type', self::SURVEY )
+        ->condition ('r.Type', self::CONTACT ) 
+      );
+      $result = $query->execute();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      nlp_debug_msg('e', $e->getMessage() );
+      return $canvassResult;
+    }
+    db_set_active('default');
+    
+    do {
+      $report = $result->fetchAssoc();
+      if(empty($report)) {break;}
+      $canvassResult['attempt'] = TRUE;
+      if($report['Type'] == 'Survey') {
+        $canvassResult['survey'] = TRUE;
+      }
+    } while (TRUE);
   }
   
   function countyContacted($county) {
@@ -483,11 +531,7 @@ class NlpReports {
         $counts[$mcid]['attempts']++;
       }
       if(!empty($status['survey'])) {
-        if (empty($counts[$mcid][$status['survey']])) {
-          $counts[$mcid][$status['survey']] = 1;
-        } else {
-          $counts[$mcid][$status['survey']]++;
-        }
+        $counts[$mcid]['contacts']++;
       }
     }
     return $counts;
@@ -701,7 +745,34 @@ class NlpReports {
     return $result;
     } 
     
-   public function decodeReportsHdr($fileHdr) {
+    public function selectNlReports ($nlsObj,$county) {
+    $cycle = variable_get('nlp_ecycle', 'xxxx-mm-G');
+    $nlsTbl = $nlsObj::NLSTBL;
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::NLPRESULTSTBL, 'r');
+      $query->join($nlsTbl, 'n', 'r.MCID = n.MCID' );
+      $query->fields('r');
+      $query->addField('n', $nlsObj->nlList['nickname']);
+      $query->addField('n', $nlsObj->nlList['lastName']);
+      if(!empty($county)) {
+        $query->condition('r.'.'County',$county);
+        $query->condition('r.'.'Cycle',$cycle);
+      }
+      $query->orderBy('r.'.'County');
+      $query->orderBy('r.'.'Cycle');
+      $result = $query->execute();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      nlp_debug_msg('e', $e->getMessage() );
+      return FALSE;
+    }
+    db_set_active('default');
+    return $result;
+  }
+  
+  public function decodeReportsHdr($fileHdr) {
     //voterdb_debug_msg('header', $fileHdr);
     //$state = variable_get('voterdb_state', 'Select');
     $hdrErr = array();
