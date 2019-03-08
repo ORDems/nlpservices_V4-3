@@ -4,7 +4,7 @@
  * Contains Drupal\voterdb\NlpActivistCodes.
  */
 /*
- * Name:  voterdb_class_activist_codes_nlp.php               V4.1 5/28/18
+ * Name:  voterdb_class_activist_codes_nlp.php               V5.0 2/17/19
  */
 namespace Drupal\voterdb;
 
@@ -14,10 +14,10 @@ class NlpActivistCodes {
   
   private $activistCodeMap = array (
     'FunctionName' => 'functionName',
-      'Name' => 'name',
-      'Type' => 'type',
-      'Description' => 'description',
-      'ActivistCodeId' => 'activistCodeId',
+    'Name' => 'name',
+    'Type' => 'type',
+    'Description' => 'description',
+    'ActivistCodeId' => 'activistCodeId',
   );
   
   private function deleteCode($functionName) {
@@ -57,6 +57,7 @@ class NlpActivistCodes {
   }
   
   public function getActivistCode($functionName) {
+    
     db_set_active('nlp_voterdb');
     try {
       $query = db_select(self::ACTIVISTCODETBL, 'a');

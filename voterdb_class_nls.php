@@ -16,27 +16,27 @@ class NlpNls {
   const NLSSTATUSTBL = 'nls_status';
   const NLSSTATUSHISTORYTBL = 'nls_status_history';
   
-  const CANVASS = 'canvass';
-  const MINIVAN = 'minivan';
-  const PHONE = 'phone';
-  const MAIL = 'mail';
+  const CANVASS = 'CANVASS';
+  const MINIVAN = 'MINIVAN';
+  const PHONE = 'PHONE';
+  const MAIL = 'MAIL';
   
   const NOTESDBLENGTH = '81';  // Length of the notes field in database.
   const NOTESMAX = '75';   // Notes max length of the note.
   const NOTESWRAP = '25';  // Notes max length for single line.
    
   public $contactList = array(
-      'canvass'=>self::CANVASS,
-      'minivan'=>self::MINIVAN,
-      'phone'=>self::PHONE,
-      'mail'=>self::MAIL,
+      'CANVASS'=>self::CANVASS,
+      'MINIVAN'=>self::MINIVAN,
+      'PHONE'=>self::PHONE,
+      'MAIL'=>self::MAIL,
   );
   
   const DASH = '-';
-  const ASKED = 'Asked';
-  const YES = 'Yes';
-  const NO = 'No';
-  const QUIT = 'Quit';
+  const ASKED = 'ASKED';
+  const YES = 'YES';
+  const NO = 'NO';
+  const QUIT = 'QUIT';
   
   public $askList = array(
       '-'=>self::DASH,
@@ -405,6 +405,8 @@ class NlpNls {
   
   
   public function getNlsStatus($mcid,$county) {
+    //$backTrace = debug_backtrace(); 
+    //voterdb_debug_msg('caller, Line: '.$backTrace[0]['line'], $backTrace[0]['file']);
     db_set_active('nlp_voterdb');
     try {
       $select = "SELECT * FROM {".self::NLSSTATUSTBL."} WHERE  ".
@@ -419,50 +421,50 @@ class NlpNls {
       voterdb_debug_msg('e', $e->getMessage() );
       return FALSE;
     }
-    $nlDbStaus = $result->fetchAssoc();
-    if(empty($nlDbStaus)) {
-      //voterdb_debug_msg('nldbstatus', $nlDbStaus);
-      $nlStaus = array();
+    $nlDbStatus = $result->fetchAssoc();
+    if(empty($nlDbStatus)) {
+      //voterdb_debug_msg('nldbstatus', $nlDbStatus);
+      $nlStatus = array();
       $nlpKeys = array_keys($this->statusList);
       foreach ($nlpKeys as $nlpKey) {
-        $nlStaus[$nlpKey] = NULL;
+        $nlStatus[$nlpKey] = NULL;
       }
-      $nlStaus['mcid'] = $mcid;
-      $nlStaus['county'] = $county;
-      $nlStaus['contact'] = self::CANVASS;
-      $nlStaus['asked'] = self::DASH;
-      //voterdb_debug_msg('nlstatus', $nlStaus);
+      $nlStatus['mcid'] = $mcid;
+      $nlStatus['county'] = $county;
+      $nlStatus['contact'] = self::CANVASS;
+      $nlStatus['asked'] = self::DASH;
+      //voterdb_debug_msg('nlstatus', $nlStatus);
     } else {
-      //voterdb_debug_msg('nldbstatus', $nlDbStaus);
+      //voterdb_debug_msg('nldbstatus', $nlDbStatus);
       foreach ($this->statusList as $nlpKey => $dbFieldName) {
-        $nlStaus[$nlpKey] = $nlDbStaus[$dbFieldName];
+        $nlStatus[$nlpKey] = $nlDbStatus[$dbFieldName];
       }
-      //voterdb_debug_msg('nlstatus', $nlStaus);
+      //voterdb_debug_msg('nlstatus', $nlStatus);
       $askListFlip = array_flip($this->askList);
       //voterdb_debug_msg('asklistflipped', $askListFlip);
-      if(empty($nlStaus['asked'])) {
-        $nlStaus['asked'] = '-';
+      if(empty($nlStatus['asked'])) {
+        $nlStatus['asked'] = '-';
       } else {
-        $nlStaus['asked'] = $askListFlip[$nlStaus['asked']];
+        $nlStatus['asked'] = $askListFlip[$nlStatus['asked']];
       }
     }
     db_set_active('default');
-    return $nlStaus;
+    return $nlStatus;
   }
 
   public function setNlsStatus($status) {
     //voterdb_debug_msg('status', $status);
-    //$backTrace = debug_backtrace(); 
+    $backTrace = debug_backtrace(); 
     //voterdb_debug_msg('caller, Line: '.$backTrace[0]['line'], $backTrace[0]['file']);
     foreach ($this->statusList as $nlpKey => $dbFieldName) {
-      $nlDbStaus[$dbFieldName] = $status[$nlpKey];
+      $nlDbStatus[$dbFieldName] = $status[$nlpKey];
     }
-    //voterdb_debug_msg('fields', $nlDbStaus);
-    $nlDbStaus['Asked'] = $this->askList[$nlDbStaus['Asked']];
+    //voterdb_debug_msg('fields', $nlDbStatus);
+    $nlDbStatus['Asked'] = $this->askList[$nlDbStatus['Asked']];
     db_set_active('nlp_voterdb');
     try {
       db_merge(self::NLSSTATUSTBL)
-        ->fields($nlDbStaus)
+        ->fields($nlDbStatus)
         ->key(array(
           'MCID' => $status['mcid'],
           'County' => $status['county']))
@@ -481,13 +483,13 @@ class NlpNls {
     db_set_active('nlp_voterdb');
     $date = date('Y-m-d G:i:s');
     foreach ($this->historyList as $nlpKey => $dbFieldName) {
-      $nlDbStaus[$dbFieldName] = (isset($statusHistory[$nlpKey]))?$statusHistory[$nlpKey]:NULL;
+      $nlDbStatus[$dbFieldName] = (isset($statusHistory[$nlpKey]))?$statusHistory[$nlpKey]:NULL;
     }
-    $nlDbStaus['Date'] = $date;
-    $nlDbStaus['Cycle'] = variable_get('voterdb_ecycle', 'yyyy-mm-t');
+    $nlDbStatus['Date'] = $date;
+    $nlDbStatus['Cycle'] = variable_get('voterdb_ecycle', 'yyyy-mm-t');
     try {
       db_insert(self::NLSSTATUSHISTORYTBL)
-        ->fields($nlDbStaus)
+        ->fields($nlDbStatus)
         ->execute();
       db_set_active('default');
     }
