@@ -195,6 +195,7 @@ function voterdb_participation() {
   // Count the NLs who have signed up, the voters assigned to NLs, and the
   // progress on contacting voters.
   // Export the progress report for each participating NL.
+  $startTime = voterdb_timer('start',NULL);
   $gc_temp_dir = 'public://temp';
   $gc_cdate = date('Y-m-d-H-i-s',time());
   $gc_participation_uri = $gc_temp_dir.'/participation_report_'.$gc_county.'_'.$gc_cdate.'.txt';
@@ -257,5 +258,7 @@ function voterdb_participation() {
   $gc_participation_url = file_create_url($gc_participation_uri);
   $output .= "<p><a href=".$gc_participation_url.">Right click here to download the participation report.</a> "
     . "<i>(Use the Save link as... option)</i></p>";
+  $elapsedTime = voterdb_timer('end',$startTime);
+  voterdb_debug_msg('elapsed time', $elapsedTime);
   return $output;
 }

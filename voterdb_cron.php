@@ -24,8 +24,9 @@ define('CR_TIME_WINDOW','3');  // Window of time when emails will be sent.
 function voterdb_cron() {
 
   watchdog('voterdb_cron', 'called');
-  
+
   // Check for email bounces.
+  /*
   $cr_bounce_lst = voterdb_bounce_chk();  //cron_bounce.
   if(!empty($cr_bounce_lst)) {
     watchdog('voterdb_cron', 'Bounce notifications to be sent.');
@@ -39,10 +40,12 @@ function voterdb_cron() {
       $cr_queue->createItem($cr_item);
     }
   }
+   * 
+   */
   
   // Check if we have results to report to VoteBuilder.
   //watchdog('voterdb_cron', 'results chk to be called');
-  $cr_results_list = voterdb_results_chk();  //cron_resu;ts.
+  $cr_results_list = voterdb_results_chk();  //cron_results.
   if(!empty($cr_results_list)) {  // Results to report.
     //watchdog('voterdb_cron', 'Results to be recorded.');
     foreach ($cr_results_list as $cr_results_batch) {
@@ -54,7 +57,7 @@ function voterdb_cron() {
       $cr_queue->createItem($cr_item);
     }
   }
-  
+
   // Verify that we run only once a day between midnight and 7am.
   $cr_time = time();
   $cr_interval = 12 * 60 * 60;  // 12 hours in seconds.
@@ -95,6 +98,7 @@ function voterdb_cron() {
     }
     
   }
+
 }
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_cron_queue_info

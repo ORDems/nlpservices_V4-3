@@ -41,7 +41,7 @@ function voterdb_header_validate($fileType,$fileName) {
     form_set_error('upload', 'Fix the problem before resubmit.');
     return FALSE;
   }
-  $headerRecord = sanitize_string($headerRaw);
+  $headerRecord = nlp_sanitize_string($headerRaw);
   // Extract the column headers.
   $columnHeader = explode(",", $headerRecord);
 
@@ -91,7 +91,7 @@ function voterdb_get_minivan_results($fileName, $fieldPos, $fileType, $activistC
     $record = array();
     $fieldsRaw = explode(",", $recordRaw);
     foreach ($fieldsRaw as $fieldRaw) {
-      $record[] = sanitize_string($fieldRaw);
+      $record[] = nlp_sanitize_string($fieldRaw);
     }
     $report = $minivanObj->extractMinivanFields($record,$fieldPos);
     //voterdb_debug_msg('report '.$fileType, $report);

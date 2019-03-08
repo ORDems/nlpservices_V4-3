@@ -35,7 +35,7 @@ function voterdb_get_group(&$form_state) {
     drupal_set_message('County unknown or not specified','error');
     return FALSE;
   }
-  $form_state['voterdb']['county'] = $gg_county;
+  $form_state['voterdb']['county'] = strtoupper($gg_county);
   $form_state['voterdb']['hd_array'] = $hdNames;
   $form_state['voterdb']['debug'] = FALSE;
   if( $gg_options != '') {

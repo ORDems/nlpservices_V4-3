@@ -52,6 +52,9 @@ function voterdb_export_nlsreports_batch($en_arg,&$en_context) {
     $en_rcnt++;
     // Get the name of the NL who recorded this report, if we have it.
     $nl = $nlObj->getNlById($en_record_raw['MCID']);
+    //$en_record_raw['RecordedVan'] = $en_record_raw['RecordedVan']."\t";
+    //$en_record_raw['MiniVanRecorded'] = $en_record_raw['MiniVanRecorded']."\t";
+    //$en_record_raw['Cdate'] = $en_record_raw['Cdate']."\t";
     $en_record_raw['nickname'] = $nl['nickname'];
     $en_record_raw['lastName'] = $nl['lastName'];
     // Convert the associative array to tab delimited string.

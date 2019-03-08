@@ -1,6 +1,6 @@
   <?php
 /*
- * Name: voterdb_export_turf_status.php   V4.3 10/21/18
+ * Name: voterdb_export_turf_status.php   V4.3 10/28/18
  *
  */
 
@@ -77,7 +77,7 @@ function voterdb_who_voted($wv_vanid) {
  */
 function voterdb_turf_results($tr_temp_name,$tr_county) {
   $tr_hdr = array('HD','Pct','First Name','Last Name','Voters','Voted','Percent',
-      'Pledge to Vote','Voted','Percent','Attempts','Turf Name');
+      'Pledge to Vote','Voted','Percent','Attempts','Login Date','Turf Name');
   // Create the results file.
   $tr_results_fh = fopen($tr_temp_name,"w");
   // Write the header.
@@ -160,6 +160,7 @@ function voterdb_turf_results($tr_temp_name,$tr_county) {
     $tr_turf_rec .= $tr_ftfvoted."\t";
     $tr_turf_rec .= $tr_ftf_pc."\t";
     $tr_turf_rec .= $tr_attempts."\t";
+    $tr_turf_rec .= $tr_turf['lastAccess']."\t";
     $tr_turf_rec .= $tr_turf['turfName']."\t\n";
     fwrite($tr_results_fh,$tr_turf_rec);
   }
