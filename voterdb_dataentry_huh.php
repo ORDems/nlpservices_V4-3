@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_dataentry.php      V4.3  9/30/18
+ * Name: voterdb_dataentry.php      V5.0  11/16/18
  */
 
 require_once "voterdb_constants_voter_tbl.php";
@@ -9,11 +9,9 @@ require_once "voterdb_group.php";
 require_once "voterdb_debug.php";
 require_once "voterdb_banner.php";
 require_once "voterdb_track.php";
-require_once "voterdb_dataentry_func.php";
-require_once "voterdb_dataentry_func2.php";
-require_once "voterdb_dataentry_func3.php";
-require_once "voterdb_dataentry_func4.php";
-require_once "voterdb_dataentry_func5.php";
+require_once "voterdb_dataentry_build.php";
+require_once "voterdb_dataentry_verify.php";
+require_once "voterdb_dataentry_submit.php";
 require_once "voterdb_class_get_browser.php";
 require_once "voterdb_class_candidates_nlp.php";
 require_once "voterdb_class_survey_question_nlp.php";

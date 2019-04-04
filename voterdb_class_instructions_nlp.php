@@ -66,7 +66,10 @@ class NlpInstructions {
       foreach ($record as $dbKey => $value) {
         $instruct[$dbList[$dbKey]] = $value;
       }
-      $instructs[$instruct['type']] = $instruct;
+      $type = strtolower($instruct['type']);
+      //voterdb_debug_msg('type: '.$type,'');
+      $instructs[$type] = $instruct;
+      //$instructs[$instruct['type']] = $instruct;
     } while (TRUE);
     return $instructs;
   }

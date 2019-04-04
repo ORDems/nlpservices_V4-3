@@ -10,6 +10,13 @@ class NlpDrupalUser {
   
   const NLPROLE = 'neighborhood leader';
   
+  public $nlpRoles = array(
+    'nl' => NLP_LEADER_ROLE,
+    'co' => NLP_COORDINATOR_ROLE,
+    'admin' => NLP_ADMIN_ROLE,
+    'authenticated' => 'authenticated user',
+  );
+  
   private $searchFields = array(
     'mcid'=>'field_mcid',
     'firstName'=>'field_firstname',
@@ -302,5 +309,77 @@ class NlpDrupalUser {
     $roles = user_roles();
     return array_search(self::NLPROLE, $roles);
   }
+  
+  public function getRoles() {
+    $drupalRoles = user_roles();
+    $roleIds = array_flip($drupalRoles);
+    foreach ($this->nlpRoles as $drupalName) {
+      if(!empty($roleIds[$drupalName])) {
+        $roles[$roleIds[$drupalName]] = $drupalName;
+      }
+    }
+    return $roles;
+  }
+  
+  
+  public function addUser($account) {
+    if(empty($account['userName'])) {
+      $userByName['status'] = 'no userName';
+      return $userByName;
+    }
+    $userName = $account['userName'];
+    $userByName = $this->getUserByName($userName);
+    if(!empty($userByName)) {
+      $userByName['status'] = 'exists';
+      return $userByName;
+    }
+    $func = 'send';
+    if(empty($account['email'])) {
+      $userByName['status'] = 'no email';
+      return $userByName;
+    }
+    
+    $email = $account['email'];
+    $sharedEmail = NULL;
+    if(!empty($account['sharedEmail'])) {
+      $sharedEmail = $account['sharedEmail'];
+    }
+    $userByEmail = $this->getUserByEmail($email);
+    if(!empty($userByEmail)) {
+      $sharedEmail = $email;
+      $email = 'shared_'.$email;
+      $func = 'shared';
+    }
+    $roles = $account['roles'];
+    
+    $edit = array(
+      'name' => $userName, 
+      'pass' => $account['magicWord'],
+      'mail' => $email,
+      'init' => $email, 
+      'status' => 1, 
+      'access' => REQUEST_TIME,
+      'language' => 'en',
+      'timezone' => 'America/Los_Angeles',
+      'roles' => $roles,
+      'field_firstname' => array(LANGUAGE_NONE => array(array('value' => $account['firstName']))),
+      'field_lastname' => array(LANGUAGE_NONE => array(array('value' => $account['lastName']))),
+      'field_county' => array(LANGUAGE_NONE => array(array('value' => $account['county']))),
+      'field_mcid' => array(LANGUAGE_NONE => array(array('value' => $account['mcid']))) , 
+      'field_phone' => array(LANGUAGE_NONE => array(array('value' => $account['phone']))) , 
+      'field_shared_email' => array(LANGUAGE_NONE => array(array('value' => $sharedEmail))) ,
+      'func' => $func,
+      'firstName' => $account['firstName'],
+      'sharedEmail' => $sharedEmail,
+    );
+    $accountObj = user_save(NULL, $edit);
+    if(empty($accountObj)) {
+      return $user['status'] = 'error';
+    }
+    $user = $this->extractUserInfo($accountObj); 
+    $user['status'] = 'complete';
+    return $user;
+  }
+  
   
 }

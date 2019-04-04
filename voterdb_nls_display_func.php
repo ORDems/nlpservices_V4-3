@@ -217,6 +217,7 @@ function voterdb_build_nls_table(&$form,&$form_state) {
     
     
     $nf_co_default = $nlRecord['status']['contact'];
+    //voterdb_debug_msg('nlrecord', $nlRecord);
     $form['nlform']["CO-".$nf_mcid.'-contact'] = array(
       '#type' => 'select',
       '#options' => $nf_contact,

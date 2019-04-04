@@ -18,6 +18,10 @@ require_once "voterdb_class_magic_word.php";
 
 use Drupal\voterdb\NlpMagicWord;
 
+define('NLP_ADMIN_ROLE','nlp administrator');
+define('NLP_COORDINATOR_ROLE','nlp coordinator');
+define('NLP_LEADER_ROLE','neighborhood leader');
+
 class voterdbMailSystem extends DefaultMailSystem {
   public function format(array $message) {
     $message['body'] = implode("\n\n", $message['body']);
@@ -342,6 +346,14 @@ function voterdb_menu() {
     'page callback' => 'voterdb_record_results',
     'file' => 'voterdb_record_results.php',
     'type' => MENU_CALLBACK,
+  );
+  $items ['nlpimportusers'] = array (
+    'title' => 'Import user accounts',
+    'description' => 'Import the contents of a prior export of user accounts.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('voterdb_import_users_form'),
+    'file' => 'voterdb_import_users.php',
+    'access arguments' => array('Access VoterDB tools'),
   );
 return $items;
 };

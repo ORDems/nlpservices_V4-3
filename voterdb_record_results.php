@@ -1,14 +1,15 @@
 <?php
 /**
- * Name:  voteredb_cron_results.php     V4.3  10/29/18
+ * Name:  voteredb_record_results.php     V4.3  10/29/18
  * @file
  */
 require_once "voterdb_class_api_authentication.php";
 require_once "voterdb_class_nlreports_nlp.php";
 require_once "voterdb_class_response_codes.php";
 require_once "voterdb_class_survey_questions_api.php";
+require_once "voterdb_debug.php";
 
-define('BATCHSIZE','2000');
+define('BATCHSIZE2','2000');
 
 use Drupal\voterdb\NlpReports;
 use Drupal\voterdb\NlpResponseCodes;
@@ -25,8 +26,8 @@ use Drupal\voterdb\ApiAuthentication;
  * 
  * @return an associative list of NL reports arranged in batches.
  */
-function voterdb_results_chk() {
-  watchdog('voterdb_cron_results', 'results chk called.');
+function voterdb_results_check() {
+  //watchdog('voterdb_cron_results', 'results chk called.');
   $nlReportsObj = new NlpReports();
   $nlReports = $nlReportsObj->getNlpUnrecorded();
   //watchdog('voterdb_results_chk', 'reports: @rec',array('@rec' =>  print_r($nlReports, true)),WATCHDOG_DEBUG);
@@ -34,7 +35,7 @@ function voterdb_results_chk() {
   $voterCnt = 0;
   $batchCnt = 0;
   foreach ($nlReports as $vanid => $voterReports) {
-    if($voterCnt<BATCHSIZE) {
+    if($voterCnt<BATCHSIZE2) {
       $voterReportBatch[$batchCnt][$vanid] = $voterReports;
       $voterCnt++;
     } else {
@@ -55,7 +56,7 @@ function voterdb_results_chk() {
  * 
  * @param type $item - A batch of canvass results to be recorded in VoteBuilder.
  */
-function voterdb_cron_results_notify($item) {
+function voterdb_results_notify($item) {
   watchdog('voterdb_results_notify', 'processed item created at @time', array('@time' => date_iso8601($item->created),));
   $stateCommittee = variable_get('voterdb_state_committee', 'StateParty');
   $authenticationObj = new ApiAuthentication;
@@ -136,3 +137,16 @@ function voterdb_cron_results_notify($item) {
     }
   }
 }
+  
+function voterdb_record_results() {
+  $cr_results_list = voterdb_results_check();  //cron_results.
+  voterdb_debug_msg('results', $cr_results_list);
+  if(!empty($cr_results_list)) {
+    drupal_set_message('NotEmpty','status');
+  }
+  drupal_set_message('Done','status');
+  $output .= "<br>test complete";
+  return array('#markup' => $output); 
+
+}
+

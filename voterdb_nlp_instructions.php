@@ -42,6 +42,7 @@ function voterdb_nlp_instructions_form($form,&$form_state) {
   $instructionsObj = new NlpInstructions();
   
   $ni_current = $instructionsObj->getInstructions($ni_county);
+  //voterdb_debug_msg('current', $ni_current);
   
   $form_state['voterdb']['current'] = $ni_current;
   // Create the form to display of all the NLs

@@ -250,7 +250,8 @@
     'description' => 'Voter contact reports by NL.', 
     'fields' => array( 
       'Rindex' => array( 'type' => 'serial', 'size' => 'normal', 'unsigned' => TRUE, 'not null' => TRUE, ),
-      'Recorded' => array( 'mysql_type' => 'date', 'length' => 16, ),
+      'RecordedVan' => array( 'mysql_type' => 'date', 'length' => 16, ),
+      'MiniVanRecorded' => array( 'mysql_type' => 'date', 'length' => 16, ),
       'Cycle' => array( 'type' => 'varchar', 'length' => 10, 'not null' => TRUE, ),
       'County' => array( 'mysql_type' => 'enum('.$counties.')','not null' => TRUE, ),
       'Active' => array( 'type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, ),
@@ -262,6 +263,7 @@
       'Text' => array( 'type' => 'varchar', 'length' => 190, ),
       'Qid' => array( 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, ),
       'Rid' => array( 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, ),
+      'Source' => array( 'type' => 'varchar', 'length' => 20, ),
     ),
     'indexes' => array( 
       'VANID' => array( 'VANID', ),

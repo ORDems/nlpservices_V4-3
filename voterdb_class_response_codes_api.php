@@ -21,7 +21,7 @@ class ApiResponseCodes {
       array('text'=>'No Such Address','weight'=>4),
       array('text'=>'Hostile','weight'=>6),
       array('text'=>'Moved','weight'=>5),
-      array('text'=>'Canvassed','weight'=>12),
+      //array('text'=>'Canvassed','weight'=>12),
     ),
     'Phone'=>array(
       array('text'=>'Left Message','weight'=>8), 

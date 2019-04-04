@@ -160,23 +160,24 @@ class NlpCoordinators {
     $result = db_query($select);
     db_set_active('default');
     $dbList = array_flip($this->coordinatorList);
-	$cos = array();
+  	$cos = array();
     do {
       $record = $result->fetchAssoc();
       if(empty($record)) {break;}
+      $co = array();
       foreach ($record as $dbKey => $value) {
         $co[$dbList[$dbKey]] = $value;
       }
       $cos[$co['cindex']] = $co;
     } while (TRUE);
-    
+    //voterdb_debug_msg('cos', $cos);
     $coordinators = array();
     foreach ($cos as $co) {
       $county = $co['county'];
       $scope = $co['scope'];
       $cindex = $co['cindex'];
       switch ($scope) {
-        case 'Pct':
+        case 'PCT':
           db_set_active('nlp_voterdb');
           $tselect = "SELECT * FROM {".self::PCTCOORDINATORTBL."} WHERE  CIndex = :index";
           $targs = array(
@@ -199,7 +200,7 @@ class NlpCoordinators {
             $coordinators[$county]['hd'][$hd] = $co;
           }
           break;
-        case 'County':
+        case 'COUNTY':
           if(!isset($coordinators[$county]['county'])) {
             $coordinators[$county]['county'] = $co;
           }

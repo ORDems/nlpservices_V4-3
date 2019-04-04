@@ -107,6 +107,9 @@ function voterdb_get_progress($nlRecord,$reportsObj) {
   $gp_cycle = variable_get('voterdb_ecycle', 'xxxx-mm-G');
   //$gp_reports = $reportsObj->getNlpVoterReports($gp_mcid,$gp_cycle);
   $gp_reports = $reportsObj->getNlReportsForVoters($gp_voter_array,$gp_cycle);
+  if($gp_mcid == 100701594) {
+    voterdb_debug_msg('reports', $gp_reports);
+  }
   //voterdb_debug_msg('reports', $gp_reports);
   if(!empty($reportsObj->debug)) {
     if($gp_mcid=='102325487') {

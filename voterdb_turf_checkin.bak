@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_turf_checkin.php     V4.3  10/13/18
+ * Name: voterdb_turf_checkin.php     V4.3  9/1/18
  * This include file contains the code to upload a turf exported from the
  * VAN and add it to the voter database.
  */
@@ -177,12 +177,6 @@ function voterdb_turf_checkin_form($form, &$form_state) {
     '#prefix' => '<div style="width:600px;">',
     '#suffix' => '</div>',
   );
-  $form['filegroup']['note'] = array(
-    '#markup' => '<p>The file name used for "NL turf export list" will be used as the name of the turf.'
-      . '  This name will appear in the "Delete a turf" and the "Send email with turf to NL" functions.'
-      . '  The name is also used to identify the turf to the NL if there is  more than one turf assigned.'
-      . '  It is highly recommended that this name be descriptive and related to the Title used to print the PDF in VoteBuilder.</p>',
-  );
   // Name the file with the turf.
   $form['filegroup']['turffile'] = array(
       '#type' => 'file',
@@ -241,7 +235,6 @@ function voterdb_turf_checkin_form_validate($form,&$form_state) {
     return;
   }
   $form_state['voterdb']['turf_file'] = $fv_turffile;
-  $form_state['voterdb']['turf_name'] = $fv_tname_txt_array[0];
   // Now check that we have the PDF for the turf.
   $fv_pdf_file = $_FILES['files']['name']['turfpdf'];
   $fv_pdftmp = $_FILES['files']['tmp_name']['turfpdf'];
@@ -252,16 +245,18 @@ function voterdb_turf_checkin_form_validate($form,&$form_state) {
   $fv_fname_pdf = strtolower($fv_pdf_file);
   $fv_fname_pdf_array = explode('.', $fv_fname_pdf);
   $fv_ftype_pdf = end($fv_fname_pdf_array);
-  
   $fv_allowed = array('pdf','xls','xlsx');
-  if (!in_array($fv_ftype_pdf, $fv_allowed)) {
+  $fv_wrong_type = TRUE;
+  foreach ($fv_allowed as $fv_type) {
+    if ($fv_ftype_pdf == $fv_type) { 
+      $fv_wrong_type = FALSE;
+    }
+  }
+  if ($fv_wrong_type) {
     form_set_error('turfpdf', 'The walksheet must be a PDF, XLS, or XLSX type.');
     return;
   }
-
   $form_state['voterdb']['pdf_file'] = $fv_pdf_file;
-  $form_state['voterdb']['pdf_name'] = $fv_fname_pdf_array[0];
-  $form_state['voterdb']['pdf_suffix'] = $fv_ftype_pdf;
   // Now check that we have a valid export of a turf from the VAN.
   $fv_voter_fh = fopen($fv_turftmp, "r");
   if ($fv_voter_fh == FALSE) {
@@ -358,14 +353,9 @@ function voterdb_turf_checkin_form_submit($form,&$form_state) {
   $tc_county = $form_state['voterdb']['county'];
   // Create a turf name from the file name of the PDF.  This name will match
   // the name on the PDF walksheet making it easier to recognize.
-  //$tc_turfbase = voterdb_get_base($form_state['voterdb']['pdf_file']); // func.
-  
-  //$tc_turfpdf_e = explode('.', $form_state['voterdb']['pdf_file']);
-  //$tc_turfbase = $tc_turfpdf_e[0];
-  
-  //$tc_tname = $tc_turfbase;
-  //$form_state['voterdb']['tname'] = $tc_tname;
-  $form_state['voterdb']['tname'] = $form_state['voterdb']['turf_name'];
+  $tc_turfbase = voterdb_get_base($form_state['voterdb']['pdf_file']); // func.
+  $tc_tname = $tc_turfbase;
+  $form_state['voterdb']['tname'] = $tc_tname;
   // Now check if there is any overlap of voter assignment to NLs.
   
   $votersObj = new NlpVoters();
@@ -419,12 +409,12 @@ function voterdb_turf_checkin_form_submit($form,&$form_state) {
         . $form_state['voterdb']['lname']." ".$tc_turf_oarray['TurfName'];
     voterdb_login_tracking('turf',$tc_county,'Deleted overlapped turf',$lt_info);
   }
-  /*
+  
   // Save the PDF where we can find it.
   $tc_pdf_tmp = $form_state['voterdb']['pdf_tmp'];
   $tc_turf_pdf_name = '';
   if ($tc_pdf_tmp != '') {
-    $tc_turf_pdf_name = "MCID".$tc_mcid."_".$form_state['voterdb']['pdf_file'].'TI';
+    $tc_turf_pdf_name = "MCID".$tc_mcid."_".$tc_tname.'.pdf';
     
     $pathsObj = new NlpPaths();
     $tc_uri = $pathsObj->getPath('PDF',$tc_county).$tc_turf_pdf_name;
@@ -434,33 +424,11 @@ function voterdb_turf_checkin_form_submit($form,&$form_state) {
     $form_state['voterdb']['pdf_file'] = $tc_turf_pdf_name;
   } 
   
-   * 
-   */
   // We have a good turf so insert in database.
   if(!voterdb_insert_turf($form_state)) { //func.
     $votersObj->unlockVoters();
     return FALSE;
   } 
-  
-  // Save the PDF where we can find it.
-  $tc_pdf_tmp = $form_state['voterdb']['pdf_tmp'];
-  $tc_turf_pdf_name = '';
-  if ($tc_pdf_tmp != '') {
-    $tc_turf_pdf_name = "MCID".$tc_mcid."_".$form_state['voterdb']['pdf_name']
-        .'_TI'.$form_state['voterdb']['turf_index'].'.'.$form_state['voterdb']['pdf_suffix'];
-    
-    $pathsObj = new NlpPaths();
-    $tc_uri = $pathsObj->getPath('PDF',$tc_county).$tc_turf_pdf_name;
-    //voterdb_debug_msg('uri', $tc_uri );
-    //$tc_uri = voterdb_get_path('PDF',$tc_county).$tc_turf_pdf_name;
-    drupal_move_uploaded_file($tc_pdf_tmp, $tc_uri);
-    $form_state['voterdb']['pdf_file'] = $tc_turf_pdf_name;
-    $turfsObj = $form_state['voterdb']['turfsObj'];
-    $turfsObj->updateTurfFiles('pdf',$tc_turf_pdf_name,$form_state['voterdb']['turf_index']);
-  } 
-  
-  
-  
   $votersObj->unlockVoters();
   
   
@@ -515,6 +483,6 @@ function voterdb_turf_checkin_form_submit($form,&$form_state) {
   if($newAccount) {
     $magicWordObj->setMagicWord($tc_mcid,$magicWord);
   }
-  $tc_success_msg = $form_state['voterdb']['tname']." has been successfully checked in.";
+  $tc_success_msg = "$tc_tname has been successfully checked in.";
   drupal_set_message($tc_success_msg,'status');
 }
