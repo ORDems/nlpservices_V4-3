@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Name:  voterdb_turf_deliver.php               V4.3 8/25/18
+ * Name:  voterdb_turf_deliver.php               V4.3 4/3/19
  */
 require_once "voterdb_constants_voter_tbl.php";
 require_once "voterdb_constants_nls_tbl.php";
@@ -211,7 +211,9 @@ function voterdb_turf_deliver_form($form, &$form_state) {
  * @param type $form_state
  */
 function voterdb_turf_deliver_form_submit($form, &$form_state) {
-  global $base_url;
+  //global $base_url;
+  $serverName = $GLOBALS['_SERVER']['SERVER_NAME'];
+  $serverUrl = 'https://'.$serverName;
   $form_state['voterdb']['reenter'] = TRUE;
   $form_state['rebuild'] = TRUE;  // form_state will persist.
   $df_county = $form_state['voterdb']['county'];
@@ -357,7 +359,7 @@ function voterdb_turf_deliver_form_submit($form, &$form_state) {
           'It is important that you return to this login to report the results of your attempts to contact the voters.&nbsp;   ' .
           'After login, you will see a link in the upper left corner.&nbsp;  That will take you to a printable copy of your list of voters.  ' .
           'Click that link and print the list.' . '</p>');
-  $df_message .= t('<p><a href="' . $base_url . '" target="_blank">Neighborhood Leader Login</a></p>');
+  $df_message .= t('<p><a href="' . $serverUrl . '" target="_blank">Neighborhood Leader Login</a></p>');
   $df_message .= t('<p>' . 'Your login name is: @name ' . '</p>', array('@name' => $user['userName']));
   $df_message .= t('<p>' . 'The password is: @pass' . '</p>', array('@pass' => $magicWord));
   // Add the optional note.

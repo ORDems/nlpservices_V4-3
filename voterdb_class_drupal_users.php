@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_class_drupal_user.php   V4.3 8/21/18
+ * Name: voterdb_class_drupal_user.php   V4.3 4/3/19
  *
  */
 namespace Drupal\voterdb;
@@ -155,7 +155,9 @@ class NlpDrupalUser {
   
   
   public function createUser($account) {
-    global $base_url;
+    //global $base_url;
+    $serverName = $GLOBALS['_SERVER']['SERVER_NAME'];
+    $serverUrl = 'https://'.$serverName;
     $notify = TRUE;
     $func = 'send';
     $email = $account['mail'];
@@ -210,6 +212,7 @@ class NlpDrupalUser {
     if(empty($accountObj)) {
       return $user['status'] = 'error';
     }
+    $notify = FALSE;
     if($notify) {
       $params['func'] = 'account_notification';
       $params['subject'] = 'Neighborhood Leader account login: Voter contact reports';
@@ -225,7 +228,7 @@ class NlpDrupalUser {
       $message .= 'Also, in the box for Instructions, there is a link for the current election.&nbsp;  '
               . 'Please click this link and read the instructions if your are not already familiar with the program.  </p>';
       $message .=  'In the upper right corner of the page you will see a link for "My account".&nbsp;  That link can be used to change your password if you like. ';
-      $message .= '<p><a href="' . $base_url . '" target="_blank">Neighborhood Leader Login</a></p>';
+      $message .= '<p><a href="' . $serverUrl . '" target="_blank">Neighborhood Leader Login</a></p>';
       $message .= t('<p>' . 'Your login name is: @name ' . '</p>', array('@name' => $userName));
       $message .= t('<p>' . 'The password is: @pw ' . '</p>', array('@pw' => $account['magicWord']));
       $currentUser = $this->getCurrentUser();
