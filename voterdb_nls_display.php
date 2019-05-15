@@ -124,12 +124,19 @@ function voterdb_display_nls_form($form_id, &$form_state) {
     $nlRecords = $form_state['voterdb']['nlRecords'];
     //$dn_csv_hdr = $form_state['voterdb']['nl-csv-hdr'];
 
+    //voterdb_debug_msg('hdcurrent', $form_state['voterdb']['hd-current']);
+    //voterdb_debug_msg('hdarray', $form_state['voterdb']['hd_array']);
     $dn_hdi = $form_state['voterdb']['hd-current'];
+    //hdoptions
+    $dn_hd = $form_state['voterdb']['hdoptions'][$dn_hdi];
+    /*
     if($dn_hdi == 0) {
       $dn_hd = 'ALL';
     } else {
       $dn_hd = $form_state['voterdb']['hd_array'][$dn_hdi-1];
     }
+     * 
+     */
     $dn_ccv_url = voterdb_create_csv($dn_county,$dn_hd,$nlRecords); // func2.
     //voterdb_debug_msg('ccv url', $dn_ccv_url);
     

@@ -122,7 +122,7 @@ function voterdb_dataentry_form($form, &$form_state) {
     $browserObj = new GetBrowser();
     $dv_browser = $browserObj->getBrowser();
     voterdb_debug_msg('browser', $dv_browser);
-    drupal_set_message('Something went wrong, please login again.','warning');
+    drupal_set_message('Your account is not set up correctly.  The MCID is missing.  Please contact your coordinator.','warning');
     global $base_url;
     $form['done'] = array(
       '#markup' => '<p><a href="'.$base_url.'/" class="button ">Return to Home page >></a></p>',);
@@ -130,7 +130,8 @@ function voterdb_dataentry_form($form, &$form_state) {
   }
 
   $form_state['voterdb']['nlpUser'] = $nlpUser;
-  $form_state['voterdb']['county'] = $nlpUser['county'];
+  $county = strtoupper($nlpUser['county']);
+  $form_state['voterdb']['county'] = $county;
   //voterdb_debug_msg('currentuser', $nlpUser);
   $dv_fname = $nlpUser['firstName'];
   $dv_ln = $nlpUser['lastName'];

@@ -333,6 +333,7 @@ function voterdb_user_accounts($form,&$form_state) {
   switch ($page) {
     case 'chooseCounty':
       $countyArray = $userObj->getCounties($queryObj);
+      voterdb_debug_msg('counties', $countyArray);
       $counties = $countyArray['names'];
       $form['county'] = array(
         '#type' => 'select',
@@ -405,8 +406,8 @@ function voterdb_user_accounts_validate($form, &$form_state) {
 }
 
 function voterdb_user_accounts_submit($form, &$form_state) {
-  //voterdb_debug_msg('values', $form_state['values']);
-  //voterdb_debug_msg('triggeringelement', $form_state['triggering_element']);
+  voterdb_debug_msg('values', $form_state['values']);
+  voterdb_debug_msg('triggeringelement', $form_state['triggering_element']);
   //voterdb_debug_msg('formstate', $form_state);
   $form_state['voterdb']['reenter'] = TRUE;
   $form_state['rebuild'] = TRUE;  // form_state will persist.
@@ -437,11 +438,12 @@ function voterdb_user_accounts_submit($form, &$form_state) {
       
     case 'user-submit':
       $values = $form_state['values'];
+      voterdb_debug_msg('values', $values);
       $mcids = array();
-      foreach ($values as $value) {
-        $valueParts = explode('-', $value);
+      foreach ($values as $valueKey => $value) {
+        $valueParts = explode('-', $valueKey);
         if($valueParts[0]=='CB') {
-          if($valueParts[1]) {
+          if($value AND !empty($valueParts[2])) {
             $mcids[$valueParts[2]] = $valueParts[2];
           }
         }

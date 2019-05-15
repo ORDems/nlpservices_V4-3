@@ -273,8 +273,14 @@ function voterdb_turf_overlap(&$form_state) {
               $update['phone'] = $nlpValue;
             break;
             case 'county':
-              $update['county'] = $nlpValue;
-              drupal_set_message("The county for this NL was changed.",'warning');
+              
+              //voterdb_debug_msg('drupal value: '.$user[$nlpKey].' nlpvalue: '.$nlpValue, '');
+              $nlpLower = strtolower($nlpValue);
+              $drupalLower = strtolower($user[$nlpKey]);
+              $update['county'] = ucfirst($nlpLower);
+              if($nlpLower != $drupalLower) {
+                drupal_set_message("The county for this NL was changed.",'warning');
+              }
             break;
             case 'firstName':
               $update['firstName'] = $nlpValue;

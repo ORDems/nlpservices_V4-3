@@ -85,7 +85,7 @@ function voterdb_import_matchbacks_form_validate($form,&$form_state) {
     drupal_set_message('Failed to read Matchback File Header', 'error');
     return FALSE;
   }
-  $rv_header_record = nlp_sanitize_string($rv_voter_raw);
+  $rv_header_record = sanitize_string($rv_voter_raw);
   //extract the column headers.
   $rv_column_header = explode("\t", $rv_header_record);
   

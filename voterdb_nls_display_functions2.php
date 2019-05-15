@@ -203,7 +203,7 @@ function voterdb_create_csv($cc_county,$cc_hd,$nlRecords) {
   
   $countiesObj = new NlpCounties();
   $hdNames = $countiesObj->getHdNames($cc_county);
-  //voterdb_debug_msg('countynames', $hdNames);
+  //voterdb_debug_msg('countyhdnames', $hdNames);
   
   $nlObj = new NlpNls();
   $reportsObj = new NlpReports();
@@ -219,15 +219,26 @@ function voterdb_create_csv($cc_county,$cc_hd,$nlRecords) {
       if(empty($nlRecord)) {break;}
       $nlRecord['status'] = $nlObj->getNlsStatus($nlRecord['mcid'],$cc_county);
       $nlRecord['progress']  = voterdb_get_progress($nlRecord,$reportsObj); 
+      //voterdb_debug_msg('nlrecord', $nlRecord);
 
       foreach ($cc_keys as $cc_key) {
 
         switch ($cc_key) {
           case 'atmps':
+            if(!empty($nlRecord['progress'])) {
+              $cnt = explode('/', $nlRecord['progress']['attempts']);
+              $cc_ordered_fields[$cc_key] = $cnt[0];
+              if(!empty($cnt[1])) {
+                $voterCnt = $cnt[1];
+              }
+            } else {
+              $cc_ordered_fields[$cc_key] = '';
+            }
+            break;
           case 'conts':
             $voterCnt = '';
-            if(!empty($nlRecord['results'])) {
-              $cnt = explode('/', $nlRecord['results'][$cc_key]);
+            if(!empty($nlRecord['progress'])) {
+              $cnt = explode('/', $nlRecord['progress']['contacts']);
               $cc_ordered_fields[$cc_key] = $cnt[0];
               if(!empty($cnt[1])) {
                 $voterCnt = $cnt[1];

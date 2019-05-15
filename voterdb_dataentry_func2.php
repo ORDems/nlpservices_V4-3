@@ -59,12 +59,16 @@ function voterdb_build_call_list(&$form_state) {
   //$pathsObj = $form_state['voterdb']['pathsObj'];
   $pathsObj = new NlpPaths();
   $cl_call_path = $pathsObj->getPath('CALL',$cl_county);
-  
+  //voterdb_debug_msg('path', $cl_call_path);
   
   $cl_fname = 'CALL-'.$cl_mcid.'-'.$cl_turfindex;
   $cl_call_uri = $cl_call_path . $cl_fname;
+  
+  //voterdb_debug_msg('uri', $cl_call_uri);
   file_save_data('', $cl_call_uri, FILE_EXISTS_REPLACE);
+  
   $cl_call_file_fh = fopen($cl_call_uri,"w");
+  if(empty($cl_call_file_fh)) {return NULL;}
   //$cl_types = unserialize(DE_TYPE_ARRAY);
   foreach ($cl_voters as $cl_voter_info) {
     // Write a record to the call sheet file.
