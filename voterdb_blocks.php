@@ -5,6 +5,58 @@
  */
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * nlp_coordinator_block
+ * 
+ * Builds the content of the NLP navigation block.
+ * 
+ * @param type $delta - block id.
+ * @return - renderable content for the block.
+ */
+function nlp_agreement_block($delta) {
+  $url = $GLOBALS['base_url'];
+  $roles = $GLOBALS['user']->roles;
+  $nl = in_array(NLP_LEADER_ROLE, $roles);
+  if(!$nl) {return;}
+  
+  $note = variable_get('nlpservices_note', '');
+  
+  $body = '<p><span style="font-size:16px;">';
+  $body .= "Thanks for completing a canvass. Click the link below to report ".
+    "results. Your reports will be made available to the coordinated campaigns ".
+    "within three hours. The campaigns are relying on you to be timely in ".
+    "reporting voter contacts and attempts.</span></p>";
+  /*
+  if(!empty($note)) {
+    $body .= '<p><span style="font-size:16px;  color: red;">'.$note.'</span></p>';
+  }
+   * 
+   */
+  
+  $body .= '<div style="border-style: solid; border-width:1px; '.
+    'border-radius: 5px; width:550px; padding:5px;">'.
+    '<p><span style="font-size:16px;">';
+  $body .= "By clicking the link below, you are agreeing to keep the ".
+    "information secure and to not share it with any unauthorized person.".
+    "</span></p>";
+
+  $body .= "\n".'<p><button onclick="location.href='.
+    "'".$url."/nlpcanvassresults'".'"'.
+    'style="border: 1px solid #0000ff;
+      display: block;
+      padding: 0px;
+      background-color: #dddddd;
+      text-align: center;
+      border-radius: 5px;
+      color: blue;" type="button">Click here to get your turf</button></p>
+    </div>';
+
+  $result = array(
+    '#markup' => $body,
+  );
+  return $result;
+}
+
+/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * voterdb_coordinator_block
  * 
  * Builds the content of the NLP navigation block.
@@ -56,6 +108,14 @@ function voterdb_block_info() {
     'pages' => '<front>',
     'weight' => -9999,
   );
+  $bi_blocks['nlp_agreement'] = array(
+    'info' => t('Neighborhood Leader Agreement'),
+    'status' => TRUE,
+    'region' => 'content',
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+    'pages' => '<front>',
+    'weight' => -9990,
+  );
   return $bi_blocks;
 }
 
@@ -73,6 +133,10 @@ function voterdb_block_view($bv_delta = '') {
     case 'nlp_coordinator_welcome':
       $block['subject'] = t("NLP Coordinator");
       $block['content'] = voterdb_coordinator_block($bv_delta);
+      break;
+    case 'nlp_agreement':
+      $block['subject'] = t("Neighborhood Leader Agreement");
+      $block['content'] = nlp_agreement_block($bv_delta);
       break;
   }
   return $block;

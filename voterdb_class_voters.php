@@ -272,7 +272,8 @@ class NlpVoters {
       db_merge(self::VOTERSTATUSTBL)
         ->key(array(
           'VANID' => $vanid,
-          'DORCurrent' => $fields['dorCurrent']))
+          //'DORCurrent' => $fields['dorCurrent']
+              ))
         ->fields($dbFields)
         ->execute();
     }

@@ -472,7 +472,28 @@ class NlpReports {
     } while (TRUE);
   }
   
-  function countyContacted($county) {
+   function voterContacted($vanid) {
+    $cycle = variable_get('voterdb_ecycle', 'xxxx-mm-G');
+    db_set_active('nlp_voterdb');
+    try {
+      $query = db_select(self::NLPRESULTSTBL, 'r');
+      $query->addField('r','VANID');
+      $query->condition('VANID',$vanid);
+      $query->condition('Cycle',$cycle);
+      $query->condition('Type',self::SURVEY);
+      $contactCount = $query->countQuery()->execute()->fetchField();
+    }
+    catch (Exception $e) {
+      db_set_active('default');
+      voterdb_debug_msg('e', $e->getMessage() );
+      return FALSE;
+    }
+    db_set_active('default');
+    $voterContacted = $contactCount>0;
+    return $voterContacted;
+  }
+  
+ function countyContacted($county) {
     $cycle = variable_get('voterdb_ecycle', 'xxxx-mm-G');
     db_set_active('nlp_voterdb');
     try {

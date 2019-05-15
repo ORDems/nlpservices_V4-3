@@ -1,6 +1,6 @@
 <?php
 /**
- * Name:  voteredb_module     V4.3  9/5/18
+ * Name:  voteredb_module     V4.3  5/12/19
  * @file
  * Implements the nlp voter database
  */
@@ -15,8 +15,11 @@ require_once "voterdb_cron_results.php";
 //require_once "voterdb_cron_report.php";
 require_once "voterdb_class_turfs.php";
 require_once "voterdb_class_magic_word.php";
+require_once "voterdb_debug.php";
+require_once "voterdb_class_get_browser.php";
 
 use Drupal\voterdb\NlpMagicWord;
+use Drupal\voterdb\GetBrowser;
 
 define('NLP_ADMIN_ROLE','nlp administrator');
 define('NLP_COORDINATOR_ROLE','nlp coordinator');
@@ -214,7 +217,8 @@ function voterdb_menu() {
     'title' => 'Report Canvass Results',
     'description' => 'NL report canvass results.',
     //'access arguments' => array('administer voterdb'),
-    'access arguments' => array('voterdb data entry'),
+    'access callback' => TRUE,
+    //'access arguments' => array('voterdb data entry'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('voterdb_dataentry_form'),
     'file' => 'voterdb_dataentry.php',
@@ -223,7 +227,8 @@ function voterdb_menu() {
   $items ['nlpturfdeliver'] = array (
     'title' => 'Send a turf email to NL',
     'description' => 'Send an email to the NL with links for the turf and instructions.',
-    'access arguments' => array('access voterdb tools'),
+    'access callback' => TRUE,
+    //'access arguments' => array('access voterdb tools'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('voterdb_turf_deliver_form'),
     'file' => 'voterdb_turf_deliver.php',
@@ -438,19 +443,82 @@ function voterdb_user_update(&$edit, $account, $category) {
  * 
  */
 
+/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * voterdb_user_presave
+ * 
+ * Hook to capture the value of a new password when changed by an NL.  This
+ * alllows recovery of a forgotten password which is very common for NLs.
+ * 
+ * 
+ */
 function voterdb_user_presave(&$edit, $account, $category){
-  //drupal_set_message('presaveedit: <pre>'.print_r($edit, true).'</pre>','status');
-  //drupal_set_message('presaveaccount: <pre>'.print_r($account, true).'</pre>','status');
-  //drupal_set_message('presavecatagory: <pre>'.print_r($category, true).'</pre>','status');
-  
   if(!empty($_REQUEST['field_mcid']['und'][0]['value'])) {
-    //if($_REQUEST['current_pass'] != $_REQUEST['pass']['pass1']) {
-      $magicWordObj = new NlpMagicWord();
-      $magicWordObj->setMagicWord($_REQUEST['field_mcid']['und'][0]['value'], $_REQUEST['pass']['pass1']);
-    //}
+    drupal_set_message('MCID: '.$_REQUEST['field_mcid']['und'][0]['value'].' Magicword: '.$_REQUEST['pass']['pass1'],'status');
+    $magicWordObj = new NlpMagicWord();
+    $magicWordObj->setMagicWord($_REQUEST['field_mcid']['und'][0]['value'], $_REQUEST['pass']['pass1']);
   }
-  
-  
-  
-  //drupal_set_message('presaverequest: <pre>'.print_r($_REQUEST, true).'</pre>','status');
 }
+
+
+/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * voterdb_form_alter
+ * 
+ */
+function voterdb_form_alter(&$form, $form_state, $form_id) {
+  //drupal_set_message('form alter','status');
+  switch ($form_id) {
+    case 'user_login_block':
+      //drupal_set_message('<pre>'.print_r($form_state, true).'</pre>','status');
+      if(!empty($form_state['input'])) {
+        //drupal_set_message('<pre>'.print_r($form_state, true).'</pre>','status');
+        $username = $form_state['input']['name'];
+        $pass = $form_state['input']['pass'];
+        
+        $browserObj = new GetBrowser();
+        $browser = $browserObj->getBrowser();
+        //nlp_debug_msg('browser', $browser);
+        
+        $user = $GLOBALS['user'];  
+        $ip = $user->hostname;
+        
+        $msg = 'Login attempt credentials:  '.$username.' '.$pass.' on '.$browser['platform'].' using '.$browser['browser'].' at '.$ip;
+        watchdog('user', $msg);
+        drupal_set_message($msg,'status');
+      }
+      break;
+    case 'user_login' :
+      if(!empty($form_state['input'])) {
+        //drupal_set_message('<pre>'.print_r($form_state, true).'</pre>','status');
+        $username = $form_state['input']['name'];
+        $pass = $form_state['input']['pass'];
+        $browserObj = new GetBrowser();
+        $browser = $browserObj->getBrowser();
+        //nlp_debug_msg('browser', $browser);
+        
+        $user = $GLOBALS['user'];  
+        $ip = $user->hostname;
+        
+        $msg = 'Login attempt credentials:  '.$username.' '.$pass.' on '.$browser['platform'].' using '.$browser['browser'].' at '.$ip;
+        watchdog('user', $msg);
+        drupal_set_message($msg,'status');
+      }
+      break;
+  }
+}
+
+function voterdb_user_login(&$edit, $account) {
+  //drupal_set_message('user login','status');
+  //drupal_set_message('<pre>'.print_r($edit, true).'</pre>','status');
+  //drupal_set_message('<pre>'.print_r($account, true).'</pre>','status');
+  $roles = $account->roles;
+  $roleList = '';
+  foreach ($roles as $role) {
+    $roleList .= $role.', ';
+  }
+  $uid = $account->uid;
+  $fname = $account->field_firstname['und'][0]['value'];
+  $msg = 'Welcome '.$fname.', You have logged in with the following roles: '.$roleList.' UID: '.$uid;
+  watchdog('user', $msg);
+  drupal_set_message($msg,'status');
+}
+

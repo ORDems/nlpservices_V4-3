@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_class_drupal_user.php   V4.3 4/3/19
+ * Name: voterdb_class_drupal_user.php   V4.3 4/23/19
  *
  */
 namespace Drupal\voterdb;
@@ -100,7 +100,8 @@ class NlpDrupalUser {
         $accountObj = user_load($uid);
         if(!empty($accountObj->field_county)) {
           $countyField = $accountObj->field_county; 
-          $county = $countyField['und'][0]['value'];
+          $countyMixed = $countyField['und'][0]['value'];
+          $county = strtoupper($countyMixed);
           if(!empty($county)) {
             if(empty($counties['names'][$county])) {
               $counties['names'][$county] = $county;
