@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_turf_checkin_func2.php   V4.2  7/11/18
+ * Name: voterdb_turf_checkin_func2.php   V4.2  4/3/19
  * This include file contains the code to upload a turf exported from the
  * VAN and add it to the voter database.
  */
@@ -213,7 +213,9 @@ function voterdb_turf_overlap(&$form_state) {
     //voterdb_debug_msg('user', $user, __FILE__, __LINE__);
     if(empty($user)) {
       drupal_set_message('This NL does not have an account to use to get the turf. '
-              . ' An account will be created and an email sent to the NL with instructions.','status');
+              //. ' An account will be created and an email sent to the NL with instructions.','status');
+              . ' An account will be created.  If you use the NLP Service admin function '
+              . 'to sen the turf to this NL, that email will include login instructions.','status');
 
       $account = array(
         'mail' => $userInfo['email'],
