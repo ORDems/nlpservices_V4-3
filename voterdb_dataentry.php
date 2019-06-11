@@ -1,6 +1,6 @@
 <?php
 /*
- * Name: voterdb_dataentry.php      V4.3  9/30/18
+ * Name: voterdb_dataentry.php      V4.3  5/16/18
  */
 
 require_once "voterdb_constants_voter_tbl.php";
@@ -122,7 +122,13 @@ function voterdb_dataentry_form($form, &$form_state) {
     $browserObj = new GetBrowser();
     $dv_browser = $browserObj->getBrowser();
     voterdb_debug_msg('browser', $dv_browser);
-    drupal_set_message('Your account is not set up correctly.  The MCID is missing.  Please contact your coordinator.','warning');
+    $roles = $nlpUser['roles'];
+    $nlRole = in_array(NLP_LEADER_ROLE, $roles);
+    if($nlRole) {
+      drupal_set_message('Your account is not set up correctly.  The MCID is missing.  Please contact your coordinator.','warning');
+    } else {
+      drupal_set_message('You have to be logged in as a Neighborhood Leader to see a turf.','warning');
+    }
     global $base_url;
     $form['done'] = array(
       '#markup' => '<p><a href="'.$base_url.'/" class="button ">Return to Home page >></a></p>',);
